@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  RefreshCw, 
+  HelpCircle,
+  Eye,
+  EyeOff,
   Search,
-  Star,
   ChevronRight,
-  ArrowUpRight,
-  ArrowDownRight,
+  Plus,
+  Link2,
+  List,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw,
+  Star,
   Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -19,26 +23,9 @@ interface StockQuote {
   regularMarketPrice: number;
   regularMarketChange: number;
   regularMarketChangePercent: number;
-  regularMarketTime: string;
 }
 
-interface IndexQuote {
-  symbol: string;
-  name: string;
-  points: number;
-  change: number;
-  changePercent: number;
-}
-
-// Major Brazilian indices
-const majorIndices: IndexQuote[] = [
-  { symbol: "IBOV", name: "Ibovespa", points: 127845, change: 1245, changePercent: 0.98 },
-  { symbol: "IFIX", name: "IFIX", points: 3245, change: -12, changePercent: -0.37 },
-  { symbol: "SMLL", name: "Small Caps", points: 2156, change: 34, changePercent: 1.58 },
-  { symbol: "IDIV", name: "Dividendos", points: 7823, change: 89, changePercent: 1.15 },
-];
-
-// Popular stocks for quick access
+// Popular stocks for market view
 const popularStocks = [
   "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", 
   "WEGE3", "RENT3", "MGLU3", "BBAS3", "B3SA3",
@@ -47,68 +34,70 @@ const popularStocks = [
 
 interface TradeTabProps {
   showValues: boolean;
+  userName?: string;
+  userAssets?: any[];
+  onToggleValues?: () => void;
+  onAddAsset?: () => void;
+  onAddConnection?: () => void;
 }
 
-const TradeTab = ({ showValues }: TradeTabProps) => {
+const TradeTab = ({ 
+  showValues, 
+  userName = "",
+  userAssets = [],
+  onToggleValues,
+  onAddAsset,
+  onAddConnection
+}: TradeTabProps) => {
+  const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stocks, setStocks] = useState<StockQuote[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>(["PETR4", "VALE3", "ITUB4"]);
-  const [activeFilter, setActiveFilter] = useState<"all" | "favorites" | "gainers" | "losers">("all");
+  const [lastUpdate, setLastUpdate] = useState<string>("-");
+  const [marketStocks, setMarketStocks] = useState<StockQuote[]>([]);
+  const [loadingMarket, setLoadingMarket] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  // Fetch stock quotes from Brapi API
-  const fetchStocks = async (tickers: string[]) => {
+  // Fetch market stocks
+  const fetchMarketStocks = async () => {
+    setLoadingMarket(true);
     try {
       const response = await fetch(
-        `https://brapi.dev/api/quote/${tickers.join(",")}?token=`
+        `https://brapi.dev/api/quote/${popularStocks.join(",")}?token=`
       );
       const data = await response.json();
       
       if (data.results) {
-        return data.results.map((stock: any) => ({
+        setMarketStocks(data.results.map((stock: any) => ({
           symbol: stock.symbol,
           shortName: stock.shortName || stock.longName || stock.symbol,
           regularMarketPrice: stock.regularMarketPrice || 0,
           regularMarketChange: stock.regularMarketChange || 0,
           regularMarketChangePercent: stock.regularMarketChangePercent || 0,
-          regularMarketTime: stock.regularMarketTime || new Date().toISOString(),
-        }));
+        })));
+        setLastUpdate(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
       }
-      return [];
     } catch (error) {
-      console.error("Error fetching stocks:", error);
-      // Return mock data if API fails
-      return tickers.map(ticker => ({
+      console.error("Error fetching market:", error);
+      // Mock data fallback
+      setMarketStocks(popularStocks.map(ticker => ({
         symbol: ticker,
         shortName: ticker,
         regularMarketPrice: Math.random() * 100 + 10,
         regularMarketChange: (Math.random() - 0.5) * 5,
         regularMarketChangePercent: (Math.random() - 0.5) * 10,
-        regularMarketTime: new Date().toISOString(),
-      }));
+      })));
+      setLastUpdate(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
     }
-  };
-
-  const loadStocks = async () => {
-    setLoading(true);
-    const stocksData = await fetchStocks(popularStocks);
-    setStocks(stocksData);
-    setLoading(false);
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadStocks();
-    setRefreshing(false);
+    setLoadingMarket(false);
   };
 
   useEffect(() => {
-    loadStocks();
-    // Refresh every 30 seconds
-    const interval = setInterval(loadStocks, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    if (activeTab === "mercado") {
+      fetchMarketStocks();
+      const interval = setInterval(fetchMarketStocks, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   const toggleFavorite = (symbol: string) => {
     setFavorites(prev => 
@@ -123,177 +112,265 @@ const TradeTab = ({ showValues }: TradeTabProps) => {
     return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
-  const formatChange = (change: number, percent: number) => {
-    if (!showValues) return "••%";
-    const sign = change >= 0 ? "+" : "";
-    return `${sign}${percent.toFixed(2)}%`;
-  };
-
-  const filteredStocks = stocks.filter(stock => {
-    if (searchTerm) {
-      return stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             stock.shortName.toLowerCase().includes(searchTerm.toLowerCase());
-    }
-    switch (activeFilter) {
-      case "favorites":
-        return favorites.includes(stock.symbol);
-      case "gainers":
-        return stock.regularMarketChange > 0;
-      case "losers":
-        return stock.regularMarketChange < 0;
-      default:
-        return true;
-    }
-  });
+  const tabs = [
+    { id: "meus-ativos", label: "Meus ativos" },
+    { id: "patrimonio", label: "Patrimônio" },
+    { id: "mercado", label: "Mercado" },
+    { id: "favoritos", label: "Favoritos" },
+  ];
 
   return (
     <div className="flex-1 pb-20">
       {/* Header */}
       <header className="p-4 safe-area-inset-top">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-foreground">Trade</h1>
-          <button 
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar ativo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-12 bg-card border-border rounded-xl"
-          />
-        </div>
-      </header>
-
-      {/* Indices Carousel */}
-      <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-        <div className="flex gap-3" style={{ minWidth: "max-content" }}>
-          {majorIndices.map((index) => (
-            <motion.div
-              key={index.symbol}
-              whileTap={{ scale: 0.98 }}
-              className="bg-card border border-border rounded-xl p-4 min-w-[160px]"
+          <h1 className="text-xl font-bold text-foreground">Kadig Trade</h1>
+          <div className="flex items-center gap-2">
+            <button className="p-2 text-muted-foreground">
+              <HelpCircle className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={onToggleValues}
+              className="p-2 text-muted-foreground"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-primary">{index.symbol}</span>
-                {index.change >= 0 ? (
-                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
-                )}
-              </div>
-              <p className="text-lg font-bold text-foreground">
-                {showValues ? index.points.toLocaleString("pt-BR") : "••••"}
-              </p>
-              <p className={`text-sm font-medium ${index.change >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                {showValues ? `${index.change >= 0 ? "+" : ""}${index.changePercent.toFixed(2)}%` : "••%"}
-              </p>
-            </motion.div>
-          ))}
+              {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+            >
+              <Search className="w-5 h-5 text-foreground" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="px-4 mb-4">
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {[
-            { id: "all", label: "Todos" },
-            { id: "favorites", label: "Favoritos" },
-            { id: "gainers", label: "📈 Altas" },
-            { id: "losers", label: "📉 Baixas" },
-          ].map((filter) => (
+        {/* Search Bar (when open) */}
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-4"
+          >
+            <Input
+              placeholder="Buscar ativo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-12 bg-card border-border rounded-xl"
+              autoFocus
+            />
+          </motion.div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          {tabs.map((tab) => (
             <button
-              key={filter.id}
-              onClick={() => setActiveFilter(filter.id as any)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeFilter === filter.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? "bg-background text-foreground shadow-sm border border-border"
+                  : "text-muted-foreground"
               }`}
             >
-              {filter.label}
+              {tab.label}
             </button>
           ))}
         </div>
+      </header>
+
+      {/* Portfolio Selector */}
+      <div className="px-4 mb-4">
+        <div className="flex items-center gap-3">
+          <button className="flex-1 flex items-center justify-between bg-card border border-border rounded-xl p-4">
+            <span className="text-foreground font-medium">Patrimônio {userName}</span>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <button className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center">
+            <List className="w-5 h-5 text-muted-foreground" />
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-[10px] text-white font-bold">1</span>
+            </div>
+          </button>
+        </div>
       </div>
 
-      {/* Stock List */}
-      <div className="px-4 space-y-2">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        ) : filteredStocks.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Nenhum ativo encontrado</p>
-          </div>
-        ) : (
-          filteredStocks.map((stock, index) => (
-            <motion.div
-              key={stock.symbol}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
-            >
-              {/* Favorite Button */}
-              <button
-                onClick={() => toggleFavorite(stock.symbol)}
-                className="text-muted-foreground hover:text-yellow-500 transition-colors"
-              >
-                <Star 
-                  className={`w-5 h-5 ${favorites.includes(stock.symbol) ? "fill-yellow-500 text-yellow-500" : ""}`} 
-                />
-              </button>
-
-              {/* Stock Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground">{stock.symbol}</span>
-                  {stock.regularMarketChange >= 0 ? (
-                    <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4 text-red-500" />
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {stock.shortName}
-                </p>
-              </div>
-
-              {/* Price Info */}
-              <div className="text-right">
-                <p className="font-bold text-foreground">
-                  {formatPrice(stock.regularMarketPrice)}
-                </p>
-                <p className={`text-sm font-medium ${
-                  stock.regularMarketChange >= 0 ? "text-emerald-500" : "text-red-500"
-                }`}>
-                  {formatChange(stock.regularMarketChange, stock.regularMarketChangePercent)}
-                </p>
-              </div>
-
-              {/* Action */}
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </motion.div>
-          ))
-        )}
-      </div>
-
-      {/* Last Update */}
-      <div className="px-4 pt-4 pb-8">
-        <p className="text-xs text-center text-muted-foreground">
-          Dados atualizados automaticamente a cada 30 segundos
+      {/* Real-time update indicator */}
+      <div className="px-4 mb-6">
+        <div className="flex items-center justify-center gap-2 text-sm">
+          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+          <span className="text-muted-foreground">Atualização</span>
+          <span className="text-foreground font-medium">em tempo real</span>
+        </div>
+        <p className="text-center text-xs text-muted-foreground mt-1">
+          Última atualização: {lastUpdate}
         </p>
       </div>
+
+      <div className="border-t border-border" />
+
+      {/* Content based on active tab */}
+      {activeTab === "meus-ativos" && (
+        <div className="p-4">
+          {userAssets.length === 0 ? (
+            /* Empty State */
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="relative mb-4">
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-primary" />
+                </div>
+                <div className="absolute -bottom-2 -right-2">
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <path d="M20 5 L20 15 L10 20 L20 25 L20 35" stroke="currentColor" strokeWidth="2" className="text-muted-foreground" />
+                    <circle cx="20" cy="15" r="3" fill="currentColor" className="text-muted-foreground" />
+                  </svg>
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-foreground text-center mb-2">
+                Adicione ativos da bolsa<br/>na sua carteira
+              </h3>
+              <p className="text-sm text-muted-foreground text-center mb-6">
+                Você não possui ativos da bolsa nesta carteira
+              </p>
+
+              <div className="w-full max-w-xs space-y-3">
+                <button
+                  onClick={onAddAsset}
+                  className="w-full h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-foreground font-medium">Adicionar ativos</span>
+                </button>
+
+                <button
+                  onClick={onAddConnection}
+                  className="w-full h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Link2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-foreground font-medium">Adicionar conexão</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Assets List */
+            <div className="space-y-2">
+              {userAssets.map((asset, index) => (
+                <div key={index} className="bg-card border border-border rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-foreground">{asset.ticker || asset.asset_name}</p>
+                      <p className="text-xs text-muted-foreground">{asset.asset_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-foreground">{formatPrice(asset.current_value)}</p>
+                      <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                        {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "patrimonio" && (
+        <div className="p-4">
+          <div className="bg-card border border-border rounded-xl p-6 text-center">
+            <p className="text-muted-foreground">Patrimônio em renda variável</p>
+            <p className="text-3xl font-bold text-foreground mt-2">
+              {showValues ? "R$ 0,00" : "R$ ••••"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "mercado" && (
+        <div className="p-4 space-y-2">
+          {loadingMarket ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            marketStocks.map((stock, index) => (
+              <motion.div
+                key={stock.symbol}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
+              >
+                <button
+                  onClick={() => toggleFavorite(stock.symbol)}
+                  className="text-muted-foreground"
+                >
+                  <Star 
+                    className={`w-5 h-5 ${favorites.includes(stock.symbol) ? "fill-yellow-500 text-yellow-500" : ""}`} 
+                  />
+                </button>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-foreground">{stock.symbol}</span>
+                    {stock.regularMarketChange >= 0 ? (
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                    ) : (
+                      <TrendingDown className="w-4 h-4 text-red-500" />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-foreground">{formatPrice(stock.regularMarketPrice)}</p>
+                  <p className={`text-xs ${stock.regularMarketChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                    {stock.regularMarketChange >= 0 ? "+" : ""}{stock.regularMarketChangePercent.toFixed(2)}%
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === "favoritos" && (
+        <div className="p-4">
+          {favorites.length === 0 ? (
+            <div className="text-center py-12">
+              <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum favorito ainda</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Adicione ativos aos favoritos na aba Mercado
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {marketStocks
+                .filter(stock => favorites.includes(stock.symbol))
+                .map((stock) => (
+                  <div key={stock.symbol} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+                    <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
+                    <div className="flex-1">
+                      <span className="font-bold text-foreground">{stock.symbol}</span>
+                      <p className="text-xs text-muted-foreground">{stock.shortName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-foreground">{formatPrice(stock.regularMarketPrice)}</p>
+                      <p className={`text-xs ${stock.regularMarketChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                        {stock.regularMarketChange >= 0 ? "+" : ""}{stock.regularMarketChangePercent.toFixed(2)}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
