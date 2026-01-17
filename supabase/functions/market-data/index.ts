@@ -154,6 +154,120 @@ serve(async (req) => {
       }
     }
 
+    // Buscar cotações de criptoativos
+    if (type === 'crypto-prices') {
+      console.log('Fetching crypto prices');
+      
+      try {
+        // Usar CoinGecko API (gratuita)
+        const cryptoIds = 'bitcoin,litecoin,bitcoin-cash,ripple,ethereum,solana,cardano,polkadot,dogecoin,shiba-inu,binancecoin,avalanche-2,tron,chainlink,uniswap';
+        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds}&vs_currencies=brl&include_24hr_change=true`;
+        
+        console.log('Requesting CoinGecko API');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        console.log('CoinGecko response:', JSON.stringify(data).slice(0, 200));
+        
+        // Mapear para nomes amigáveis
+        const cryptoNameMap: { [key: string]: string } = {
+          'bitcoin': 'BITCOIN',
+          'litecoin': 'LITECOIN',
+          'bitcoin-cash': 'BCASH',
+          'ripple': 'XRP (RIPPLE)',
+          'ethereum': 'ETHEREUM',
+          'solana': 'SOLANA',
+          'cardano': 'CARDANO',
+          'polkadot': 'POLKADOT',
+          'dogecoin': 'DOGECOIN',
+          'shiba-inu': 'SHIBA INU',
+          'binancecoin': 'BNB',
+          'avalanche-2': 'AVALANCHE',
+          'tron': 'TRON',
+          'chainlink': 'CHAINLINK',
+          'uniswap': 'UNISWAP',
+        };
+        
+        const prices: { [key: string]: { price: number; change24h: number } } = {};
+        
+        Object.entries(data).forEach(([id, values]: [string, any]) => {
+          const name = cryptoNameMap[id];
+          if (name) {
+            prices[name] = {
+              price: values.brl || 0,
+              change24h: values.brl_24h_change || 0,
+            };
+          }
+        });
+        
+        return new Response(
+          JSON.stringify({ prices, lastUpdate: new Date().toISOString() }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching crypto prices:', error);
+        return new Response(
+          JSON.stringify({ prices: {}, error: 'Failed to fetch crypto prices' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Buscar cotações de moedas
+    if (type === 'currency-prices') {
+      console.log('Fetching currency prices');
+      
+      try {
+        // Usar API do Banco Central ou AwesomeAPI para cotações
+        const currencies = 'USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,CHF-BRL,CAD-BRL,AUD-BRL,ARS-BRL,CNY-BRL,MXN-BRL';
+        const url = `https://economia.awesomeapi.com.br/json/last/${currencies}`;
+        
+        console.log('Requesting AwesomeAPI for currencies');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        console.log('AwesomeAPI response:', JSON.stringify(data).slice(0, 200));
+        
+        // Mapear para nomes amigáveis
+        const currencyNameMap: { [key: string]: string } = {
+          'USDBRL': 'DÓLAR AMERICANO (USD)',
+          'EURBRL': 'EURO (EUR)',
+          'GBPBRL': 'LIBRA ESTERLINA (GBP)',
+          'JPYBRL': 'IENE JAPONÊS (JPY)',
+          'CHFBRL': 'FRANCO SUÍÇO (CHF)',
+          'CADBRL': 'DÓLAR CANADENSE (CAD)',
+          'AUDBRL': 'DÓLAR AUSTRALIANO (AUD)',
+          'ARSBRL': 'PESO ARGENTINO (ARS)',
+          'CNYBRL': 'YUAN CHINÊS (CNY)',
+          'MXNBRL': 'PESO MEXICANO (MXN)',
+        };
+        
+        const prices: { [key: string]: { price: number; change24h: number } } = {};
+        
+        Object.entries(data).forEach(([key, values]: [string, any]) => {
+          const name = currencyNameMap[key];
+          if (name) {
+            prices[name] = {
+              price: parseFloat(values.bid) || 0,
+              change24h: parseFloat(values.pctChange) || 0,
+            };
+          }
+        });
+        
+        return new Response(
+          JSON.stringify({ prices, lastUpdate: new Date().toISOString() }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching currency prices:', error);
+        return new Response(
+          JSON.stringify({ prices: {}, error: 'Failed to fetch currency prices' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
     // Buscar notícias do mercado usando Stock News API
     if (type === 'market-news') {
       console.log('Fetching market news from Stock News API');

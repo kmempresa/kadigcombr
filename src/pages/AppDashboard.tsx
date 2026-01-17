@@ -156,6 +156,158 @@ const AppDashboard = () => {
     fetchEconomicIndicators();
   }, []);
 
+  // Update crypto and currency prices for investments
+  const updateInvestmentPrices = async (userId: string) => {
+    try {
+      console.log('Updating investment prices...');
+      
+      // Fetch all investments
+      const { data: investments } = await supabase
+        .from("investments")
+        .select("*")
+        .eq("user_id", userId);
+      
+      if (!investments || investments.length === 0) return;
+      
+      // Identify crypto and currency investments
+      const cryptoInvestments = investments.filter((inv: any) => 
+        inv.asset_type === 'Criptoativos'
+      );
+      const currencyInvestments = investments.filter((inv: any) => 
+        inv.asset_type === 'Moedas'
+      );
+      const stockInvestments = investments.filter((inv: any) => 
+        ['Ações, Stocks e ETF', 'BDRs', 'FIIs e REITs', 'Fundos'].includes(inv.asset_type)
+      );
+      
+      // Fetch crypto prices if needed
+      if (cryptoInvestments.length > 0) {
+        console.log(`Updating ${cryptoInvestments.length} crypto investments`);
+        const { data: cryptoData } = await supabase.functions.invoke('market-data', {
+          body: { type: 'crypto-prices' }
+        });
+        
+        if (cryptoData?.prices) {
+          for (const inv of cryptoInvestments) {
+            const priceData = cryptoData.prices[inv.asset_name];
+            if (priceData) {
+              const newCurrentPrice = priceData.price;
+              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
+              const gainPercent = inv.total_invested > 0 
+                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
+                : 0;
+              
+              await supabase.from("investments").update({
+                current_price: newCurrentPrice,
+                current_value: newCurrentValue,
+                gain_percent: gainPercent,
+                updated_at: new Date().toISOString(),
+              }).eq("id", inv.id);
+            }
+          }
+        }
+      }
+      
+      // Fetch currency prices if needed
+      if (currencyInvestments.length > 0) {
+        console.log(`Updating ${currencyInvestments.length} currency investments`);
+        const { data: currencyData } = await supabase.functions.invoke('market-data', {
+          body: { type: 'currency-prices' }
+        });
+        
+        if (currencyData?.prices) {
+          for (const inv of currencyInvestments) {
+            const priceData = currencyData.prices[inv.asset_name];
+            if (priceData) {
+              const newCurrentPrice = priceData.price;
+              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
+              const gainPercent = inv.total_invested > 0 
+                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
+                : 0;
+              
+              await supabase.from("investments").update({
+                current_price: newCurrentPrice,
+                current_value: newCurrentValue,
+                gain_percent: gainPercent,
+                updated_at: new Date().toISOString(),
+              }).eq("id", inv.id);
+            }
+          }
+        }
+      }
+      
+      // Fetch stock prices if needed
+      if (stockInvestments.length > 0) {
+        console.log(`Updating ${stockInvestments.length} stock investments`);
+        const { data: stockData } = await supabase.functions.invoke('market-data', {
+          body: { type: 'all' }
+        });
+        
+        if (stockData?.stocks) {
+          const stockPrices: { [key: string]: number } = {};
+          stockData.stocks.forEach((s: any) => {
+            if (s.regularMarketPrice > 0) {
+              stockPrices[s.symbol] = s.regularMarketPrice;
+            }
+          });
+          
+          for (const inv of stockInvestments) {
+            if (inv.ticker && stockPrices[inv.ticker]) {
+              const newCurrentPrice = stockPrices[inv.ticker];
+              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
+              const gainPercent = inv.total_invested > 0 
+                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
+                : 0;
+              
+              await supabase.from("investments").update({
+                current_price: newCurrentPrice,
+                current_value: newCurrentValue,
+                gain_percent: gainPercent,
+                updated_at: new Date().toISOString(),
+              }).eq("id", inv.id);
+            }
+          }
+        }
+      }
+      
+      // Update portfolio totals
+      const { data: updatedInvestments } = await supabase
+        .from("investments")
+        .select("current_value, total_invested, portfolio_id")
+        .eq("user_id", userId);
+      
+      if (updatedInvestments && updatedInvestments.length > 0) {
+        // Group by portfolio
+        const portfolioTotals: { [key: string]: { value: number; invested: number } } = {};
+        updatedInvestments.forEach((inv: any) => {
+          if (!portfolioTotals[inv.portfolio_id]) {
+            portfolioTotals[inv.portfolio_id] = { value: 0, invested: 0 };
+          }
+          portfolioTotals[inv.portfolio_id].value += inv.current_value || 0;
+          portfolioTotals[inv.portfolio_id].invested += inv.total_invested || 0;
+        });
+        
+        // Update each portfolio
+        for (const [portfolioId, totals] of Object.entries(portfolioTotals)) {
+          const gain = totals.value - totals.invested;
+          const cdiPercent = totals.invested > 0 ? (gain / totals.invested) * 100 : 0;
+          
+          await supabase.from("portfolios").update({
+            total_value: totals.value,
+            total_gain: gain,
+            cdi_percent: cdiPercent,
+            updated_at: new Date().toISOString(),
+          }).eq("id", portfolioId);
+        }
+      }
+      
+      console.log('Investment prices updated successfully');
+      toast.success("Cotações atualizadas!");
+    } catch (error) {
+      console.error('Error updating investment prices:', error);
+    }
+  };
+
   // Fetch all user data from database
   useEffect(() => {
     const fetchUserData = async () => {
@@ -175,6 +327,11 @@ const AppDashboard = () => {
         }
 
         const userId = session.user.id;
+
+        // Update investment prices in background (only on first load)
+        if (!userData) {
+          updateInvestmentPrices(userId);
+        }
 
         // Fetch all data in parallel
         const [profileResult, portfoliosResult, investmentsResult] = await Promise.all([
