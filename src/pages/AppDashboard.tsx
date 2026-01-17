@@ -67,6 +67,12 @@ interface MonthlyData {
   stats: { carteira: number; cdi: number; ipca: number };
 }
 
+interface EconomicIndicators {
+  current: { cdi: number; ipca: number; selic: number };
+  accumulated12m: { cdi: number; ipca: number };
+  monthly: { month: string; cdi: number; ipca: number }[];
+}
+
 // Get current date in Brazil timezone
 const getBrazilDate = () => {
   return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
@@ -124,6 +130,27 @@ const AppDashboard = () => {
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [patrimonioDrawerOpen, setPatrimonioDrawerOpen] = useState(false);
   const [adicionarDrawerOpen, setAdicionarDrawerOpen] = useState(false);
+  const [economicIndicators, setEconomicIndicators] = useState<EconomicIndicators | null>(null);
+
+  // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
+  useEffect(() => {
+    const fetchEconomicIndicators = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('market-data', {
+          body: { type: 'economic-indicators' }
+        });
+        
+        if (error) throw error;
+        
+        console.log('Economic indicators:', data);
+        setEconomicIndicators(data);
+      } catch (error) {
+        console.error('Error fetching economic indicators:', error);
+      }
+    };
+    
+    fetchEconomicIndicators();
+  }, []);
 
   // Fetch all user data from database
   useEffect(() => {
@@ -156,27 +183,19 @@ const AppDashboard = () => {
         const portfolios = portfoliosResult.data || [];
         const investments = investmentsResult.data || [];
 
-        // Calculate totals
+        // Calculate totals from investments (more accurate)
         let totalValue = 0;
-        let totalGain = 0;
         let totalInvested = 0;
 
-        portfolios.forEach((p: any) => {
-          totalValue += Number(p.total_value) || 0;
-          totalGain += Number(p.total_gain) || 0;
-        });
-
         investments.forEach((inv: any) => {
+          totalValue += Number(inv.current_value) || 0;
           totalInvested += Number(inv.total_invested) || 0;
         });
 
-        // Generate monthly data based on real portfolio data
-        const brazilDate = getBrazilDate();
-        const currentMonth = brazilDate.getMonth();
-        const currentYear = brazilDate.getFullYear();
+        const totalGain = totalValue - totalInvested;
 
-        // Estimate monthly performance (in real app, this would come from historical data)
-        const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, portfolios);
+        // Generate monthly data based on real portfolio data and economic indicators
+        const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, totalInvested, economicIndicators);
         setMonthlyData(monthlyPerformance);
 
         setUserData({
@@ -225,23 +244,31 @@ const AppDashboard = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, economicIndicators]);
 
-  // Generate monthly performance data
-  const generateMonthlyPerformance = (totalValue: number, totalGain: number, portfolios: any[]): MonthlyData[] => {
+  // Generate monthly performance data with real economic indicators
+  const generateMonthlyPerformance = (
+    totalValue: number, 
+    totalGain: number, 
+    totalInvested: number,
+    indicators: EconomicIndicators | null
+  ): MonthlyData[] => {
     const brazilDate = getBrazilDate();
     const currentMonth = brazilDate.getMonth();
     const currentYear = brazilDate.getFullYear();
 
-    // Average CDI percent from portfolios
-    const avgCdiPercent = portfolios.length > 0 
-      ? portfolios.reduce((sum, p) => sum + (Number(p.cdi_percent) || 0), 0) / portfolios.length 
-      : 0;
-
-    // Estimated monthly rates (would come from real historical data)
-    const estimatedMonthlyReturn = totalValue > 0 && totalGain > 0 ? (totalGain / totalValue) / 12 : 0.008;
-    const cdiMonthlyRate = 0.0095; // ~11.5% annual
-    const ipcaMonthlyRate = 0.004; // ~4.8% annual
+    // Calculate real return percentage of portfolio
+    const portfolioReturnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+    
+    // Get real CDI and IPCA from economic indicators
+    const cdi12m = indicators?.accumulated12m?.cdi || 11.5;
+    const ipca12m = indicators?.accumulated12m?.ipca || 4.5;
+    
+    // Calculate how much % of CDI the portfolio is returning
+    const cdiPercent = cdi12m > 0 ? (portfolioReturnPercent / cdi12m) * 100 : 0;
+    
+    // Monthly data from BCB (if available)
+    const monthlyIndicators = indicators?.monthly || [];
 
     return Array.from({ length: 3 }, (_, i) => {
       const monthOffset = 2 - i;
@@ -253,8 +280,20 @@ const AppDashboard = () => {
         year -= 1;
       }
 
+      // Find corresponding month data from BCB
+      const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+      const monthKey = `${monthNames[month]} ${year}`;
+      const monthIndicator = monthlyIndicators.find(m => m.month === monthKey);
+      
+      // Use real data if available, otherwise estimate
+      const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
+      const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
+      
+      // Estimate portfolio monthly return based on annual return
+      const estimatedMonthlyReturn = portfolioReturnPercent / 12;
+      
       // Calculate estimated values for each month
-      const multiplier = Math.pow(1 + estimatedMonthlyReturn, monthOffset);
+      const multiplier = Math.pow(1 + (portfolioReturnPercent / 100) / 12, monthOffset);
       const monthValue = totalValue / multiplier;
       const monthGain = totalGain / (3 - i);
 
@@ -262,11 +301,11 @@ const AppDashboard = () => {
         month: `${getMonthName(month)} ${year}`,
         value: monthValue,
         gain: monthGain,
-        cdiPercent: avgCdiPercent,
+        cdiPercent: cdiPercent,
         stats: {
-          carteira: estimatedMonthlyReturn * 100 * (1 + (i * 0.1)),
-          cdi: cdiMonthlyRate * 100,
-          ipca: ipcaMonthlyRate * 100,
+          carteira: estimatedMonthlyReturn,
+          cdi: realCdiMonthly,
+          ipca: realIpcaMonthly,
         },
       };
     });
