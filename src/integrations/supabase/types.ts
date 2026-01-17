@@ -14,7 +14,205 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investments: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          created_at: string
+          current_price: number | null
+          current_value: number | null
+          gain_percent: number | null
+          id: string
+          maturity_date: string | null
+          portfolio_id: string
+          purchase_price: number | null
+          quantity: number | null
+          ticker: string | null
+          total_invested: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type: string
+          created_at?: string
+          current_price?: number | null
+          current_value?: number | null
+          gain_percent?: number | null
+          id?: string
+          maturity_date?: string | null
+          portfolio_id: string
+          purchase_price?: number | null
+          quantity?: number | null
+          ticker?: string | null
+          total_invested?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          created_at?: string
+          current_price?: number | null
+          current_value?: number | null
+          gain_percent?: number | null
+          id?: string
+          maturity_date?: string | null
+          portfolio_id?: string
+          purchase_price?: number | null
+          quantity?: number | null
+          ticker?: string | null
+          total_invested?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investments_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolios: {
+        Row: {
+          cdi_percent: number | null
+          created_at: string
+          id: string
+          name: string
+          total_gain: number | null
+          total_value: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cdi_percent?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          total_gain?: number | null
+          total_value?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cdi_percent?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          total_gain?: number | null
+          total_value?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          investment_goal: string | null
+          investor_profile: string | null
+          monthly_income: number | null
+          phone: string | null
+          risk_tolerance: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          investment_goal?: string | null
+          investor_profile?: string | null
+          monthly_income?: number | null
+          phone?: string | null
+          risk_tolerance?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          investment_goal?: string | null
+          investor_profile?: string | null
+          monthly_income?: number | null
+          phone?: string | null
+          risk_tolerance?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

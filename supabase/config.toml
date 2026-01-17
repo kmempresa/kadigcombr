@@ -1,1 +1,4 @@
 project_id = "purbhxibouvtmgtsoidh"
+
+[functions.kadig-ai-chat]
+verify_jwt = false
