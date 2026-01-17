@@ -442,16 +442,23 @@ const AppDashboard = () => {
         updateInvestmentPrices(userId);
       }
 
+      // Calculate date 3 months ago for history fetch
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      const historyStartDate = threeMonthsAgo.toISOString().split('T')[0];
+
       // Fetch all data in parallel
-      const [profileResult, portfoliosResult, investmentsResult] = await Promise.all([
+      const [profileResult, portfoliosResult, investmentsResult, historyResult] = await Promise.all([
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
         supabase.from("portfolios").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
         supabase.from("investments").select("*").eq("user_id", userId).order("current_value", { ascending: false }),
+        supabase.from("portfolio_history").select("*").eq("user_id", userId).gte("snapshot_date", historyStartDate).order("snapshot_date", { ascending: false }),
       ]);
 
       const profile = profileResult.data;
       const portfolios = portfoliosResult.data || [];
       const investments = investmentsResult.data || [];
+      const portfolioHistory = historyResult.data || [];
 
       // Calculate totals from investments (more accurate)
       let totalValue = 0;
@@ -464,8 +471,8 @@ const AppDashboard = () => {
 
       const totalGain = totalValue - totalInvested;
 
-      // Generate monthly data based on real portfolio data and economic indicators
-      const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, totalInvested, economicIndicators);
+      // Generate monthly data based on real portfolio data, economic indicators, AND real history
+      const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, totalInvested, economicIndicators, portfolioHistory);
       setMonthlyData(monthlyPerformance);
 
       setUserData({
@@ -518,12 +525,13 @@ const AppDashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate, economicIndicators, refreshKey]);
 
-  // Generate monthly performance data with real economic indicators
+  // Generate monthly performance data - uses real history when available
   const generateMonthlyPerformance = (
     totalValue: number, 
     totalGain: number, 
     totalInvested: number,
-    indicators: EconomicIndicators | null
+    indicators: EconomicIndicators | null,
+    historyData?: { snapshot_date: string; total_value: number; total_gain: number; gain_percent: number; cdi_accumulated: number; ipca_accumulated: number }[]
   ): MonthlyData[] => {
     const brazilDate = getBrazilDate();
     const currentMonth = brazilDate.getMonth();
@@ -542,6 +550,19 @@ const AppDashboard = () => {
     // Monthly data from BCB (if available)
     const monthlyIndicators = indicators?.monthly || [];
 
+    // Group history by month (get last day of each month)
+    const historyByMonth: { [key: string]: typeof historyData extends undefined ? never : NonNullable<typeof historyData>[0] } = {};
+    if (historyData && historyData.length > 0) {
+      historyData.forEach(h => {
+        const date = new Date(h.snapshot_date);
+        const key = `${date.getFullYear()}-${date.getMonth()}`;
+        // Keep the most recent entry for each month
+        if (!historyByMonth[key] || new Date(h.snapshot_date) > new Date(historyByMonth[key].snapshot_date)) {
+          historyByMonth[key] = h;
+        }
+      });
+    }
+
     return Array.from({ length: 3 }, (_, i) => {
       const monthOffset = 2 - i;
       let month = currentMonth - monthOffset;
@@ -552,6 +573,9 @@ const AppDashboard = () => {
         year -= 1;
       }
 
+      const historyKey = `${year}-${month}`;
+      const monthHistory = historyByMonth[historyKey];
+
       // Find corresponding month data from BCB
       const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
       const monthKey = `${monthNames[month]} ${year}`;
@@ -560,6 +584,24 @@ const AppDashboard = () => {
       // Use real data if available, otherwise estimate
       const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
       const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
+
+      // If we have real history data, use it
+      if (monthHistory) {
+        const monthTotalInvested = monthHistory.total_value - monthHistory.total_gain;
+        const monthlyReturn = monthTotalInvested > 0 ? (monthHistory.total_gain / monthTotalInvested) * 100 : 0;
+        
+        return {
+          month: `${getMonthName(month)} ${year}`,
+          value: monthHistory.total_value,
+          gain: monthHistory.total_gain,
+          cdiPercent: cdiPercent,
+          stats: {
+            carteira: monthlyReturn / 12, // Monthly return estimate
+            cdi: realCdiMonthly,
+            ipca: realIpcaMonthly,
+          },
+        };
+      }
       
       // Estimate portfolio monthly return based on annual return
       const estimatedMonthlyReturn = portfolioReturnPercent / 12;
