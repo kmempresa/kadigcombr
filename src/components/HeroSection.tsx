@@ -23,29 +23,28 @@ export const HeroSection = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              {/* Live AI indicator */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 glass rounded-full mb-8">
+              {/* Live indicator */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 glass rounded-full mb-8">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kadig-cyan opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-kadig-cyan"></span>
                 </span>
                 <span className="text-xs text-kadig-cyan font-medium tracking-wide">
-                  AGENTE IA ATIVO • ANALISANDO MERCADO
+                  SINCRONIZANDO EM TEMPO REAL
                 </span>
               </div>
 
               <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-6">
-                <span className="text-foreground">IA que</span>
+                <span className="text-foreground">Seu</span>
                 <br />
-                <span className="text-primary glow-text">Prevê</span>
-                <span className="text-foreground"> seus</span>
+                <span className="text-primary glow-text">Patrimônio</span>
                 <br />
-                <span className="text-foreground">Investimentos</span>
+                <span className="text-foreground">Sob Controle</span>
               </h1>
 
               <p className="text-lg text-muted-foreground max-w-md mb-10 leading-relaxed">
-                Um agente de inteligência artificial que analisa o mercado em tempo real 
-                e te ajuda a fazer as melhores escolhas de investimento.
+                Visualize, analise e proteja todos os seus ativos em uma 
+                experiência única e inteligente.
               </p>
 
               <div className="flex flex-wrap gap-4">

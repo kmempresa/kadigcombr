@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
-import { AIAgentSection } from "@/components/AIAgentSection";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { Footer } from "@/components/Footer";
@@ -13,7 +12,6 @@ const Index = () => {
       <Header />
       <main className="relative z-10">
         <HeroSection />
-        <AIAgentSection />
         <DashboardPreview />
         <FeaturesSection />
       </main>
