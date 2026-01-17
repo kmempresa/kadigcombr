@@ -5,6 +5,7 @@ import { ArrowLeft, Send, User, Mic, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import biancaConsultora from "@/assets/bianca-consultora.png";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Message {
   id: string;
@@ -17,6 +18,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kadig-ai-cha
 
 const ConsultorIA = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -206,8 +208,10 @@ const ConsultorIA = () => {
     "Como reduzir riscos?",
   ];
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   return (
-    <div className="light-theme min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+    <div className={`${themeClass} min-h-screen bg-gradient-to-b from-background to-card flex flex-col`}>
       {/* Minimal Header */}
       <header className="flex items-center justify-between px-5 py-4 safe-area-inset-top">
         <button

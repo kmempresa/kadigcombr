@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, ChevronRight, ChevronDown, Check, Edit, Trash2, ArrowRightLeft, Loader2 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import {
   Drawer,
   DrawerContent,
@@ -62,6 +63,8 @@ const PatrimonioDrawer = ({
   onSelectPortfolio,
   onRefreshPortfolios,
 }: PatrimonioDrawerProps) => {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [selectedPortfolioForAction, setSelectedPortfolioForAction] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -200,7 +203,7 @@ const PatrimonioDrawer = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="light-theme bg-muted max-h-[90vh]">
+      <DrawerContent className={`${themeClass} bg-muted max-h-[90vh]`}>
         <DrawerHeader className="border-b border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2">
             <ChevronDown className="w-5 h-5 text-foreground" />
@@ -541,7 +544,7 @@ const PatrimonioDrawer = ({
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent className="light-theme">
+          <AlertDialogContent className={themeClass}>
             <AlertDialogHeader>
               <AlertDialogTitle>Excluir carteira?</AlertDialogTitle>
               <AlertDialogDescription>

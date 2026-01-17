@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Trash2, Save, AlertTriangle } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import {
   Drawer,
   DrawerContent,
@@ -197,10 +198,13 @@ const InvestmentEditDrawer = ({
   const previewGain = previewCurrentValue - invested;
   const previewGainPercent = invested > 0 ? ((previewGain / invested) * 100) : 0;
 
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="light-theme bg-background max-h-[90vh]">
+        <DrawerContent className={`${themeClass} bg-background max-h-[90vh]`}>
           <DrawerHeader className="border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
               <DrawerTitle className="font-semibold text-foreground">
@@ -344,7 +348,7 @@ const InvestmentEditDrawer = ({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent className="light-theme">
+        <AlertDialogContent className={themeClass}>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-red-500" />
