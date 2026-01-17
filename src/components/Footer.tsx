@@ -1,33 +1,47 @@
 import { motion } from "framer-motion";
 import kadigLogo from "@/assets/kadig-logo.png";
+import { ArrowUpRight } from "lucide-react";
 
 export const Footer = () => {
   return (
-    <footer className="py-16 bg-card border-t border-border" id="contato">
-      <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col items-center md:items-start"
-          >
-            <img src={kadigLogo} alt="Kadig" className="h-8 mb-4" />
-            <p className="text-sm text-muted-foreground text-center md:text-left">
-              Gestão patrimonial inteligente
-              <br />
-              para o seu futuro.
-            </p>
-          </motion.div>
+    <footer className="py-20 relative">
+      {/* CTA Section */}
+      <div className="container mx-auto px-6 mb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="glass-strong rounded-3xl p-12 text-center relative overflow-hidden"
+        >
+          {/* Glow */}
+          <div className="absolute inset-0 bg-primary/5 blur-[80px] rounded-full" />
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="flex gap-8"
-          >
-            {["Privacidade", "Termos", "Suporte"].map((item) => (
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Pronto para assumir o controle?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              Junte-se a milhares de pessoas que já transformaram sua gestão patrimonial.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="group px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium inline-flex items-center gap-2 glow-blue"
+            >
+              Criar Conta Gratuita
+              <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Footer content */}
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 py-8 border-t border-border">
+          <img src={kadigLogo} alt="Kadig" className="h-6 invert brightness-200 opacity-60" />
+
+          <div className="flex gap-8">
+            {["Privacidade", "Termos", "Contato"].map((item) => (
               <a
                 key={item}
                 href="#"
@@ -36,20 +50,12 @@ export const Footer = () => {
                 {item}
               </a>
             ))}
-          </motion.div>
-        </div>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-          className="mt-12 pt-8 border-t border-border text-center"
-        >
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Kadig. Todos os direitos reservados.
+            © {new Date().getFullYear()} Kadig
           </p>
-        </motion.div>
+        </div>
       </div>
     </footer>
   );

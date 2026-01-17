@@ -1,237 +1,178 @@
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
   AreaChart,
   Area,
-  XAxis,
-  YAxis,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
 } from "recharts";
-import { useState, useEffect } from "react";
-import { Wallet, Building2, TrendingUp, Coins } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Building2, LineChart, Coins } from "lucide-react";
 
-const chartData = [
-  { month: "Jan", value: 1800000 },
-  { month: "Fev", value: 1950000 },
-  { month: "Mar", value: 1920000 },
-  { month: "Abr", value: 2100000 },
-  { month: "Mai", value: 2250000 },
-  { month: "Jun", value: 2400000 },
-  { month: "Jul", value: 2550000 },
-  { month: "Ago", value: 2680000 },
-  { month: "Set", value: 2750000 },
-  { month: "Out", value: 2847650 },
-];
+const generateData = () =>
+  Array.from({ length: 20 }, (_, i) => ({
+    value: 1800000 + Math.random() * 500000 + i * 30000,
+  }));
 
-const pieData = [
-  { name: "Ações", value: 35, color: "hsl(220, 50%, 15%)" },
-  { name: "Renda Fixa", value: 28, color: "hsl(220, 40%, 35%)" },
-  { name: "Imóveis", value: 22, color: "hsl(160, 60%, 45%)" },
-  { name: "Fundos", value: 15, color: "hsl(220, 25%, 55%)" },
+const allocation = [
+  { name: "Ações", value: 35, color: "hsl(210, 100%, 60%)" },
+  { name: "Renda Fixa", value: 28, color: "hsl(185, 80%, 55%)" },
+  { name: "Imóveis", value: 22, color: "hsl(210, 100%, 75%)" },
+  { name: "Fundos", value: 15, color: "hsl(220, 40%, 40%)" },
 ];
 
 export const DashboardPreview = () => {
-  const [liveValue, setLiveValue] = useState(2847650);
+  const [data, setData] = useState(generateData);
+  const [activeAsset, setActiveAsset] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setLiveValue((prev) => {
-        const change = (Math.random() - 0.48) * 500;
-        return Math.round(prev + change);
-      });
+      setData((prev) => [
+        ...prev.slice(1),
+        { value: prev[prev.length - 1].value + (Math.random() - 0.45) * 20000 },
+      ]);
     }, 2000);
     return () => clearInterval(interval);
   }, []);
 
+  const assets = [
+    { icon: <Wallet />, name: "Liquidez", value: "R$ 450K", change: "+2.3%", up: true },
+    { icon: <Building2 />, name: "Imóveis", value: "R$ 1.2M", change: "+8.1%", up: true },
+    { icon: <LineChart />, name: "Ações", value: "R$ 890K", change: "-1.2%", up: false },
+    { icon: <Coins />, name: "Cripto", value: "R$ 120K", change: "+15.4%", up: true },
+  ];
+
   return (
-    <section className="py-24 bg-background relative" id="soluções">
+    <section className="py-32 relative">
       <div className="container mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Visão completa do seu patrimônio
+          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Visão <span className="text-primary">360°</span>
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Dashboard intuitivo com métricas em tempo real e análises avançadas
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Cada ativo, cada variação, em tempo real
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="bg-card rounded-3xl shadow-lg border border-border overflow-hidden"
-        >
-          {/* Dashboard Header */}
-          <div className="p-6 border-b border-border flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">
-                Patrimônio Total
-              </p>
-              <motion.p
-                key={liveValue}
-                initial={{ opacity: 0.5, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="text-3xl font-bold text-foreground"
-              >
-                R$ {liveValue.toLocaleString("pt-BR")}
-              </motion.p>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-kadig-success-light text-kadig-success text-sm font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kadig-success opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-kadig-success"></span>
-              </span>
-              Ao vivo
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-0">
-            {/* Chart Section */}
-            <div className="md:col-span-2 p-6 border-r border-border">
-              <p className="text-sm text-muted-foreground mb-4">
-                Evolução Patrimonial
-              </p>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient
-                        id="colorValue"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="hsl(220, 50%, 15%)"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="hsl(220, 50%, 15%)"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: "hsl(220, 10%, 45%)", fontSize: 12 }}
-                    />
-                    <YAxis hide />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(220, 50%, 15%)"
-                      strokeWidth={2}
-                      fill="url(#colorValue)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+        <div className="grid lg:grid-cols-5 gap-6">
+          {/* Main Chart */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-3 glass-strong rounded-3xl p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Evolução Patrimonial</p>
+                <p className="text-2xl font-bold text-foreground">R$ 2.84M</p>
+              </div>
+              <div className="flex items-center gap-2 text-kadig-cyan text-sm font-medium">
+                <TrendingUp className="w-4 h-4" />
+                +12.4%
               </div>
             </div>
 
-            {/* Allocation Section */}
-            <div className="p-6">
-              <p className="text-sm text-muted-foreground mb-4">Alocação</p>
-              <div className="h-40 mb-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={60}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-2">
-                {pieData.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between text-sm"
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data}>
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(210, 100%, 60%)" stopOpacity={0.4} />
+                      <stop offset="100%" stopColor="hsl(210, 100%, 60%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="hsl(210, 100%, 60%)"
+                    strokeWidth={3}
+                    fill="url(#chartGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          {/* Allocation */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-2 glass-strong rounded-3xl p-6"
+          >
+            <p className="text-sm text-muted-foreground mb-4">Alocação</p>
+
+            <div className="h-48 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={allocation}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
                   >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-muted-foreground">{item.name}</span>
-                    </div>
-                    <span className="font-medium text-foreground">
-                      {item.value}%
-                    </span>
-                  </div>
-                ))}
-              </div>
+                    {allocation.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border-t border-border">
-            <QuickStat
-              icon={<Wallet className="w-4 h-4" />}
-              label="Liquidez"
-              value="R$ 450K"
-            />
-            <QuickStat
-              icon={<Building2 className="w-4 h-4" />}
-              label="Imóveis"
-              value="R$ 620K"
-            />
-            <QuickStat
-              icon={<TrendingUp className="w-4 h-4" />}
-              label="Investimentos"
-              value="R$ 1.5M"
-            />
-            <QuickStat
-              icon={<Coins className="w-4 h-4" />}
-              label="Outros"
-              value="R$ 277K"
-            />
-          </div>
-        </motion.div>
+            <div className="space-y-3">
+              {allocation.map((item) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{item.value}%</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Asset cards */}
+          {assets.map((asset, i) => (
+            <motion.div
+              key={asset.name}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              onMouseEnter={() => setActiveAsset(i)}
+              className={`glass rounded-2xl p-5 cursor-pointer transition-all duration-300 ${
+                activeAsset === i ? "glow-blue border-primary/30" : ""
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-primary">
+                  {asset.icon}
+                </div>
+                <span className="text-sm text-muted-foreground">{asset.name}</span>
+              </div>
+              <p className="text-xl font-bold text-foreground mb-1">{asset.value}</p>
+              <div className={`flex items-center gap-1 text-sm ${asset.up ? "text-kadig-cyan" : "text-red-400"}`}>
+                {asset.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {asset.change}
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
 };
-
-const QuickStat = ({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) => (
-  <motion.div
-    whileHover={{ backgroundColor: "hsl(var(--secondary))" }}
-    className="p-4 border-r last:border-r-0 border-border transition-colors"
-  >
-    <div className="flex items-center gap-2 text-muted-foreground mb-1">
-      {icon}
-      <span className="text-xs">{label}</span>
-    </div>
-    <p className="text-lg font-semibold text-foreground">{value}</p>
-  </motion.div>
-);
