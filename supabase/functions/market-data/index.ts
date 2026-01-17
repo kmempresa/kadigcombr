@@ -106,13 +106,22 @@ serve(async (req) => {
 
         // Combinar: Stock News (com fotos) primeiro, depois Google News
         const allNews = [...news, ...googleItems];
-        console.log(`Total combined news: ${allNews.length}`);
+        
+        // Ordenar por data (mais recentes primeiro) e filtrar apenas 2025+
+        const sortedNews = allNews
+          .filter(item => {
+            const itemDate = new Date(item.date);
+            return itemDate.getFullYear() >= 2025;
+          })
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        console.log(`Total combined news (2025+, sorted): ${sortedNews.length}`);
 
-        const newsCount = allNews.length;
+        const newsCount = sortedNews.length;
         const totalPages = Math.max(1, Math.ceil(newsCount / 5)); // 5 news per page
 
         return new Response(
-          JSON.stringify({ news: allNews, totalPages }),
+          JSON.stringify({ news: sortedNews, totalPages }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (newsError) {

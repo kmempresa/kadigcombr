@@ -150,8 +150,13 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   useEffect(() => {
     fetchMarketData();
     fetchMarketNews();
-    const interval = setInterval(fetchMarketData, 60000);
-    return () => clearInterval(interval);
+    // Auto-refresh: cotações a cada 60s, notícias a cada 2 minutos
+    const marketInterval = setInterval(fetchMarketData, 60000);
+    const newsInterval = setInterval(fetchMarketNews, 120000);
+    return () => {
+      clearInterval(marketInterval);
+      clearInterval(newsInterval);
+    };
   }, []);
 
   const toggleFavorite = (symbol: string) => {
