@@ -30,6 +30,7 @@ import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 import AdicionarDrawer from "@/components/AdicionarDrawer";
 import TradeTab from "@/components/TradeTab";
 import MercadoTab from "@/components/MercadoTab";
+import InvestmentEditDrawer from "@/components/InvestmentEditDrawer";
 
 interface UserData {
   id: string;
@@ -131,6 +132,9 @@ const AppDashboard = () => {
   const [patrimonioDrawerOpen, setPatrimonioDrawerOpen] = useState(false);
   const [adicionarDrawerOpen, setAdicionarDrawerOpen] = useState(false);
   const [economicIndicators, setEconomicIndicators] = useState<EconomicIndicators | null>(null);
+  const [editingInvestment, setEditingInvestment] = useState<any>(null);
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
@@ -244,7 +248,7 @@ const AppDashboard = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, economicIndicators]);
+  }, [navigate, economicIndicators, refreshKey]);
 
   // Generate monthly performance data with real economic indicators
   const generateMonthlyPerformance = (
@@ -733,8 +737,15 @@ const AppDashboard = () => {
                     
                     <div className="space-y-2">
                       {investments.map((inv) => (
-                        <div key={inv.id} className="bg-card border border-border rounded-xl p-3 flex items-center justify-between">
-                          <div>
+                        <button 
+                          key={inv.id} 
+                          onClick={() => {
+                            setEditingInvestment(inv);
+                            setEditDrawerOpen(true);
+                          }}
+                          className="w-full bg-card border border-border rounded-xl p-3 flex items-center justify-between hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-[0.99]"
+                        >
+                          <div className="text-left">
                             <p className="font-medium text-foreground">{inv.asset_name}</p>
                             {inv.ticker && <p className="text-xs text-muted-foreground">{inv.ticker}</p>}
                           </div>
@@ -744,7 +755,7 @@ const AppDashboard = () => {
                               {inv.gain_percent >= 0 ? "+" : ""}{inv.gain_percent.toFixed(2)}%
                             </p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -978,6 +989,14 @@ const AppDashboard = () => {
         open={adicionarDrawerOpen}
         onClose={() => setAdicionarDrawerOpen(false)}
         onNavigate={(path) => navigate(path)}
+      />
+
+      {/* Investment Edit Drawer */}
+      <InvestmentEditDrawer
+        open={editDrawerOpen}
+        onOpenChange={setEditDrawerOpen}
+        investment={editingInvestment}
+        onSuccess={() => setRefreshKey(prev => prev + 1)}
       />
     </div>
   );
