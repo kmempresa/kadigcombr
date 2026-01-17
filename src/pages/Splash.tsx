@@ -8,20 +8,9 @@ const Splash = () => {
   const [phase, setPhase] = useState<"spinning" | "settling" | "done">("spinning");
 
   useEffect(() => {
-    // Phase 1: Spinning for 2 seconds
-    const spinTimer = setTimeout(() => {
-      setPhase("settling");
-    }, 2000);
-
-    // Phase 2: Settle animation for 1 second, then navigate
-    const settleTimer = setTimeout(() => {
-      setPhase("done");
-    }, 3000);
-
-    // Navigate to welcome after animation completes
-    const navTimer = setTimeout(() => {
-      navigate("/welcome");
-    }, 3500);
+    const spinTimer = setTimeout(() => setPhase("settling"), 2000);
+    const settleTimer = setTimeout(() => setPhase("done"), 3000);
+    const navTimer = setTimeout(() => navigate("/welcome"), 3500);
 
     return () => {
       clearTimeout(spinTimer);
@@ -31,19 +20,19 @@ const Splash = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center overflow-hidden fixed inset-0">
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(15)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-cyan-400/30 rounded-full"
+            className="absolute w-2 h-2 bg-primary/30 rounded-full"
             initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: `${Math.random() * 100}%`,
+              y: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [null, Math.random() * -200 - 100],
+              y: [`${Math.random() * 100}%`, `${Math.random() * 100 - 50}%`],
               opacity: [0.3, 0],
             }}
             transition={{
@@ -57,7 +46,7 @@ const Splash = () => {
 
       {/* Glow effect behind logo */}
       <motion.div
-        className="absolute w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl"
+        className="absolute w-48 h-48 sm:w-64 sm:h-64 bg-primary/20 rounded-full blur-3xl"
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.5, 0.3],
@@ -82,7 +71,7 @@ const Splash = () => {
             <motion.img
               src={kadigLogo}
               alt="Kadig"
-              className="w-32 h-32 object-contain drop-shadow-2xl"
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl"
               animate={{ rotate: 360 }}
               transition={{
                 duration: 1,
@@ -104,7 +93,7 @@ const Splash = () => {
             <motion.img
               src={kadigLogo}
               alt="Kadig"
-              className="w-32 h-32 object-contain drop-shadow-2xl"
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl"
               initial={{ scale: 1 }}
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 0.5 }}
@@ -123,7 +112,7 @@ const Splash = () => {
             <img
               src={kadigLogo}
               alt="Kadig"
-              className="w-32 h-32 object-contain drop-shadow-2xl"
+              className="w-24 h-24 sm:w-32 sm:h-32 object-contain drop-shadow-2xl"
             />
           </motion.div>
         )}
@@ -131,7 +120,7 @@ const Splash = () => {
 
       {/* Loading indicator */}
       <motion.div
-        className="absolute bottom-20 flex flex-col items-center gap-4"
+        className="absolute bottom-16 sm:bottom-20 flex flex-col items-center gap-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -140,7 +129,7 @@ const Splash = () => {
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-2 h-2 bg-cyan-400 rounded-full"
+              className="w-2 h-2 bg-primary rounded-full"
               animate={{
                 y: [-5, 5, -5],
                 opacity: [0.5, 1, 0.5],
@@ -154,7 +143,7 @@ const Splash = () => {
           ))}
         </div>
         <motion.p
-          className="text-white/60 text-sm"
+          className="text-muted-foreground text-sm"
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
