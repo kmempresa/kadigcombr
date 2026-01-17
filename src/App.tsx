@@ -19,7 +19,6 @@ import AdicionarResgate from "./pages/AdicionarResgate";
 import TransferirAtivo from "./pages/TransferirAtivo";
 import ExcluirAtivos from "./pages/ExcluirAtivos";
 import Preferencias from "./pages/Preferencias";
-import Seguranca from "./pages/Seguranca";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,7 +46,6 @@ const App = () => (
               <Route path="/transferir-ativo" element={<TransferirAtivo />} />
               <Route path="/excluir-ativos" element={<ExcluirAtivos />} />
               <Route path="/preferencias" element={<Preferencias />} />
-              <Route path="/seguranca" element={<Seguranca />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

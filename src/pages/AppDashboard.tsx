@@ -1822,7 +1822,7 @@ const AppDashboard = () => {
 
           <div className="px-4">
             {[
-              { icon: Shield, label: "Segurança", action: () => navigate("/seguranca") },
+              { icon: Shield, label: "Segurança", action: undefined },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
               { icon: MessageSquare, label: "Suporte", action: undefined },
               { icon: Info, label: "Sobre", action: undefined },
