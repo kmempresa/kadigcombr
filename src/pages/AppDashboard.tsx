@@ -1960,7 +1960,7 @@ const AppDashboard = () => {
             {[
               { icon: Shield, label: "Segurança", action: () => {} },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
-              { icon: MessageSquare, label: "Suporte", action: () => {} },
+              { icon: MessageSquare, label: "Suporte", action: () => window.open("https://wa.me/5511999999999?text=Olá! Preciso de ajuda com o Kadig.", "_blank") },
               { icon: Info, label: "Sobre", action: () => {} },
             ].map((item, index) => (
               <button 
