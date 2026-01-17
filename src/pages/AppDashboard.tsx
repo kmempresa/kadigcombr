@@ -1023,39 +1023,216 @@ const AppDashboard = () => {
 
           {/* Análises Tab */}
           {carteiraTab === "analises" && (
-            <div className="p-4 space-y-6">
-              <div className="bg-gradient-to-br from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-6 text-center">
-                <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">Análise Inteligente</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Use o Kadig AI para análises detalhadas da sua carteira
+            <div className="p-4 space-y-4">
+              {/* Distribuição da Carteira */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Distribuição da Carteira</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Entenda como está distribuída a sua carteira e como cada ativo rende.</p>
+                </div>
+              </button>
+
+              {/* Evolução da Carteira */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Evolução da Carteira</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Veja a evolução da sua carteira frente ao seu primeiro valor aplicado.</p>
+                </div>
+              </button>
+
+              {/* Section Header - Recursos Premium */}
+              <div className="flex items-center gap-2 pt-2">
+                <div className="w-1 h-5 bg-primary rounded-full" />
+                <h2 className="font-semibold text-foreground">Recursos Premium</h2>
+              </div>
+
+              {/* Proventos */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Proventos</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Tenha acesso aos proventos recebidos e a receber de todos os seus ativos.</p>
+                </div>
+              </button>
+
+              {/* Ganho de Capital */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Ganho de Capital</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Acompanhe todo valor em dinheiro que ganhou num determinado período de tempo.</p>
+                </div>
+              </button>
+
+              {/* Rentabilidade */}
+              <button 
+                onClick={() => navigate("/consultor-ia")}
+                className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
+                      <TrendingUp className="w-5 h-5 text-pink-500" />
+                    </div>
+                    <span className="font-semibold text-foreground">Rentabilidade</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Acompanhe a rentabilidade histórica da sua carteira e dos seus ativos.</p>
+                </div>
+              </button>
+
+              {/* Rentabilidade Real */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Rentabilidade Real</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Conheça a rentabilidade das suas aplicações abatida da inflação.</p>
+                </div>
+              </button>
+
+              {/* Risco x Retorno */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Risco x Retorno</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Acompanhe o custo-benefício da sua carteira e de cada ativo.</p>
+                </div>
+              </button>
+
+              {/* Sensibilidade dos Ativos */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Sensibilidade dos Ativos</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Entenda como cada ativo contribui para o resultado da carteira.</p>
+                </div>
+              </button>
+
+              {/* Comparador de Ativos */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Comparador de Ativos</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Compare um ativo da sua carteira com os índices do mercado.</p>
+                </div>
+              </button>
+
+              {/* Cobertura do FGC */}
+              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <span className="font-semibold text-foreground">Cobertura do FGC</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </div>
+                <div className="border-t border-border pt-3">
+                  <p className="text-sm text-muted-foreground">Acompanhe quanto do seu dinheiro está protegido pelo FGC.</p>
+                </div>
+              </button>
+
+              {/* Kadig AI Card */}
+              <div className="bg-gradient-to-br from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Kadig AI</h3>
+                    <p className="text-xs text-muted-foreground">Análise inteligente</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Use a inteligência artificial para análises personalizadas da sua carteira.
                 </p>
                 <button 
                   onClick={() => navigate("/consultor-ia")}
-                  className="bg-primary text-primary-foreground px-6 py-2 rounded-full font-medium"
+                  className="w-full bg-primary text-primary-foreground py-2 rounded-full font-medium text-sm"
                 >
                   Falar com Kadig AI
                 </button>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Ativos</p>
-                  <p className="text-2xl font-bold text-foreground">{userData?.investments.length || 0}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Carteiras</p>
-                  <p className="text-2xl font-bold text-foreground">{userData?.portfolios.length || 0}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Tipos de Ativo</p>
-                  <p className="text-2xl font-bold text-foreground">{Object.keys(investmentsByType).length}</p>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-xs text-muted-foreground mb-1">vs CDI</p>
-                  <p className="text-2xl font-bold text-foreground">{avgCdiPercent.toFixed(0)}%</p>
-                </div>
               </div>
             </div>
           )}
