@@ -5,6 +5,7 @@ import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, Trending
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 
 // Tipos de ativos disponíveis com fluxos específicos
 // Fluxos:
@@ -253,6 +254,7 @@ const instituicoesFinanceiras = [
 
 const AdicionarInvestimento = () => {
   const navigate = useNavigate();
+  const { selectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState(1);
   
   // Step 1 - Asset type selection
@@ -527,26 +529,44 @@ const AdicionarInvestimento = () => {
       if (!userId) return;
       
       try {
-        // Get or create portfolio
-        let { data: portfolios } = await supabase
-          .from('portfolios')
-          .select('id, total_value, total_gain')
-          .eq('user_id', userId)
-          .limit(1);
+        // Use selected portfolio from context or get first one
+        let portfolioId = selectedPortfolioId;
+        let currentPortfolioValue = 0;
+        let currentPortfolioGain = 0;
         
-        let portfolioId = portfolios?.[0]?.id;
-        let currentPortfolioValue = portfolios?.[0]?.total_value || 0;
-        let currentPortfolioGain = portfolios?.[0]?.total_gain || 0;
-        
-        if (!portfolioId) {
-          const { data: newPortfolio } = await supabase
+        if (portfolioId) {
+          const { data: portfolio } = await supabase
             .from('portfolios')
-            .insert({ user_id: userId, name: 'Minha Carteira' })
-            .select('id')
+            .select('id, total_value, total_gain')
+            .eq('id', portfolioId)
             .single();
-          portfolioId = newPortfolio?.id;
-          currentPortfolioValue = 0;
-          currentPortfolioGain = 0;
+          
+          if (portfolio) {
+            currentPortfolioValue = portfolio.total_value || 0;
+            currentPortfolioGain = portfolio.total_gain || 0;
+          }
+        } else {
+          // Fallback: get first portfolio or create one
+          let { data: portfolios } = await supabase
+            .from('portfolios')
+            .select('id, total_value, total_gain')
+            .eq('user_id', userId)
+            .limit(1);
+          
+          portfolioId = portfolios?.[0]?.id;
+          currentPortfolioValue = portfolios?.[0]?.total_value || 0;
+          currentPortfolioGain = portfolios?.[0]?.total_gain || 0;
+          
+          if (!portfolioId) {
+            const { data: newPortfolio } = await supabase
+              .from('portfolios')
+              .insert({ user_id: userId, name: 'Minha Carteira' })
+              .select('id')
+              .single();
+            portfolioId = newPortfolio?.id;
+            currentPortfolioValue = 0;
+            currentPortfolioGain = 0;
+          }
         }
         
         if (portfolioId) {
@@ -675,6 +695,9 @@ const AdicionarInvestimento = () => {
           }).eq('id', portfolioId);
           
           toast.success("Investimento adicionado com sucesso!");
+          
+          // Refresh portfolios in context
+          await refreshPortfolios();
         }
         
         navigate("/app");

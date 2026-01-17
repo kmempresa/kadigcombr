@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -132,6 +133,7 @@ const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: nu
 
 const AppDashboard = () => {
   const navigate = useNavigate();
+  const { selectedPortfolioId, setSelectedPortfolioId } = usePortfolio();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
@@ -154,7 +156,6 @@ const AppDashboard = () => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
