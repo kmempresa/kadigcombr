@@ -833,13 +833,17 @@ const AppDashboard = () => {
               </div>
 
               {/* Pagination dots */}
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-3">
                 {monthlyData.map((_, index) => (
-                  <button key={index} onClick={() => emblaApi?.scrollTo(index)} className="p-1">
-                    <motion.div
-                      className={`w-2 h-2 rounded-full ${selectedIndex === index ? "bg-primary" : "bg-muted-foreground/30"}`}
-                      animate={{ scale: selectedIndex === index ? 1.2 : 1 }}
-                    />
+                  <button key={index} onClick={() => emblaApi?.scrollTo(index)} className="p-1 relative">
+                    <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                    {selectedIndex === index && (
+                      <motion.div
+                        layoutId="activeCarouselDot"
+                        className="absolute inset-1 w-2 h-2 rounded-full bg-primary"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
                   </button>
                 ))}
               </div>
