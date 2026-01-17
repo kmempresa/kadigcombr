@@ -360,7 +360,7 @@ const TradeTab = ({
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-foreground">{formatPrice(asset.current_value)}</p>
-                        <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                        <p className={`text-xs ${asset.gain_percent >= 0 ? "text-success" : "text-destructive"}`}>
                           {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
                         </p>
                       </div>
@@ -456,7 +456,7 @@ const TradeTab = ({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Variação do dia:</span>
-                          <span className={`font-semibold ${dailyVariation >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                          <span className={`font-semibold ${dailyVariation >= 0 ? "text-success" : "text-destructive"}`}>
                             {showValues 
                               ? `${dailyVariation >= 0 ? "+" : ""}${dailyVariation.toFixed(2)}%`
                               : "••••%"
@@ -563,8 +563,8 @@ const TradeTab = ({
                             <p className="text-sm text-foreground mb-1">{formatNumber(index.value)}</p>
                             <span className={`text-xs px-2 py-1 rounded-full ${
                               index.changePercent >= 0 
-                                ? "bg-emerald-500 text-white" 
-                                : "bg-red-500 text-white"
+                                ? "bg-success text-success-foreground" 
+                                : "bg-destructive text-destructive-foreground"
                             }`}>
                               {index.changePercent >= 0 ? "+ " : "- "}{Math.abs(index.changePercent).toFixed(2)}%
                             </span>
@@ -620,7 +620,7 @@ const TradeTab = ({
                               <span className="text-sm font-medium text-foreground">
                                 {formatPrice(stock.regularMarketPrice)}
                               </span>
-                              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white">
+                              <span className="text-xs px-2 py-1 rounded-full bg-success text-success-foreground">
                                 + {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
                               </span>
                             </div>
@@ -676,7 +676,7 @@ const TradeTab = ({
                               <span className="text-sm font-medium text-foreground">
                                 {formatPrice(stock.regularMarketPrice)}
                               </span>
-                              <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white">
+                              <span className="text-xs px-2 py-1 rounded-full bg-destructive text-destructive-foreground">
                                 - {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
                               </span>
                             </div>
@@ -735,8 +735,8 @@ const TradeTab = ({
                       </span>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         stock.regularMarketChangePercent >= 0 
-                          ? "bg-emerald-500 text-white" 
-                          : "bg-red-500 text-white"
+                          ? "bg-success text-success-foreground" 
+                          : "bg-destructive text-destructive-foreground"
                       }`}>
                         {stock.regularMarketChangePercent >= 0 ? "+ " : "- "}
                         {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%

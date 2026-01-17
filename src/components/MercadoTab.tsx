@@ -263,8 +263,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-md font-medium ${
                     index.changePercent >= 0 
-                      ? "bg-emerald-500 text-white" 
-                      : "bg-red-500 text-white"
+                      ? "bg-success text-success-foreground" 
+                      : "bg-destructive text-destructive-foreground"
                   }`}>
                     {index.changePercent >= 0 ? "" : ""}{index.changePercent.toFixed(2)}%
                   </span>

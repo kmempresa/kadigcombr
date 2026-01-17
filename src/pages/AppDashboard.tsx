@@ -660,7 +660,7 @@ const AppDashboard = () => {
                         <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
                         
                         <motion.circle
-                          cx="100" cy="100" r="85" fill="none" stroke="#10b981" strokeWidth="18"
+                          cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
                           strokeDasharray={segments.carteira.dasharray}
                           strokeDashoffset={segments.carteira.offset}
                           strokeLinecap="round"
@@ -680,7 +680,7 @@ const AppDashboard = () => {
                         />
                         
                         <motion.circle
-                          cx="100" cy="100" r="85" fill="none" stroke="#f97316" strokeWidth="18"
+                          cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
                           strokeDasharray={segments.ipca.dasharray}
                           strokeDashoffset={segments.ipca.offset}
                           strokeLinecap="round"
@@ -714,8 +714,8 @@ const AppDashboard = () => {
                         <div className="mt-1">
                           <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
                             currentData.gain >= 0 
-                              ? "text-emerald-500 bg-emerald-50 border border-emerald-100" 
-                              : "text-red-500 bg-red-50 border border-red-100"
+                              ? "text-success bg-success/10 border border-success/20" 
+                              : "text-destructive bg-destructive/10 border border-destructive/20"
                           }`}>
                             {currentData.gain >= 0 ? "+" : ""}{formatCurrency(currentData.gain)}
                           </span>
@@ -746,10 +746,10 @@ const AppDashboard = () => {
               <div className="flex items-center justify-around py-4 border-y border-border">
                 <div className="text-center">
                   <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <div className="w-2 h-2 rounded-full bg-success" />
                     <span className="text-xs text-muted-foreground uppercase">Carteira</span>
                   </div>
-                  <p className="text-lg font-bold text-emerald-500">
+                  <p className="text-lg font-bold text-success">
                     {showValues ? `${currentData.stats.carteira.toFixed(2)}%` : "••%"}
                   </p>
                 </div>
@@ -766,10 +766,10 @@ const AppDashboard = () => {
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
                   <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <div className="w-2 h-2 rounded-full bg-warning" />
                     <span className="text-xs text-muted-foreground uppercase">IPCA</span>
                   </div>
-                  <p className="text-lg font-bold text-orange-500">
+                  <p className="text-lg font-bold text-warning">
                     {showValues ? `${currentData.stats.ipca.toFixed(2)}%` : "••%"}
                   </p>
                 </div>
@@ -827,10 +827,10 @@ const AppDashboard = () => {
                           whileTap={{ scale: 0.95 }}
                           className="relative w-24 h-24"
                         >
-                          <div className="absolute inset-0 bg-cyan-100 rounded-full opacity-40" />
-                          <div className="absolute inset-2 bg-cyan-200 rounded-full opacity-60" />
-                          <div className="absolute inset-4 bg-cyan-300/80 rounded-full flex items-center justify-center">
-                            <Plus className="w-8 h-8 text-white" />
+                          <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
+                          <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
+                          <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
+                            <Plus className="w-8 h-8 text-primary-foreground" />
                           </div>
                         </motion.button>
                       </div>
@@ -871,10 +871,10 @@ const AppDashboard = () => {
                           whileTap={{ scale: 0.95 }}
                           className="relative w-24 h-24"
                         >
-                          <div className="absolute inset-0 bg-cyan-100 rounded-full opacity-40" />
-                          <div className="absolute inset-2 bg-cyan-200 rounded-full opacity-60" />
-                          <div className="absolute inset-4 bg-cyan-300/80 rounded-full flex items-center justify-center">
-                            <Plus className="w-8 h-8 text-white" />
+                          <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
+                          <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
+                          <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
+                            <Plus className="w-8 h-8 text-primary-foreground" />
                           </div>
                         </motion.button>
                       </div>
