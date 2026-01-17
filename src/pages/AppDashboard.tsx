@@ -27,6 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
 import PatrimonioDrawer from "@/components/PatrimonioDrawer";
+import AdicionarDrawer from "@/components/AdicionarDrawer";
 
 interface UserData {
   id: string;
@@ -120,6 +121,7 @@ const AppDashboard = () => {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(2);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [patrimonioDrawerOpen, setPatrimonioDrawerOpen] = useState(false);
+  const [adicionarDrawerOpen, setAdicionarDrawerOpen] = useState(false);
 
   // Fetch all user data from database
   useEffect(() => {
@@ -365,7 +367,7 @@ const AppDashboard = () => {
                 <HelpCircle className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => navigate("/adicionar-investimento")}
+                onClick={() => setAdicionarDrawerOpen(true)}
                 className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md"
               >
                 <Plus className="w-5 h-5 text-white" />
@@ -912,6 +914,13 @@ const AppDashboard = () => {
           ))}
         </div>
       </nav>
+
+      {/* Adicionar Drawer */}
+      <AdicionarDrawer 
+        open={adicionarDrawerOpen}
+        onClose={() => setAdicionarDrawerOpen(false)}
+        onNavigate={(path) => navigate(path)}
+      />
     </div>
   );
 };
