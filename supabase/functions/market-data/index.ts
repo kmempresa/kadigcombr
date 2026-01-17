@@ -20,6 +20,140 @@ serve(async (req) => {
 
     const { type = 'all', symbol, category } = await req.json().catch(() => ({}));
 
+    // Buscar indicadores econômicos reais (CDI, IPCA, SELIC) do Banco Central
+    if (type === 'economic-indicators') {
+      console.log('Fetching real economic indicators from BCB');
+      
+      try {
+        // CDI - Série 4389 do BCB (Taxa CDI anualizada base 252)
+        // IPCA - Série 433 do BCB (Variação mensal)
+        // SELIC - Série 432 do BCB (Taxa SELIC meta)
+        
+        const today = new Date();
+        const oneYearAgo = new Date(today);
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        
+        const formatDate = (date: Date) => {
+          const dd = String(date.getDate()).padStart(2, '0');
+          const mm = String(date.getMonth() + 1).padStart(2, '0');
+          const yyyy = date.getFullYear();
+          return `${dd}/${mm}/${yyyy}`;
+        };
+        
+        const startDate = formatDate(oneYearAgo);
+        const endDate = formatDate(today);
+        
+        // Buscar CDI, IPCA e SELIC em paralelo
+        const [cdiResponse, ipcaResponse, selicResponse] = await Promise.all([
+          // CDI diário (série 12)
+          fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=${startDate}&dataFinal=${endDate}`),
+          // IPCA mensal (série 433)
+          fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados?formato=json&dataInicial=${startDate}&dataFinal=${endDate}`),
+          // SELIC meta (série 432)
+          fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=${startDate}&dataFinal=${endDate}`),
+        ]);
+        
+        const cdiData = await cdiResponse.json();
+        const ipcaData = await ipcaResponse.json();
+        const selicData = await selicResponse.json();
+        
+        console.log(`CDI data points: ${cdiData.length}, IPCA: ${ipcaData.length}, SELIC: ${selicData.length}`);
+        
+        // Pegar os valores mais recentes
+        const latestCdi = cdiData.length > 0 ? parseFloat(cdiData[cdiData.length - 1].valor) : 0;
+        const latestIpca = ipcaData.length > 0 ? parseFloat(ipcaData[ipcaData.length - 1].valor) : 0;
+        const latestSelic = selicData.length > 0 ? parseFloat(selicData[selicData.length - 1].valor) : 0;
+        
+        // Calcular CDI e IPCA acumulado dos últimos 12 meses
+        let cdiAcumulado12m = 0;
+        if (cdiData.length > 0) {
+          // CDI é taxa diária, precisa acumular
+          const last252Days = cdiData.slice(-252); // ~252 dias úteis = 1 ano
+          cdiAcumulado12m = last252Days.reduce((acc: number, item: any) => {
+            return acc * (1 + parseFloat(item.valor) / 100);
+          }, 1);
+          cdiAcumulado12m = (cdiAcumulado12m - 1) * 100;
+        }
+        
+        let ipcaAcumulado12m = 0;
+        if (ipcaData.length > 0) {
+          // IPCA é mensal, pegar últimos 12 meses
+          const last12Months = ipcaData.slice(-12);
+          ipcaAcumulado12m = last12Months.reduce((acc: number, item: any) => {
+            return acc * (1 + parseFloat(item.valor) / 100);
+          }, 1);
+          ipcaAcumulado12m = (ipcaAcumulado12m - 1) * 100;
+        }
+        
+        // Preparar dados mensais para o gráfico
+        const monthlyData: any[] = [];
+        const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        
+        // Agrupar CDI por mês
+        const cdiByMonth: { [key: string]: number[] } = {};
+        cdiData.forEach((item: any) => {
+          const [day, month, year] = item.data.split('/');
+          const key = `${year}-${month}`;
+          if (!cdiByMonth[key]) cdiByMonth[key] = [];
+          cdiByMonth[key].push(parseFloat(item.valor));
+        });
+        
+        // Calcular CDI mensal (acumulado do mês)
+        Object.entries(cdiByMonth).forEach(([key, values]) => {
+          const [year, month] = key.split('-');
+          const monthlyAccumulated = values.reduce((acc, val) => acc * (1 + val / 100), 1);
+          const monthlyRate = (monthlyAccumulated - 1) * 100;
+          
+          // Encontrar IPCA do mesmo mês
+          const ipcaItem = ipcaData.find((item: any) => {
+            const [, m, y] = item.data.split('/');
+            return m === month && y === year;
+          });
+          
+          monthlyData.push({
+            month: `${monthNames[parseInt(month) - 1]} ${year}`,
+            monthKey: key,
+            cdi: monthlyRate,
+            ipca: ipcaItem ? parseFloat(ipcaItem.valor) : 0,
+          });
+        });
+        
+        // Ordenar por data
+        monthlyData.sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+        
+        const result = {
+          current: {
+            cdi: latestCdi, // Taxa CDI diária mais recente
+            ipca: latestIpca, // IPCA mensal mais recente
+            selic: latestSelic, // SELIC meta atual
+          },
+          accumulated12m: {
+            cdi: cdiAcumulado12m,
+            ipca: ipcaAcumulado12m,
+          },
+          monthly: monthlyData.slice(-12), // Últimos 12 meses
+          lastUpdate: new Date().toISOString(),
+        };
+        
+        console.log(`Returning economic indicators: CDI=${latestCdi}%, IPCA=${latestIpca}%, SELIC=${latestSelic}%`);
+        
+        return new Response(
+          JSON.stringify(result),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching economic indicators:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to fetch economic indicators',
+            current: { cdi: 0.05, ipca: 0.4, selic: 14.25 },
+            accumulated12m: { cdi: 11.5, ipca: 4.5 },
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Buscar notícias do mercado usando Stock News API
     if (type === 'market-news') {
       console.log('Fetching market news from Stock News API');
