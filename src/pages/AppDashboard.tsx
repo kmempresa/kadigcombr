@@ -552,17 +552,6 @@ const AppDashboard = () => {
     outro: "Outros",
   };
 
-  if (loading) {
-    return (
-      <div className="light-theme min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando seus dados...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Recalculate monthly data when portfolio changes
   const portfolioMonthlyData = useMemo(() => {
     return generateMonthlyPerformance(totalPatrimonio, totalGanhos, totalInvestido, economicIndicators);
@@ -575,6 +564,17 @@ const AppDashboard = () => {
     cdiPercent: avgCdiPercent,
     stats: { carteira: 0, cdi: 0, ipca: 0 },
   };
+
+  if (loading) {
+    return (
+      <div className="light-theme min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando seus dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="light-theme min-h-screen bg-background flex flex-col">
