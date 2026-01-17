@@ -88,6 +88,19 @@ const AdicionarResgate = () => {
     
     setSaving(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      // Get portfolio name
+      const portfolio = await supabase
+        .from("portfolios")
+        .select("name")
+        .eq("id", selectedInvestment.portfolio_id)
+        .maybeSingle();
+
+      const redeemQty = parseFloat(redeemQuantity) || selectedInvestment.quantity || 0;
+      const redeemVal = parseFloat(redeemValue) || selectedInvestment.current_value;
+
       if (redeemType === "total") {
         // Delete the investment completely
         const { error } = await supabase
@@ -96,12 +109,27 @@ const AdicionarResgate = () => {
           .eq("id", selectedInvestment.id);
 
         if (error) throw error;
+
+        // Register movement
+        await supabase.from("movements").insert({
+          user_id: session.user.id,
+          portfolio_id: selectedInvestment.portfolio_id,
+          investment_id: null,
+          type: "resgate",
+          asset_name: selectedInvestment.asset_name,
+          ticker: selectedInvestment.ticker,
+          asset_type: selectedInvestment.asset_type,
+          quantity: selectedInvestment.quantity || 0,
+          unit_price: parseFloat(redeemPrice) || selectedInvestment.purchase_price || 0,
+          total_value: selectedInvestment.current_value,
+          portfolio_name: portfolio.data?.name || "Carteira",
+          notes: "Resgate total",
+          movement_date: redeemDate || new Date().toISOString().split("T")[0],
+        });
+
         toast.success("Resgate total realizado! Ativo removido da carteira.");
       } else {
         // Partial redeem
-        const redeemQty = parseFloat(redeemQuantity) || 0;
-        const redeemVal = parseFloat(redeemValue) || 0;
-        
         const newQuantity = Math.max(0, (selectedInvestment.quantity || 0) - redeemQty);
         const newTotalInvested = Math.max(0, (selectedInvestment.total_invested || 0) - redeemVal);
         const newCurrentValue = newQuantity * (parseFloat(redeemPrice) || selectedInvestment.purchase_price || 0);
@@ -115,6 +143,23 @@ const AdicionarResgate = () => {
             .eq("id", selectedInvestment.id);
 
           if (error) throw error;
+
+          await supabase.from("movements").insert({
+            user_id: session.user.id,
+            portfolio_id: selectedInvestment.portfolio_id,
+            investment_id: null,
+            type: "resgate",
+            asset_name: selectedInvestment.asset_name,
+            ticker: selectedInvestment.ticker,
+            asset_type: selectedInvestment.asset_type,
+            quantity: redeemQty,
+            unit_price: parseFloat(redeemPrice) || 0,
+            total_value: redeemVal,
+            portfolio_name: portfolio.data?.name || "Carteira",
+            notes: "Resgate completo",
+            movement_date: redeemDate || new Date().toISOString().split("T")[0],
+          });
+
           toast.success("Resgate completo! Ativo removido da carteira.");
         } else {
           const { error } = await supabase
@@ -129,6 +174,23 @@ const AdicionarResgate = () => {
             .eq("id", selectedInvestment.id);
 
           if (error) throw error;
+
+          await supabase.from("movements").insert({
+            user_id: session.user.id,
+            portfolio_id: selectedInvestment.portfolio_id,
+            investment_id: selectedInvestment.id,
+            type: "resgate",
+            asset_name: selectedInvestment.asset_name,
+            ticker: selectedInvestment.ticker,
+            asset_type: selectedInvestment.asset_type,
+            quantity: redeemQty,
+            unit_price: parseFloat(redeemPrice) || 0,
+            total_value: redeemVal,
+            portfolio_name: portfolio.data?.name || "Carteira",
+            notes: "Resgate parcial",
+            movement_date: redeemDate || new Date().toISOString().split("T")[0],
+          });
+
           toast.success("Resgate parcial realizado com sucesso!");
         }
       }

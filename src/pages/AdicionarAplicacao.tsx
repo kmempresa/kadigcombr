@@ -81,12 +81,16 @@ const AdicionarAplicacao = () => {
     
     setSaving(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
       const newQuantity = (selectedInvestment.quantity || 0) + (parseFloat(applicationQuantity) || 0);
       const newTotalInvested = (selectedInvestment.total_invested || 0) + (parseFloat(applicationValue) || 0);
       const newCurrentValue = newQuantity * (parseFloat(applicationPrice) || selectedInvestment.purchase_price || 0);
       const gainPercent = newTotalInvested > 0 ? ((newCurrentValue - newTotalInvested) / newTotalInvested) * 100 : 0;
 
-      const { error } = await supabase
+      // Update investment
+      const { error: updateError } = await supabase
         .from("investments")
         .update({
           quantity: newQuantity,
@@ -97,7 +101,34 @@ const AdicionarAplicacao = () => {
         })
         .eq("id", selectedInvestment.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Get portfolio name for movement record
+      const portfolio = await supabase
+        .from("portfolios")
+        .select("name")
+        .eq("id", selectedInvestment.portfolio_id)
+        .maybeSingle();
+
+      // Register movement
+      const { error: movementError } = await supabase
+        .from("movements")
+        .insert({
+          user_id: session.user.id,
+          portfolio_id: selectedInvestment.portfolio_id,
+          investment_id: selectedInvestment.id,
+          type: "aplicacao",
+          asset_name: selectedInvestment.asset_name,
+          ticker: selectedInvestment.ticker,
+          asset_type: selectedInvestment.asset_type,
+          quantity: parseFloat(applicationQuantity) || 0,
+          unit_price: parseFloat(applicationPrice) || 0,
+          total_value: parseFloat(applicationValue) || 0,
+          portfolio_name: portfolio.data?.name || "Carteira",
+          movement_date: applicationDate || new Date().toISOString().split("T")[0],
+        });
+
+      if (movementError) console.error("Error saving movement:", movementError);
 
       toast.success("Aplicação adicionada com sucesso!");
       await refreshPortfolios();

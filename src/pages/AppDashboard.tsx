@@ -163,6 +163,8 @@ const AppDashboard = () => {
   const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
   const [goalType, setGoalType] = useState<"patrimonio" | "renda_passiva">("patrimonio");
   const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
+  const [movements, setMovements] = useState<any[]>([]);
+  const [extratoSearch, setExtratoSearch] = useState("");
 
   const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
     setGoalType(type);
@@ -550,11 +552,37 @@ const AppDashboard = () => {
     }
   };
 
+  // Fetch movements for extrato
+  const fetchMovements = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from("movements")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("movement_date", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setMovements(data || []);
+    } catch (error) {
+      console.error("Error fetching movements:", error);
+    }
+  };
+
   useEffect(() => {
     if (activePortfolioId) {
       fetchGoals();
     }
   }, [activePortfolioId]);
+
+  useEffect(() => {
+    if (userData?.id) {
+      fetchMovements();
+    }
+  }, [userData?.id, refreshKey]);
   
   // Filter investments by selected portfolio
   const filteredInvestments = activePortfolioId 
@@ -1516,7 +1544,9 @@ const AppDashboard = () => {
                 <div className="flex-1 relative">
                   <input
                     type="text"
-                    placeholder="Buscar:"
+                    placeholder="Buscar movimentação..."
+                    value={extratoSearch}
+                    onChange={(e) => setExtratoSearch(e.target.value)}
                     className="w-full h-11 pl-4 pr-10 bg-card border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -1532,20 +1562,28 @@ const AppDashboard = () => {
                 </button>
               </div>
 
-              {/* Transactions grouped by month */}
+              {/* Transactions grouped by month - ALL MOVEMENTS */}
               {(() => {
-                // Group investments by month
-                const groupedByMonth: { [key: string]: typeof filteredInvestments } = {};
+                // Filter movements by search
+                const filteredMovements = movements.filter(mov => 
+                  mov.asset_name?.toLowerCase().includes(extratoSearch.toLowerCase()) ||
+                  mov.ticker?.toLowerCase().includes(extratoSearch.toLowerCase()) ||
+                  mov.portfolio_name?.toLowerCase().includes(extratoSearch.toLowerCase()) ||
+                  mov.type?.toLowerCase().includes(extratoSearch.toLowerCase())
+                );
+
+                // Group by month
+                const groupedByMonth: { [key: string]: any[] } = {};
                 
-                filteredInvestments.forEach(inv => {
-                  const date = new Date((inv as any).created_at || Date.now());
+                filteredMovements.forEach(mov => {
+                  const date = new Date(mov.movement_date || mov.created_at);
                   const monthKey = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
                   const capitalizedMonth = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
                   
                   if (!groupedByMonth[capitalizedMonth]) {
                     groupedByMonth[capitalizedMonth] = [];
                   }
-                  groupedByMonth[capitalizedMonth].push(inv);
+                  groupedByMonth[capitalizedMonth].push(mov);
                 });
 
                 const months = Object.keys(groupedByMonth);
@@ -1563,11 +1601,96 @@ const AppDashboard = () => {
                       </div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma movimentação</h3>
                       <p className="text-sm text-muted-foreground">
-                        Suas aplicações e resgates aparecerão aqui
+                        Suas aplicações, resgates e transferências aparecerão aqui
                       </p>
                     </div>
                   );
                 }
+
+                const getMovementConfig = (type: string) => {
+                  switch (type) {
+                    case 'aplicacao':
+                      return { 
+                        label: 'Aplicação', 
+                        color: 'text-emerald-600', 
+                        bgColor: 'bg-emerald-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17,8 12,3 7,8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                        ),
+                        prefix: '+'
+                      };
+                    case 'resgate':
+                      return { 
+                        label: 'Resgate', 
+                        color: 'text-orange-600', 
+                        bgColor: 'bg-orange-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7,10 12,15 17,10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                        ),
+                        prefix: '-'
+                      };
+                    case 'transferencia_saida':
+                      return { 
+                        label: 'Transferência (saída)', 
+                        color: 'text-cyan-600', 
+                        bgColor: 'bg-cyan-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12,5 19,12 12,19" />
+                          </svg>
+                        ),
+                        prefix: '→'
+                      };
+                    case 'transferencia_entrada':
+                      return { 
+                        label: 'Transferência (entrada)', 
+                        color: 'text-cyan-600', 
+                        bgColor: 'bg-cyan-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="19" y1="12" x2="5" y2="12" />
+                            <polyline points="12,5 5,12 12,19" />
+                          </svg>
+                        ),
+                        prefix: '←'
+                      };
+                    case 'dividendo':
+                      return { 
+                        label: 'Dividendo', 
+                        color: 'text-purple-600', 
+                        bgColor: 'bg-purple-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="16" />
+                            <line x1="8" y1="12" x2="16" y2="12" />
+                          </svg>
+                        ),
+                        prefix: '+'
+                      };
+                    default:
+                      return { 
+                        label: type, 
+                        color: 'text-gray-600', 
+                        bgColor: 'bg-gray-100',
+                        icon: (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                          </svg>
+                        ),
+                        prefix: ''
+                      };
+                  }
+                };
 
                 return months.map(month => (
                   <div key={month}>
@@ -1576,42 +1699,54 @@ const AppDashboard = () => {
                     
                     {/* Transaction Cards */}
                     <div className="space-y-3">
-                      {groupedByMonth[month].map((inv, idx) => {
-                        const date = new Date((inv as any).created_at || Date.now());
+                      {groupedByMonth[month].map((mov, idx) => {
+                        const date = new Date(mov.movement_date || mov.created_at);
                         const formattedDate = date.toLocaleDateString('pt-BR');
+                        const config = getMovementConfig(mov.type);
                         
                         return (
                           <div 
-                            key={inv.id || idx}
+                            key={mov.id || idx}
                             className="bg-card border border-border rounded-2xl p-4"
                           >
                             <div className="flex items-start gap-3">
                               {/* Icon */}
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                  <polyline points="17,8 12,3 7,8" />
-                                  <line x1="12" y1="3" x2="12" y2="15" />
-                                </svg>
+                              <div className={`w-10 h-10 rounded-lg ${config.bgColor} flex items-center justify-center flex-shrink-0 ${config.color}`}>
+                                {config.icon}
                               </div>
                               
                               {/* Content */}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-muted-foreground">Aplicação</p>
+                                <p className={`text-sm font-medium ${config.color}`}>{config.label}</p>
                                 <p className="font-medium text-foreground truncate">
-                                  {inv.asset_name}
+                                  {mov.asset_name} {mov.ticker ? `(${mov.ticker})` : ''}
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <p className="text-xs text-muted-foreground">{formattedDate}</p>
+                                  {mov.portfolio_name && (
+                                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                                      {mov.portfolio_name}
+                                    </span>
+                                  )}
+                                </div>
+                                {mov.notes && (
+                                  <p className="text-xs text-muted-foreground mt-1 italic">{mov.notes}</p>
+                                )}
                               </div>
                               
                               {/* Value */}
                               <div className="text-right flex-shrink-0">
-                                <p className="font-semibold text-foreground">
+                                <p className={`font-semibold ${mov.type === 'resgate' || mov.type === 'transferencia_saida' ? 'text-orange-600' : 'text-emerald-600'}`}>
                                   {showValues 
-                                    ? formatCurrency(inv.total_invested)
+                                    ? `${config.prefix} ${mov.total_value?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
                                     : "R$ ••••••"
                                   }
                                 </p>
+                                {mov.quantity > 0 && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {mov.quantity} un
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </div>
