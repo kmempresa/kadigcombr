@@ -82,6 +82,13 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [newsPage, setNewsPage] = useState(1);
   const [totalNewsPages, setTotalNewsPages] = useState(89);
   const newsPerPage = 5;
+  
+  // Estados para expandir seções
+  const [showAllAltas, setShowAllAltas] = useState(false);
+  const [showAllBaixas, setShowAllBaixas] = useState(false);
+  const [showAllDividends, setShowAllDividends] = useState(false);
+  const [showAllNews, setShowAllNews] = useState(false);
+  const [showAllKadig, setShowAllKadig] = useState(false);
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -299,8 +306,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               <h2 className="text-lg font-semibold text-white">Principais notícias do mercado</h2>
             </div>
             
-            <button className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4">
-              TODAS AS NOTÍCIAS
+            <button 
+              onClick={() => setShowAllNews(!showAllNews)}
+              className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2"
+            >
+              {showAllNews ? 'VER MENOS' : 'TODAS AS NOTÍCIAS'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showAllNews ? 'rotate-180' : ''}`} />
             </button>
             
             {loadingNews ? (
@@ -342,9 +353,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   </a>
                 )}
                 
-                {/* Secondary news cards */}
+                {/* Secondary news cards - show more if expanded */}
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                  {marketNews.slice(1, 4).map((news, index) => (
+                  {marketNews.slice(1, showAllNews ? 10 : 4).map((news, index) => (
                     <a
                       key={index}
                       href={news.news_url}
@@ -502,14 +513,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   <ArrowUp className="w-5 h-5 text-emerald-500" />
                   <h3 className="text-white font-semibold">Maiores Altas</h3>
                 </div>
-                <button className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg">
-                  Ver todos
-                  <ChevronRight className="w-4 h-4" />
+                <button 
+                  onClick={() => setShowAllAltas(!showAllAltas)}
+                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                >
+                  {showAllAltas ? 'Ver menos' : 'Ver todos'}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAllAltas ? 'rotate-180' : ''}`} />
                 </button>
               </div>
               
               <div className="space-y-3">
-                {maioresAltas.slice(0, 5).map((stock) => (
+                {maioresAltas.slice(0, showAllAltas ? maioresAltas.length : 5).map((stock) => (
                   <div 
                     key={stock.symbol}
                     onClick={() => {
@@ -560,14 +574,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   <ArrowDown className="w-5 h-5 text-red-500" />
                   <h3 className="text-white font-semibold">Maiores Baixas</h3>
                 </div>
-                <button className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg">
-                  Ver todos
-                  <ChevronRight className="w-4 h-4" />
+                <button 
+                  onClick={() => setShowAllBaixas(!showAllBaixas)}
+                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                >
+                  {showAllBaixas ? 'Ver menos' : 'Ver todos'}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAllBaixas ? 'rotate-180' : ''}`} />
                 </button>
               </div>
               
               <div className="space-y-3">
-                {maioresBaixas.slice(0, 5).map((stock) => (
+                {maioresBaixas.slice(0, showAllBaixas ? maioresBaixas.length : 5).map((stock) => (
                   <div 
                     key={stock.symbol}
                     onClick={() => {
@@ -619,8 +636,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               <h2 className="text-lg font-semibold text-white">Índice Kadig</h2>
             </div>
             
-            <button className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4">
-              LISTA COMPLETA DO ÍNDICE
+            <button 
+              onClick={() => setShowAllKadig(!showAllKadig)}
+              className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2 hover:bg-[#3a4259] transition-colors"
+            >
+              {showAllKadig ? 'VER MENOS' : 'LISTA COMPLETA DO ÍNDICE'}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showAllKadig ? 'rotate-180' : ''}`} />
             </button>
 
             <div className="bg-[#252b3d] rounded-2xl p-4">
@@ -630,7 +651,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               </div>
               
               <div className="space-y-6">
-                {bestPerformance.map((stock, index) => (
+                {bestPerformance.slice(0, showAllKadig ? bestPerformance.length : 2).map((stock, index) => (
                   <div key={index}>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="bg-[#3a4259] text-white text-xs px-2 py-1 rounded-md font-medium">
@@ -685,14 +706,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             <div className="bg-[#252b3d] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold">Dividendos</h3>
-                <button className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg">
-                  Ver todos
-                  <ChevronRight className="w-4 h-4" />
+                <button 
+                  onClick={() => setShowAllDividends(!showAllDividends)}
+                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                >
+                  {showAllDividends ? 'Ver menos' : 'Ver todos'}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAllDividends ? 'rotate-180' : ''}`} />
                 </button>
               </div>
               
               <div className="space-y-4">
-                {dividends.map((dividend, index) => (
+                {dividends.slice(0, showAllDividends ? dividends.length : 3).map((dividend, index) => (
                   <div key={index} className="flex items-start gap-3">
                     <div className="w-14 h-14 rounded-full bg-violet-500/20 border-2 border-violet-500 flex flex-col items-center justify-center text-center flex-shrink-0">
                       <span className="text-white font-bold text-lg leading-none">{dividend.paymentDay}</span>
