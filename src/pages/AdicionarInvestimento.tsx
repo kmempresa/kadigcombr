@@ -6,17 +6,24 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Tipos de ativos disponíveis
+// Tipos de ativos disponíveis com fluxos específicos
+// Fluxos:
+// "ativo" - Buscar ativo via API (Ações, BDRs, FIIs, Fundos)
+// "cripto" - Lista predefinida de criptos + data compra + cotação + quantidade
+// "simples" - Apenas valor e % CDI opcional (Conta Corrente, Poupança)
+// "moeda" - Lista predefinida de moedas + data compra + cotação + quantidade
+// "personalizado" - Nome customizado + data + valor
+// "renda_fixa" - Taxa, vencimento, indexador (Debêntures, Previdência, Renda Fixa, Tesouro)
 const tiposAtivos = [
   { id: "acoes", nome: "Ações, Stocks e ETF", cor: "#ef4444", fluxo: "ativo" },
   { id: "bdrs", nome: "BDRs", cor: "#f97316", fluxo: "ativo" },
   { id: "conta_corrente", nome: "Conta Corrente", cor: "#eab308", fluxo: "simples" },
-  { id: "criptoativos", nome: "Criptoativos", cor: "#22c55e", fluxo: "ativo" },
+  { id: "criptoativos", nome: "Criptoativos", cor: "#22c55e", fluxo: "cripto" },
   { id: "debentures", nome: "Debêntures", cor: "#14b8a6", fluxo: "renda_fixa" },
   { id: "fundos", nome: "Fundos", cor: "#06b6d4", fluxo: "ativo" },
   { id: "fiis", nome: "FIIs e REITs", cor: "#3b82f6", fluxo: "ativo" },
-  { id: "moedas", nome: "Moedas", cor: "#8b5cf6", fluxo: "simples" },
-  { id: "personalizados", nome: "Personalizados", cor: "#a855f7", fluxo: "simples" },
+  { id: "moedas", nome: "Moedas", cor: "#8b5cf6", fluxo: "moeda" },
+  { id: "personalizados", nome: "Personalizados", cor: "#a855f7", fluxo: "personalizado" },
   { id: "poupanca", nome: "Poupança", cor: "#d946ef", fluxo: "simples" },
   { id: "previdencia", nome: "Previdência", cor: "#ec4899", fluxo: "renda_fixa" },
   { id: "renda_fixa_pre", nome: "Renda Fixa Prefixada", cor: "#f43f5e", fluxo: "renda_fixa" },
@@ -24,10 +31,38 @@ const tiposAtivos = [
   { id: "tesouro", nome: "Tesouro Direto", cor: "#9d174d", fluxo: "renda_fixa" },
 ];
 
-// Fluxos:
-// "ativo" - Precisa buscar ativo (Ações, BDRs, FIIs, Criptoativos, Fundos)
-// "simples" - Apenas valor e % CDI opcional (Conta Corrente, Poupança, Moedas, Personalizados)
-// "renda_fixa" - Taxa, vencimento, indexador (Debêntures, Previdência, Renda Fixa, Tesouro)
+// Lista de criptoativos
+const listaCriptoativos = [
+  "BITCOIN",
+  "LITECOIN",
+  "BCASH",
+  "XRP (RIPPLE)",
+  "ETHEREUM",
+  "SOLANA",
+  "CARDANO",
+  "POLKADOT",
+  "DOGECOIN",
+  "SHIBA INU",
+  "BNB",
+  "AVALANCHE",
+  "TRON",
+  "CHAINLINK",
+  "UNISWAP",
+];
+
+// Lista de moedas
+const listaMoedas = [
+  "DÓLAR AMERICANO (USD)",
+  "EURO (EUR)",
+  "LIBRA ESTERLINA (GBP)",
+  "IENE JAPONÊS (JPY)",
+  "FRANCO SUÍÇO (CHF)",
+  "DÓLAR CANADENSE (CAD)",
+  "DÓLAR AUSTRALIANO (AUD)",
+  "PESO ARGENTINO (ARS)",
+  "YUAN CHINÊS (CNY)",
+  "PESO MEXICANO (MXN)",
+];
 
 interface StockData {
   symbol: string;
@@ -253,6 +288,16 @@ const AdicionarInvestimento = () => {
   const [maturityDate, setMaturityDate] = useState("");
   const [indexer, setIndexer] = useState("CDI");
   
+  // For "cripto" and "moeda" flows
+  const [selectedCripto, setSelectedCripto] = useState("");
+  const [selectedMoeda, setSelectedMoeda] = useState("");
+  const [cotacao, setCotacao] = useState("");
+  const [cryptoSearchTerm, setCryptoSearchTerm] = useState("");
+  const [moedaSearchTerm, setMoedaSearchTerm] = useState("");
+  
+  // For "personalizado" flow
+  const [customAssetName, setCustomAssetName] = useState("");
+
   // Get current flow type
   const currentFlow = tiposAtivos.find(t => t.id === selectedTipoAtivo)?.fluxo || "ativo";
   
@@ -260,10 +305,24 @@ const AdicionarInvestimento = () => {
   const getTotalSteps = () => {
     if (currentFlow === "simples") return 4; // Tipo -> Banco -> Valor/% CDI -> Confirmação
     if (currentFlow === "renda_fixa") return 5; // Tipo -> Banco -> Dados -> Valor -> Confirmação
+    if (currentFlow === "cripto") return 5; // Tipo -> Banco -> Escolha Cripto -> Dados -> Confirmação
+    if (currentFlow === "moeda") return 5; // Tipo -> Banco -> Escolha Moeda -> Dados -> Confirmação
+    if (currentFlow === "personalizado") return 4; // Tipo -> Banco -> Dados -> Confirmação
     return 5; // Tipo -> Banco -> Buscar Ativo -> Valor -> Confirmação
   };
   
   const totalSteps = getTotalSteps();
+  
+  // Filtered lists for cripto and moeda
+  const filteredCriptos = useMemo(() => {
+    if (!cryptoSearchTerm.trim()) return listaCriptoativos;
+    return listaCriptoativos.filter(c => c.toLowerCase().includes(cryptoSearchTerm.toLowerCase()));
+  }, [cryptoSearchTerm]);
+  
+  const filteredMoedas = useMemo(() => {
+    if (!moedaSearchTerm.trim()) return listaMoedas;
+    return listaMoedas.filter(m => m.toLowerCase().includes(moedaSearchTerm.toLowerCase()));
+  }, [moedaSearchTerm]);
   
   // Get title based on asset type
   const getAssetTypeTitle = () => {
@@ -376,6 +435,23 @@ const AdicionarInvestimento = () => {
       return true; // Step 5 is confirmation
     }
     
+    if (currentFlow === "cripto") {
+      if (step === 3) return selectedCripto !== "";
+      if (step === 4) return purchaseDate !== "" && cotacao !== "" && quantity !== "";
+      return true; // Step 5 is confirmation
+    }
+    
+    if (currentFlow === "moeda") {
+      if (step === 3) return selectedMoeda !== "";
+      if (step === 4) return purchaseDate !== "" && cotacao !== "" && quantity !== "";
+      return true; // Step 5 is confirmation
+    }
+    
+    if (currentFlow === "personalizado") {
+      if (step === 3) return customAssetName !== "" && purchaseDate !== "" && investmentValue !== "";
+      return true; // Step 4 is confirmation
+    }
+    
     // Flow "ativo"
     if (step === 3) return selectedAsset !== null;
     if (step === 4) return quantity !== "" && purchasePrice !== "";
@@ -426,9 +502,9 @@ const AdicionarInvestimento = () => {
           let price = 0;
           
           if (currentFlow === "simples") {
-            // Conta Corrente, Poupança, Moedas, Personalizados
+            // Conta Corrente, Poupança
             totalInvested = parseFloat(investmentValue) || 0;
-            currentValue = totalInvested; // Valor atual = valor investido inicialmente
+            currentValue = totalInvested;
             gainValue = 0;
             gainPercent = 0;
             assetName = `${assetTypeLabel} - ${selectedInstituicao.split(' ')[0]}`;
@@ -445,8 +521,38 @@ const AdicionarInvestimento = () => {
             ticker = selectedTipoAtivo?.toUpperCase() || '';
             qty = 1;
             price = totalInvested;
+          } else if (currentFlow === "cripto") {
+            // Criptoativos
+            qty = parseFloat(quantity) || 0;
+            price = parseFloat(cotacao) || 0;
+            totalInvested = qty * price;
+            currentValue = totalInvested;
+            gainValue = 0;
+            gainPercent = 0;
+            assetName = selectedCripto;
+            ticker = selectedCripto.split(' ')[0].toUpperCase();
+          } else if (currentFlow === "moeda") {
+            // Moedas
+            qty = parseFloat(quantity) || 0;
+            price = parseFloat(cotacao) || 0;
+            totalInvested = qty * price;
+            currentValue = totalInvested;
+            gainValue = 0;
+            gainPercent = 0;
+            assetName = selectedMoeda;
+            ticker = selectedMoeda.match(/\(([^)]+)\)/)?.[1] || selectedMoeda.split(' ')[0];
+          } else if (currentFlow === "personalizado") {
+            // Personalizados
+            totalInvested = parseFloat(investmentValue) || 0;
+            currentValue = totalInvested;
+            gainValue = 0;
+            gainPercent = 0;
+            assetName = customAssetName;
+            ticker = "CUSTOM";
+            qty = 1;
+            price = totalInvested;
           } else {
-            // Ações, BDRs, FIIs, Criptoativos, Fundos
+            // Ações, BDRs, FIIs, Fundos
             if (!selectedAsset) return;
             qty = parseFloat(quantity) || 0;
             price = parseFloat(purchasePrice) || 0;
@@ -898,6 +1004,334 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
+        {/* Step 3 for CRIPTO flow - Escolha o criptoativo */}
+        {step === 3 && currentFlow === "cripto" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
+          >
+            <h2 className="text-center text-muted-foreground font-medium">
+              Escolha o criptoativo
+            </h2>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Buscar:"
+                value={cryptoSearchTerm}
+                onChange={(e) => setCryptoSearchTerm(e.target.value)}
+                className="h-12 pr-10 bg-card border-border rounded-2xl"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            </div>
+
+            {/* Crypto List */}
+            <div className="space-y-2">
+              {filteredCriptos.map((crypto) => (
+                <motion.button
+                  key={crypto}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedCripto(crypto)}
+                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
+                    selectedCripto === crypto
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
+                  }`}
+                >
+                  <span className="font-medium text-foreground text-sm">{crypto}</span>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedCripto === crypto
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30"
+                    }`}
+                  >
+                    {selectedCripto === crypto && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </div>
+                </motion.button>
+              ))}
+
+              {filteredCriptos.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum criptoativo encontrado
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4 for CRIPTO flow - Data, cotação e quantidade */}
+        {step === 4 && currentFlow === "cripto" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Informações adicionais</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe a cotação, quantidade, data da compra e taxas que foram pagas.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
+            </h2>
+
+            <div className="space-y-3">
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data da compra:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                  />
+                  {purchaseDate && <Check className="w-4 h-4 text-pink-500" />}
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Cotação (R$):</span>
+                <input
+                  type="number"
+                  value={cotacao}
+                  onChange={(e) => setCotacao(e.target.value)}
+                  placeholder="R$ 0,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Quantidade:</span>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="0"
+                  step="0.00000001"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm font-medium">Total investido:</span>
+                <span className="font-bold text-foreground">
+                  {formatCurrency((parseFloat(quantity) || 0) * (parseFloat(cotacao) || 0))}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3 for MOEDA flow - Escolha a moeda */}
+        {step === 3 && currentFlow === "moeda" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
+          >
+            <h2 className="text-center text-muted-foreground font-medium">
+              Escolha a moeda
+            </h2>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Buscar:"
+                value={moedaSearchTerm}
+                onChange={(e) => setMoedaSearchTerm(e.target.value)}
+                className="h-12 pr-10 bg-card border-border rounded-2xl"
+              />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            </div>
+
+            {/* Moeda List */}
+            <div className="space-y-2">
+              {filteredMoedas.map((moeda) => (
+                <motion.button
+                  key={moeda}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedMoeda(moeda)}
+                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
+                    selectedMoeda === moeda
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
+                  }`}
+                >
+                  <span className="font-medium text-foreground text-sm">{moeda}</span>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedMoeda === moeda
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30"
+                    }`}
+                  >
+                    {selectedMoeda === moeda && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </div>
+                </motion.button>
+              ))}
+
+              {filteredMoedas.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma moeda encontrada
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4 for MOEDA flow - Data, cotação e quantidade */}
+        {step === 4 && currentFlow === "moeda" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Informações adicionais</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe a cotação, quantidade e data da compra.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
+            </h2>
+
+            <div className="space-y-3">
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data da compra:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                  />
+                  {purchaseDate && <Check className="w-4 h-4 text-pink-500" />}
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Cotação (R$):</span>
+                <input
+                  type="number"
+                  value={cotacao}
+                  onChange={(e) => setCotacao(e.target.value)}
+                  placeholder="R$ 0,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Quantidade:</span>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder="0"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm font-medium">Total investido:</span>
+                <span className="font-bold text-foreground">
+                  {formatCurrency((parseFloat(quantity) || 0) * (parseFloat(cotacao) || 0))}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3 for PERSONALIZADO flow - Nome e dados */}
+        {step === 3 && currentFlow === "personalizado" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Ativo Personalizado</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe o nome do seu ativo, a data de início e o valor investido.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
+            </h2>
+
+            <div className="space-y-3">
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Nome do ativo:</span>
+                <input
+                  type="text"
+                  value={customAssetName}
+                  onChange={(e) => setCustomAssetName(e.target.value)}
+                  placeholder="Ex: Consórcio, Precatório..."
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none flex-1 ml-4"
+                />
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data de início:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                  />
+                  {purchaseDate && <Check className="w-4 h-4 text-pink-500" />}
+                </div>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Valor investido:</span>
+                <input
+                  type="number"
+                  value={investmentValue}
+                  onChange={(e) => setInvestmentValue(e.target.value)}
+                  placeholder="R$ 0,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Step 4 for ATIVO flow - Quantidade e valores */}
         {step === 4 && currentFlow === "ativo" && (
           <motion.div
@@ -1096,8 +1530,8 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {/* Step 5 - Confirmação for ATIVO and RENDA_FIXA flows */}
-        {step === 5 && (currentFlow === "ativo" || currentFlow === "renda_fixa") && (
+        {/* Step 5 - Confirmação for ATIVO, RENDA_FIXA, CRIPTO and MOEDA flows */}
+        {step === 5 && (currentFlow === "ativo" || currentFlow === "renda_fixa" || currentFlow === "cripto" || currentFlow === "moeda") && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -1126,7 +1560,10 @@ const AdicionarInvestimento = () => {
                 />
                 <div>
                   <p className="text-pink-500 font-semibold">
-                    {currentFlow === "ativo" ? selectedAsset?.symbol : selectedInstituicao.split(' ')[0]}
+                    {currentFlow === "ativo" ? selectedAsset?.symbol : 
+                     currentFlow === "cripto" ? selectedCripto :
+                     currentFlow === "moeda" ? selectedMoeda :
+                     selectedInstituicao.split(' ')[0]}
                   </p>
                   <p className="text-foreground text-sm">{getAssetTypeTitle()}</p>
                 </div>
@@ -1165,14 +1602,86 @@ const AdicionarInvestimento = () => {
                     </div>
                   </>
                 )}
+                {(currentFlow === "cripto" || currentFlow === "moeda") && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Data da compra</span>
+                      <span className="font-medium text-foreground">{purchaseDate ? new Date(purchaseDate).toLocaleDateString('pt-BR') : '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Cotação</span>
+                      <span className="font-medium text-foreground">{formatCurrency(parseFloat(cotacao) || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Quantidade</span>
+                      <span className="font-medium text-foreground">{quantity}</span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-between pt-3 border-t border-border">
                   <span className="font-semibold text-foreground">Total investido</span>
                   <span className="font-bold text-foreground text-lg">
                     {formatCurrency(
                       currentFlow === "ativo" 
                         ? (parseFloat(quantity) || 0) * (parseFloat(purchasePrice) || 0) + (parseFloat(brokerageFee) || 0)
+                        : (currentFlow === "cripto" || currentFlow === "moeda")
+                        ? (parseFloat(quantity) || 0) * (parseFloat(cotacao) || 0)
                         : parseFloat(investmentValue) || 0
                     )}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4 for PERSONALIZADO flow - Confirmação */}
+        {step === 4 && currentFlow === "personalizado" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Finalizar a adição.</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Observe os dados e confirme se estão corretamente preenchidos.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-center text-foreground font-medium">Confirme seus dados</h2>
+            
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-border">
+                <div
+                  className="w-1.5 h-8 rounded-full"
+                  style={{ backgroundColor: tiposAtivos.find(t => t.id === selectedTipoAtivo)?.cor }}
+                />
+                <div>
+                  <p className="text-pink-500 font-semibold">{customAssetName}</p>
+                  <p className="text-foreground text-sm">{getAssetTypeTitle()}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground text-sm">Instituição</span>
+                  <span className="font-medium text-foreground text-right text-sm">{selectedInstituicao}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground text-sm">Data de início</span>
+                  <span className="font-medium text-foreground">{purchaseDate ? new Date(purchaseDate).toLocaleDateString('pt-BR') : '-'}</span>
+                </div>
+                <div className="flex justify-between pt-3 border-t border-border">
+                  <span className="font-semibold text-foreground">Valor investido</span>
+                  <span className="font-bold text-foreground text-lg">
+                    {formatCurrency(parseFloat(investmentValue) || 0)}
                   </span>
                 </div>
               </div>
