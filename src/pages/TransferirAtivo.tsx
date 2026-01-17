@@ -5,6 +5,7 @@ import { ArrowLeft, Search, Loader2, Check, ArrowRightLeft, ChevronRight } from 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -29,6 +30,7 @@ interface Portfolio {
 
 const TransferirAtivo = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -219,16 +221,18 @@ const TransferirAtivo = () => {
     return portfolio?.name || "Carteira";
   };
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   if (loading) {
     return (
-      <div className="light-theme min-h-screen bg-background flex items-center justify-center">
+      <div className={`${themeClass} min-h-screen bg-background flex items-center justify-center`}>
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="light-theme min-h-screen bg-background">
+    <div className={`${themeClass} min-h-screen bg-background`}>
       {/* Header */}
       <header className="flex items-center gap-4 px-4 py-4 border-b border-border">
         <button

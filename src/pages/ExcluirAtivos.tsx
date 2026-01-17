@@ -5,6 +5,7 @@ import { ArrowLeft, Search, Loader2, Trash2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useTheme } from "@/hooks/useTheme";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,7 @@ interface Portfolio {
 
 const ExcluirAtivos = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { refreshPortfolios } = usePortfolio();
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
@@ -138,16 +140,18 @@ const ExcluirAtivos = () => {
     .filter(inv => selectedIds.has(inv.id))
     .reduce((sum, inv) => sum + inv.current_value, 0);
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   if (loading) {
     return (
-      <div className="light-theme min-h-screen bg-background flex items-center justify-center">
+      <div className={`${themeClass} min-h-screen bg-background flex items-center justify-center`}>
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="light-theme min-h-screen bg-background pb-24">
+    <div className={`${themeClass} min-h-screen bg-background pb-24`}>
       {/* Header */}
       <header className="flex items-center gap-4 px-4 py-4 border-b border-border">
         <button
@@ -260,7 +264,7 @@ const ExcluirAtivos = () => {
 
       {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent className="light-theme">
+        <AlertDialogContent className={themeClass}>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão?</AlertDialogTitle>
             <AlertDialogDescription>

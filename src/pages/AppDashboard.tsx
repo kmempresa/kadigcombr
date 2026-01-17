@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useTheme } from "@/hooks/useTheme";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // Lucide icons
@@ -137,6 +138,7 @@ const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: nu
 
 const AppDashboard = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { selectedPortfolioId, setSelectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -636,9 +638,11 @@ const AppDashboard = () => {
     stats: { carteira: 0, cdi: 0, ipca: 0 },
   };
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   if (loading) {
     return (
-      <div className="light-theme min-h-screen bg-background flex items-center justify-center">
+      <div className={`${themeClass} min-h-screen bg-background flex items-center justify-center`}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Carregando seus dados...</p>
@@ -648,7 +652,7 @@ const AppDashboard = () => {
   }
 
   return (
-    <div className="light-theme min-h-screen bg-background flex flex-col">
+    <div className={`${themeClass} min-h-screen bg-background flex flex-col`}>
       {/* Carteira Tab Content */}
       {activeTab === "carteira" && (
         <div className="flex-1 pb-20">
@@ -1822,12 +1826,16 @@ const AppDashboard = () => {
 
           <div className="px-4">
             {[
-              { icon: Shield, label: "Segurança" },
-              { icon: Settings, label: "Preferências" },
-              { icon: MessageSquare, label: "Suporte" },
-              { icon: Info, label: "Sobre" },
+              { icon: Shield, label: "Segurança", action: () => {} },
+              { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
+              { icon: MessageSquare, label: "Suporte", action: () => {} },
+              { icon: Info, label: "Sobre", action: () => {} },
             ].map((item, index) => (
-              <button key={index} className="w-full flex items-center justify-between py-4 border-b border-border">
+              <button 
+                key={index} 
+                onClick={item.action}
+                className="w-full flex items-center justify-between py-4 border-b border-border"
+              >
                 <span className="font-medium text-foreground">{item.label}</span>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>

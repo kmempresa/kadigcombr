@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, HelpCircle, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 interface GoalDrawerProps {
   open: boolean;
@@ -21,6 +22,8 @@ const GoalDrawer = ({
   currentValue = 0,
   onGoalSaved 
 }: GoalDrawerProps) => {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
   const [targetDate, setTargetDate] = useState("");
   const [targetValue, setTargetValue] = useState("");
   const [loading, setLoading] = useState(false);
@@ -190,7 +193,7 @@ const GoalDrawer = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col light-theme"
+            className={`fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col ${themeClass}`}
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
