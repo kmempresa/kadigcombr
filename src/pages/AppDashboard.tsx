@@ -548,51 +548,84 @@ const AppDashboard = () => {
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
 
-              {/* Portfolio Summary */}
-              {userData?.portfolios && userData.portfolios.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1 h-5 bg-foreground rounded-full" />
-                    <h2 className="font-semibold text-foreground">Suas Carteiras</h2>
-                  </div>
+              {/* Portfolio Summary - Always show carousel */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 bg-foreground rounded-full" />
+                  <h2 className="font-semibold text-foreground">Suas Carteiras</h2>
+                </div>
 
-                  <div className="space-y-3">
-                    {userData.portfolios.map((portfolio) => (
-                      <div key={portfolio.id} className="bg-card border border-border rounded-xl p-4">
-                        <div className="flex items-center justify-between">
+                {/* Horizontal Carousel */}
+                <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                  <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
+                    {/* Add Portfolio Card - Always first */}
+                    <motion.div
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => navigate("/adicionar-investimento")}
+                      className="bg-gradient-to-br from-primary/10 to-violet-500/10 border-2 border-dashed border-primary/30 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all"
+                      style={{ minWidth: '160px', height: '140px' }}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-2">
+                        <Plus className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="text-sm font-medium text-primary">Nova Carteira</span>
+                    </motion.div>
+
+                    {/* Existing Portfolios */}
+                    {userData?.portfolios && userData.portfolios.map((portfolio, index) => (
+                      <motion.div
+                        key={portfolio.id}
+                        whileTap={{ scale: 0.98 }}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-card border border-border rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
+                        style={{ minWidth: '200px', height: '140px' }}
+                      >
+                        <div className="flex flex-col h-full justify-between">
                           <div>
-                            <h3 className="font-medium text-foreground">{portfolio.name}</h3>
-                            <p className="text-2xl font-bold text-foreground">{formatCurrency(portfolio.total_value)}</p>
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                              <h3 className="font-medium text-foreground text-sm">{portfolio.name}</h3>
+                            </div>
+                            <p className="text-xl font-bold text-foreground">{formatCurrency(portfolio.total_value)}</p>
                           </div>
-                          <div className="text-right">
-                            <span className={`text-sm font-semibold ${portfolio.total_gain >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-semibold ${portfolio.total_gain >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                               {portfolio.total_gain >= 0 ? "+" : ""}{formatCurrency(portfolio.total_gain)}
                             </span>
-                            <p className="text-xs text-muted-foreground">{portfolio.cdi_percent.toFixed(0)}% do CDI</p>
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                              {portfolio.cdi_percent.toFixed(0)}% CDI
+                            </span>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
+
+                    {/* Empty placeholder cards when no portfolios */}
+                    {(!userData?.portfolios || userData.portfolios.length === 0) && (
+                      <>
+                        <div 
+                          className="bg-muted/30 border border-dashed border-muted-foreground/20 rounded-xl p-4 flex items-center justify-center"
+                          style={{ minWidth: '200px', height: '140px' }}
+                        >
+                          <p className="text-xs text-muted-foreground text-center">
+                            Sua primeira<br/>carteira aqui
+                          </p>
+                        </div>
+                        <div 
+                          className="bg-muted/20 border border-dashed border-muted-foreground/10 rounded-xl p-4 flex items-center justify-center"
+                          style={{ minWidth: '160px', height: '140px' }}
+                        >
+                          <p className="text-xs text-muted-foreground/50 text-center">
+                            Deslize →
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-              )}
-
-              {/* Empty State */}
-              {(!userData?.portfolios || userData.portfolios.length === 0) && (
-                <div className="bg-card border border-dashed border-border rounded-2xl p-8 text-center">
-                  <Wallet className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="font-semibold text-foreground mb-2">Nenhuma carteira cadastrada</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Adicione seus investimentos para começar a acompanhar seu patrimônio
-                  </p>
-                  <button 
-                    onClick={() => navigate("/adicionar-investimento")}
-                    className="bg-primary text-primary-foreground px-6 py-2 rounded-full font-medium"
-                  >
-                    Adicionar Investimento
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
           )}
 
