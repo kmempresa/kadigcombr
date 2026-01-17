@@ -1841,7 +1841,7 @@ const AppDashboard = () => {
             {[
               { icon: Shield, label: "Segurança", action: () => navigate("/seguranca") },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
-              { icon: MessageSquare, label: "Suporte", action: () => {} },
+              { icon: MessageSquare, label: "Suporte", action: () => navigate("/suporte") },
               { icon: Info, label: "Sobre", action: () => {} },
             ].map((item, index) => (
               <button 
