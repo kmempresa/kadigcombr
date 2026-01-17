@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Bot, User, Loader2, Mic, Paperclip } from "lucide-react";
+import { ArrowLeft, Send, User, Mic, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 interface Message {
   id: string;
@@ -20,7 +21,7 @@ const ConsultorIA = () => {
     {
       id: "welcome",
       role: "assistant",
-      content: "Olá! Sou o Kadig AI, seu consultor financeiro pessoal 👋\n\nConheço sua carteira de investimentos e estou aqui para te ajudar com análises personalizadas, recomendações e tirar suas dúvidas.\n\nComo posso ajudar você hoje?",
+      content: "Olá! Sou a Bianca, sua consultora financeira pessoal 👋\n\nConheço sua carteira de investimentos e estou aqui para te ajudar com análises personalizadas, recomendações e tirar suas dúvidas.\n\nComo posso ajudar você hoje?",
       timestamp: new Date(),
     },
   ]);
@@ -218,15 +219,15 @@ const ConsultorIA = () => {
         
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-200/50">
-              <Bot className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-lg shadow-emerald-200/50">
+              <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-slate-800 text-sm">Kadig AI</h1>
+            <h1 className="font-semibold text-slate-800 text-sm">Bianca Consultora</h1>
             <p className="text-[11px] text-emerald-500 font-medium">
-              {isAuthenticated ? "Conectado" : "Offline"}
+              {isAuthenticated ? "Online" : "Offline"}
             </p>
           </div>
         </div>
@@ -247,8 +248,8 @@ const ConsultorIA = () => {
               className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
             >
               {message.role === "assistant" && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-200/40">
-                  <Bot className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-xl overflow-hidden flex-shrink-0 shadow-md shadow-emerald-200/40">
+                  <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
                 </div>
               )}
               
@@ -288,8 +289,8 @@ const ConsultorIA = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-3"
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-200/40">
-              <Bot className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-xl overflow-hidden shadow-md shadow-emerald-200/40">
+              <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
             </div>
             <div className="bg-white rounded-3xl rounded-bl-lg px-5 py-4 shadow-sm border border-slate-100">
               <div className="flex items-center gap-1.5">
@@ -379,7 +380,7 @@ const ConsultorIA = () => {
         </div>
         
         <p className="text-center text-[11px] text-slate-400 mt-3">
-          Kadig AI conhece sua carteira e dá recomendações personalizadas
+          Bianca conhece sua carteira e dá recomendações personalizadas
         </p>
       </div>
     </div>
