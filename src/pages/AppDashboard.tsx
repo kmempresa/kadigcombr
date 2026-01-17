@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -563,7 +563,12 @@ const AppDashboard = () => {
     );
   }
 
-  const currentData = monthlyData[currentMonthIndex] || {
+  // Recalculate monthly data when portfolio changes
+  const portfolioMonthlyData = useMemo(() => {
+    return generateMonthlyPerformance(totalPatrimonio, totalGanhos, totalInvestido, economicIndicators);
+  }, [totalPatrimonio, totalGanhos, totalInvestido, economicIndicators]);
+
+  const currentData = portfolioMonthlyData[currentMonthIndex] || {
     month: "---",
     value: totalPatrimonio,
     gain: totalGanhos,
