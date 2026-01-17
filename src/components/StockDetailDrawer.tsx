@@ -135,6 +135,16 @@ interface StockDetails {
   dividendsHistory: { paymentDate: string; rate: number; type: string }[];
 }
 
+interface NewsItem {
+  title: string;
+  text: string;
+  source_name: string;
+  date: string;
+  news_url: string;
+  image_url: string | null;
+  sentiment: string;
+}
+
 const StockDetailDrawer = ({
   isOpen,
   onClose,
@@ -145,11 +155,14 @@ const StockDetailDrawer = ({
 }: StockDetailDrawerProps) => {
   const [loading, setLoading] = useState(false);
   const [stockDetails, setStockDetails] = useState<StockDetails | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
   const [activeInfoTab, setActiveInfoTab] = useState<"indicadores" | "empresa" | "financeiro">("indicadores");
   
   useEffect(() => {
     if (isOpen && stock) {
       fetchStockDetails(stock.symbol);
+      fetchNews(stock.symbol);
     }
   }, [isOpen, stock]);
 
@@ -169,6 +182,24 @@ const StockDetailDrawer = ({
       console.error("Error fetching stock details:", error);
     }
     setLoading(false);
+  };
+
+  const fetchNews = async (symbol: string) => {
+    setNewsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('market-data', {
+        body: { type: 'news', symbol }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.news) {
+        setNews(data.news);
+      }
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+    setNewsLoading(false);
   };
 
   if (!stock) return null;
@@ -759,15 +790,71 @@ const StockDetailDrawer = ({
                   {/* Notícias */}
                   <section className="py-4 border-t border-border">
                     <h3 className="text-lg font-semibold text-foreground mb-4">Notícias relacionadas</h3>
-                    <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
-                        <FileText className="w-8 h-8 text-muted-foreground" />
+                    
+                    {newsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
                       </div>
-                      <p className="text-muted-foreground text-center text-sm">
-                        Notícias não disponíveis na API gratuita.<br/>
-                        Requer integração com API de notícias.
-                      </p>
-                    </div>
+                    ) : news.length > 0 ? (
+                      <div className="space-y-3">
+                        {news.slice(0, 5).map((item, index) => (
+                          <a
+                            key={index}
+                            href={item.news_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block bg-card border border-border rounded-xl p-3 hover:border-primary transition-colors"
+                          >
+                            <div className="flex gap-3">
+                              {item.image_url && (
+                                <div className="w-16 h-16 rounded-lg bg-muted overflow-hidden flex-shrink-0">
+                                  <img 
+                                    src={item.image_url} 
+                                    alt="" 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-sm font-medium text-foreground line-clamp-2 mb-1">
+                                  {item.title}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{item.source_name}</span>
+                                  <span>•</span>
+                                  <span>{new Date(item.date).toLocaleDateString('pt-BR')}</span>
+                                  {item.sentiment && (
+                                    <>
+                                      <span>•</span>
+                                      <span className={`${
+                                        item.sentiment === 'Positive' ? 'text-emerald-500' : 
+                                        item.sentiment === 'Negative' ? 'text-red-500' : 
+                                        'text-muted-foreground'
+                                      }`}>
+                                        {item.sentiment === 'Positive' ? '📈' : item.sentiment === 'Negative' ? '📉' : '➖'}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center justify-center">
+                        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
+                          <FileText className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <p className="text-muted-foreground text-center text-sm">
+                          Nenhuma notícia encontrada para {stock?.symbol}.
+                        </p>
+                      </div>
+                    )}
                   </section>
                 </div>
 

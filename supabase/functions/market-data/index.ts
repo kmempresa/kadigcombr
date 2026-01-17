@@ -12,12 +12,59 @@ serve(async (req) => {
 
   try {
     const BRAPI_TOKEN = Deno.env.get('BRAPI_TOKEN');
+    const STOCK_NEWS_API_KEY = Deno.env.get('STOCK_NEWS_API_KEY');
     
     if (!BRAPI_TOKEN) {
       throw new Error('BRAPI_TOKEN not configured');
     }
 
     const { type = 'all', symbol } = await req.json().catch(() => ({}));
+
+    // Buscar notícias de uma ação específica
+    if (type === 'news' && symbol) {
+      console.log(`Fetching news for ${symbol}`);
+      
+      if (!STOCK_NEWS_API_KEY) {
+        return new Response(
+          JSON.stringify({ news: [], error: 'STOCK_NEWS_API_KEY not configured' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Stock News API - buscar notícias por ticker brasileiro
+      const newsUrl = `https://stocknewsapi.com/api/v1?tickers=${symbol}&items=10&token=${STOCK_NEWS_API_KEY}`;
+      
+      console.log(`Requesting news: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
+      
+      try {
+        const newsResponse = await fetch(newsUrl);
+        const newsData = await newsResponse.json();
+        
+        console.log(`News response:`, JSON.stringify(newsData).slice(0, 500));
+        
+        const news = (newsData.data || []).map((item: any) => ({
+          title: item.title,
+          text: item.text,
+          source_name: item.source_name,
+          date: item.date,
+          news_url: item.news_url,
+          image_url: item.image_url,
+          sentiment: item.sentiment,
+          tickers: item.tickers,
+        }));
+        
+        return new Response(
+          JSON.stringify({ news }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (newsError) {
+        console.error('Error fetching news:', newsError);
+        return new Response(
+          JSON.stringify({ news: [], error: 'Failed to fetch news' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Se for buscar detalhes de uma ação específica
     if (type === 'detail' && symbol) {
