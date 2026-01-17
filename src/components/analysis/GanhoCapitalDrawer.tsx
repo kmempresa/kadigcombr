@@ -22,7 +22,7 @@ interface GanhoCapitalDrawerProps {
 }
 
 // Normalize asset types from database to display labels
-const normalizeType = (type: string): string => {
+const normalizeAssetType = (type: string): string => {
   const normalized = type.toLowerCase().trim();
   const typeMap: { [key: string]: string } = {
     'ação': 'Ações',
@@ -268,7 +268,7 @@ export default function GanhoCapitalDrawer({
 
                 {/* Grouped by type */}
                 {Object.entries(investmentsByType).map(([type, assets]) => {
-                  const typeLabel = normalizeType(type);
+                  const typeLabel = normalizeAssetType(type);
                   const isExpanded = expandedSections.includes(type);
                   
                   return (
