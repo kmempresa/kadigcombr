@@ -577,37 +577,65 @@ const AppDashboard = () => {
       {activeTab === "carteira" && (
         <div className="flex-1 pb-20">
           {/* Header */}
-          <header className="flex items-center justify-between p-4 safe-area-inset-top">
-            <button 
-              onClick={() => setPatrimonioDrawerOpen(true)}
-              className="flex items-center gap-2 active:opacity-70 transition-opacity"
-            >
-              {patrimonioDrawerOpen ? (
-                <ChevronUp className="w-5 h-5 text-foreground" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-foreground" />
-              )}
-              <span className="font-semibold text-foreground">
-                Patrimônio {userName}
-              </span>
-            </button>
-            <div className="flex items-center gap-3">
-              <button className="p-2 text-muted-foreground">
-                <Bell className="w-5 h-5" />
-              </button>
-              <button className="p-2 text-muted-foreground" onClick={() => setShowValues(!showValues)}>
-                {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-              </button>
-              <button className="p-2 text-muted-foreground">
-                <HelpCircle className="w-5 h-5" />
-              </button>
+          <header className="flex flex-col p-4 safe-area-inset-top gap-2">
+            <div className="flex items-center justify-between">
               <button 
-                onClick={() => setAdicionarDrawerOpen(true)}
-                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md"
+                onClick={() => setPatrimonioDrawerOpen(true)}
+                className="flex items-center gap-2 active:opacity-70 transition-opacity"
               >
-                <Plus className="w-5 h-5 text-white" />
+                {patrimonioDrawerOpen ? (
+                  <ChevronUp className="w-5 h-5 text-foreground" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-foreground" />
+                )}
+                <span className="font-semibold text-foreground">
+                  Patrimônio {userName}
+                </span>
               </button>
+              <div className="flex items-center gap-3">
+                <button className="p-2 text-muted-foreground">
+                  <Bell className="w-5 h-5" />
+                </button>
+                <button className="p-2 text-muted-foreground" onClick={() => setShowValues(!showValues)}>
+                  {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                </button>
+                <button className="p-2 text-muted-foreground">
+                  <HelpCircle className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => setAdicionarDrawerOpen(true)}
+                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md"
+                >
+                  <Plus className="w-5 h-5 text-white" />
+                </button>
+              </div>
             </div>
+            
+            {/* Portfolio Quick Selector */}
+            {userData && userData.portfolios.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {userData.portfolios.map((portfolio) => {
+                  const isActive = portfolio.id === activePortfolioId;
+                  return (
+                    <button
+                      key={portfolio.id}
+                      onClick={() => setSelectedPortfolioId(portfolio.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                        isActive 
+                          ? 'bg-primary text-white shadow-sm' 
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      <Wallet className="w-3 h-3" />
+                      <span>{portfolio.name}</span>
+                      {isActive && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </header>
 
           {/* Sub Tabs */}
