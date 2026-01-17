@@ -12,8 +12,7 @@ import {
   List,
   TrendingUp,
   Star,
-  Loader2,
-  ExternalLink
+  Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,30 +24,12 @@ interface StockQuote {
   regularMarketPrice: number;
   regularMarketChange: number;
   regularMarketChangePercent: number;
-  logoUrl?: string | null;
 }
 
 interface MarketIndex {
   name: string;
   value: number;
   changePercent: number;
-  type?: string;
-}
-
-interface Commodity {
-  name: string;
-  symbol: string;
-  value: number;
-  changePercent: number;
-  icon: string;
-}
-
-interface NewsItem {
-  title: string;
-  source_name: string;
-  date: string;
-  news_url: string;
-  image_url: string | null;
 }
 
 interface TradeTabProps {
@@ -79,31 +60,16 @@ const TradeTab = ({
   const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([]);
-  const [commodities, setCommodities] = useState<Commodity[]>([]);
-  const [marketNews, setMarketNews] = useState<NewsItem[]>([]);
-  const [loadingNews, setLoadingNews] = useState(false);
-  
-  // Filtros para ações
-  const [assetFilter, setAssetFilter] = useState<"acoes" | "fiis" | "bdrs" | "etfs" | "cripto">("acoes");
+  const [marketSubTab, setMarketSubTab] = useState<"dados" | "carteiras">("dados");
+  const [indicesExpanded, setIndicesExpanded] = useState(true);
+  const [altasExpanded, setAltasExpanded] = useState(true);
+  const [baixasExpanded, setBaixasExpanded] = useState(true);
 
-  const fetchMarketNews = async () => {
-    setLoadingNews(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('market-data', {
-        body: { type: 'market-news' }
-      });
-      
-      if (error) throw error;
-      
-      if (data?.news) {
-        setMarketNews(data.news);
-      }
-    } catch (error) {
-      console.error("Error fetching market news:", error);
-    }
-    setLoadingNews(false);
-  };
+  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([
+    { name: "IBOV", value: 164799.99, changePercent: -0.46 },
+    { name: "IFIX", value: 3809.30, changePercent: 0.13 },
+    { name: "IDIV", value: 11587.36, changePercent: -0.45 },
+  ]);
 
   const fetchMarketStocks = async () => {
     setLoadingMarket(true);
@@ -118,13 +84,19 @@ const TradeTab = ({
         setMarketStocks(data.stocks || []);
         setMaioresAltas(data.maioresAltas || []);
         setMaioresBaixas(data.maioresBaixas || []);
-        setMarketIndices(data.indices || []);
-        setCommodities(data.commodities || []);
+        if (data.indices && data.indices.length > 0) {
+          setMarketIndices([
+            ...data.indices.slice(0, 2),
+            { name: "IDIV", value: 11587.36, changePercent: -0.45 }
+          ]);
+        }
         const now = new Date();
-        setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+        setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       }
     } catch (error) {
       console.error("Error fetching market:", error);
+      const now = new Date();
+      setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     }
     setLoadingMarket(false);
   };
@@ -132,7 +104,6 @@ const TradeTab = ({
   useEffect(() => {
     if (activeTab === "mercado" || activeTab === "favoritos") {
       fetchMarketStocks();
-      fetchMarketNews();
       const interval = setInterval(fetchMarketStocks, 30000);
       return () => clearInterval(interval);
     }
@@ -162,14 +133,6 @@ const TradeTab = ({
     { id: "favoritos", label: "Favoritos" },
   ];
 
-  const assetFilters = [
-    { id: "acoes", label: "Ações" },
-    { id: "fiis", label: "FIIs" },
-    { id: "bdrs", label: "BDRs" },
-    { id: "etfs", label: "ETFs" },
-    { id: "cripto", label: "Cripto" },
-  ];
-
   const filteredMarketStocks = searchTerm 
     ? marketStocks.filter(s => 
         s.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -177,17 +140,21 @@ const TradeTab = ({
       )
     : marketStocks;
 
+  const filteredAltas = maioresAltas.length > 0 ? maioresAltas : [...filteredMarketStocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0, 10);
+  const filteredBaixas = maioresBaixas.length > 0 ? maioresBaixas : [...filteredMarketStocks].sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0, 10);
+
   // Mini chart component
   const MiniChart = ({ positive }: { positive: boolean }) => (
-    <svg viewBox="0 0 60 20" className="w-full h-5">
+    <svg viewBox="0 0 80 24" className="w-full h-6">
       <path
         d={positive 
-          ? "M0,15 L10,13 L20,14 L30,10 L40,11 L50,8 L60,5"
-          : "M0,5 L10,7 L20,6 L30,10 L40,9 L50,12 L60,15"
+          ? "M0,18 L8,16 L16,17 L24,14 L32,15 L40,12 L48,13 L56,10 L64,8 L72,9 L80,6"
+          : "M0,6 L8,8 L16,7 L24,10 L32,9 L40,12 L48,11 L56,14 L64,16 L72,15 L80,18"
         }
         fill="none"
         stroke={positive ? "#22c55e" : "#ef4444"}
         strokeWidth="1.5"
+        strokeDasharray="3 2"
       />
     </svg>
   );
@@ -208,9 +175,37 @@ const TradeTab = ({
             >
               {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
             </button>
+            <button 
+              onClick={() => setSearchOpen(!searchOpen)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                searchOpen ? "bg-muted text-foreground" : "bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <Search className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Search Bar */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-4 pb-3"
+          >
+            <Input
+              placeholder="Buscar ativo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-11 bg-muted/30 border-border"
+              autoFocus
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tabs */}
       <div className="flex px-4 gap-1 overflow-x-auto scrollbar-hide">
@@ -272,10 +267,45 @@ const TradeTab = ({
             <div className="px-4">
               {userAssets.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8">
+                  {/* Plus button with hand pointer */}
                   <div className="relative mb-6">
                     <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
                       <Plus className="w-8 h-8 text-white" />
                     </div>
+                    {/* Hand pointer */}
+                    <svg 
+                      width="40" 
+                      height="48" 
+                      viewBox="0 0 40 48" 
+                      fill="none" 
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/4"
+                    >
+                      <path 
+                        d="M20 8C20 5.79086 21.7909 4 24 4C26.2091 4 28 5.79086 28 8V20" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M28 16C28 13.7909 29.7909 12 32 12C34.2091 12 36 13.7909 36 16V24" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M12 24V8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8V20" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M12 24L8 28C6 30 6 34 8 36L12 40H32C36 40 36 36 36 32V24" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </div>
 
                   <h3 className="text-lg font-semibold text-foreground text-center mb-2">
@@ -347,279 +377,233 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4"
           >
-            <div className="flex flex-col items-center justify-center py-12">
-              <TrendingUp className="w-12 h-12 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">Patrimônio</h3>
-              <p className="text-sm text-muted-foreground text-center">
-                Visualize a evolução do seu patrimônio ao longo do tempo
-              </p>
+            {/* Portfolio Selector */}
+            <div className="p-4">
+              <button className="w-full flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+                <span className="text-foreground font-medium">Patrimônio {userName}</span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="px-4">
+              <div className="flex flex-col items-center justify-center py-12">
+                <TrendingUp className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">Patrimônio</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  Visualize a evolução do seu patrimônio ao longo do tempo
+                </p>
+              </div>
             </div>
           </motion.div>
         )}
 
-        {/* Mercado Tab - NOVO DESIGN */}
+        {/* Mercado Tab */}
         {activeTab === "mercado" && (
           <motion.div 
             key="mercado"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="pb-4"
+            className="px-4 pt-4"
           >
-            {loadingMarket && marketStocks.length === 0 ? (
+            {/* Sub menu */}
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4">
+              <button 
+                onClick={() => setMarketSubTab("dados")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
+                  marketSubTab === "dados" 
+                    ? "bg-muted" 
+                    : "bg-card border border-border"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-medium text-foreground text-sm">Dados do<br/>mercado</span>
+              </button>
+              <button 
+                onClick={() => setMarketSubTab("carteiras")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
+                  marketSubTab === "carteiras" 
+                    ? "bg-muted" 
+                    : "bg-card border border-border"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">btg</span>
+                </div>
+                <span className="font-medium text-foreground text-sm">Carteiras<br/>BTG Pactual</span>
+              </button>
+            </div>
+
+            {loadingMarket ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
                 <p className="text-sm text-muted-foreground">Carregando cotações...</p>
               </div>
             ) : (
               <>
-                {/* Notícias em destaque */}
-                <section className="px-4 pt-4 pb-2">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">Notícias em destaque</h2>
-                  
-                  {loadingNews ? (
-                    <div className="flex items-center justify-center py-6">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    </div>
-                  ) : marketNews.length > 0 ? (
-                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                      {marketNews.map((news, index) => (
-                        <a
-                          key={index}
-                          href={news.news_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-shrink-0 w-64 bg-card border border-border rounded-xl overflow-hidden"
-                        >
-                          {news.image_url && (
-                            <div className="h-28 bg-muted">
-                              <img 
-                                src={news.image_url} 
-                                alt="" 
-                                className="w-full h-full object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            </div>
-                          )}
-                          <div className="p-3">
-                            <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-2">
-                              {news.title}
-                            </h3>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{news.source_name}</span>
-                            </div>
-                          </div>
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="bg-card border border-border rounded-xl p-6 text-center">
-                      <p className="text-sm text-muted-foreground">Nenhuma notícia disponível no momento</p>
-                    </div>
-                  )}
-                </section>
+                {/* Last update */}
+                <div className="pb-4">
+                  <p className="text-center text-sm text-muted-foreground">
+                    Última atualização: {lastUpdate}
+                  </p>
+                </div>
 
                 {/* Índices do mercado */}
-                <section className="px-4 py-3">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">Índices do mercado</h2>
-                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                    {marketIndices.map((index) => (
-                      <div 
-                        key={index.name}
-                        className="flex-shrink-0 w-32 bg-card border border-border rounded-xl p-3"
+                <div className="pb-4">
+                  <button 
+                    onClick={() => setIndicesExpanded(!indicesExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Índices do mercado</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${indicesExpanded ? "" : "-rotate-180"}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {indicesExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide pt-3"
                       >
-                        <p className="font-semibold text-foreground text-sm mb-1">{index.name}</p>
-                        <div className="h-5 mb-1">
-                          <MiniChart positive={index.changePercent >= 0} />
-                        </div>
-                        <p className="text-xs text-foreground mb-1">{formatNumber(index.value)}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          index.changePercent >= 0 
-                            ? "bg-emerald-500/20 text-emerald-500" 
-                            : "bg-red-500/20 text-red-500"
-                        }`}>
-                          {index.changePercent >= 0 ? "+" : ""}{index.changePercent.toFixed(2)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Commodities */}
-                <section className="px-4 py-3">
-                  <h2 className="text-lg font-semibold text-foreground mb-3">Commodities</h2>
-                  <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
-                    {commodities.map((commodity) => (
-                      <div 
-                        key={commodity.symbol}
-                        className="flex-shrink-0 w-28 bg-card border border-border rounded-xl p-3 text-center"
-                      >
-                        <span className="text-2xl mb-1 block">{commodity.icon}</span>
-                        <p className="font-semibold text-foreground text-sm">{commodity.name}</p>
-                        <p className="text-xs text-foreground">${formatNumber(commodity.value)}</p>
-                        <span className={`text-xs ${
-                          commodity.changePercent >= 0 ? "text-emerald-500" : "text-red-500"
-                        }`}>
-                          {commodity.changePercent >= 0 ? "+" : ""}{commodity.changePercent.toFixed(2)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Busca e Filtros */}
-                <section className="px-4 py-3">
-                  <div className="relative mb-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar ativo..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 h-11 bg-muted/30 border-border"
-                    />
-                  </div>
-
-                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-                    {assetFilters.map((filter) => (
-                      <button
-                        key={filter.id}
-                        onClick={() => setAssetFilter(filter.id as any)}
-                        className={`px-4 py-2 text-sm font-medium whitespace-nowrap rounded-full transition-colors ${
-                          assetFilter === filter.id 
-                            ? "bg-primary text-white" 
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {filter.label}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Lista de Ações */}
-                <section className="px-4 py-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {assetFilter === "acoes" ? "Maiores altas" : assetFilter.toUpperCase()}
-                    </h2>
-                    <span className="text-xs text-muted-foreground">Atualizado: {lastUpdate}</span>
-                  </div>
-
-                  <div className="space-y-2">
-                    {(assetFilter === "acoes" ? maioresAltas.slice(0, 8) : []).map((stock) => (
-                      <div 
-                        key={stock.symbol}
-                        onClick={() => {
-                          setSelectedStock(stock);
-                          setStockDetailOpen(true);
-                        }}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                          {stock.logoUrl ? (
-                            <img 
-                              src={stock.logoUrl} 
-                              alt={stock.symbol}
-                              className="w-8 h-8 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <span className="text-xs font-bold text-foreground">
-                              {stock.symbol.slice(0, 2)}
+                        {marketIndices.map((index) => (
+                          <div 
+                            key={index.name}
+                            className="flex-shrink-0 w-36 bg-card border border-border rounded-xl p-4"
+                          >
+                            <p className="font-semibold text-foreground mb-2">{index.name}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={index.changePercent >= 0} />
+                            </div>
+                            <p className="text-sm text-foreground mb-1">{formatNumber(index.value)}</p>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              index.changePercent >= 0 
+                                ? "bg-emerald-500 text-white" 
+                                : "bg-red-500 text-white"
+                            }`}>
+                              {index.changePercent >= 0 ? "+ " : "- "}{Math.abs(index.changePercent).toFixed(2)}%
                             </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-foreground">{stock.symbol}</p>
-                          <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
-                        </div>
-                        <div className="w-16 h-8">
-                          <MiniChart positive={stock.regularMarketChangePercent >= 0} />
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-foreground text-sm">{formatPrice(stock.regularMarketPrice)}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            stock.regularMarketChangePercent >= 0 
-                              ? "bg-emerald-500/20 text-emerald-500" 
-                              : "bg-red-500/20 text-red-500"
-                          }`}>
-                            {stock.regularMarketChangePercent >= 0 ? "+" : ""}
-                            {stock.regularMarketChangePercent.toFixed(2)}%
-                          </span>
-                        </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}
-                          className="p-1"
-                        >
-                          <Star className={`w-4 h-4 ${
-                            favorites.includes(stock.symbol) 
-                              ? "fill-yellow-400 text-yellow-400" 
-                              : "text-muted-foreground"
-                          }`} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                  {/* Maiores Baixas */}
-                  <h2 className="text-lg font-semibold text-foreground mt-6 mb-3">Maiores baixas</h2>
-                  <div className="space-y-2">
-                    {maioresBaixas.slice(0, 5).map((stock) => (
-                      <div 
-                        key={stock.symbol}
-                        onClick={() => {
-                          setSelectedStock(stock);
-                          setStockDetailOpen(true);
-                        }}
-                        className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+                {/* Maiores altas */}
+                <div className="pb-4">
+                  <button 
+                    onClick={() => setAltasExpanded(!altasExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Maiores altas</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${altasExpanded ? "" : "-rotate-180"}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {altasExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid grid-cols-2 gap-3 pt-3"
                       >
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                          {stock.logoUrl ? (
-                            <img 
-                              src={stock.logoUrl} 
-                              alt={stock.symbol}
-                              className="w-8 h-8 object-contain"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <span className="text-xs font-bold text-foreground">
-                              {stock.symbol.slice(0, 2)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-foreground">{stock.symbol}</p>
-                          <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
-                        </div>
-                        <div className="w-16 h-8">
-                          <MiniChart positive={stock.regularMarketChangePercent >= 0} />
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-foreground text-sm">{formatPrice(stock.regularMarketPrice)}</p>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-500">
-                            {stock.regularMarketChangePercent.toFixed(2)}%
-                          </span>
-                        </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}
-                          className="p-1"
-                        >
-                          <Star className={`w-4 h-4 ${
-                            favorites.includes(stock.symbol) 
-                              ? "fill-yellow-400 text-yellow-400" 
-                              : "text-muted-foreground"
-                          }`} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                        {filteredAltas.map((stock) => (
+                          <div 
+                            key={stock.symbol}
+                            onClick={() => {
+                              setSelectedStock(stock);
+                              setStockDetailOpen(true);
+                            }}
+                            className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-foreground">{stock.symbol}</p>
+                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
+                                <Star className={`w-4 h-4 ${
+                                  favorites.includes(stock.symbol) 
+                                    ? "fill-yellow-400 text-yellow-400" 
+                                    : "text-muted-foreground"
+                                }`} />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={stock.regularMarketChangePercent >= 0} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-foreground">
+                                {formatPrice(stock.regularMarketPrice)}
+                              </span>
+                              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white">
+                                + {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Maiores baixas */}
+                <div className="pb-4">
+                  <button 
+                    onClick={() => setBaixasExpanded(!baixasExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Maiores baixas</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${baixasExpanded ? "" : "-rotate-180"}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {baixasExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid grid-cols-2 gap-3 pt-3"
+                      >
+                        {filteredBaixas.map((stock) => (
+                          <div 
+                            key={stock.symbol}
+                            onClick={() => {
+                              setSelectedStock(stock);
+                              setStockDetailOpen(true);
+                            }}
+                            className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-foreground">{stock.symbol}</p>
+                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
+                                <Star className={`w-4 h-4 ${
+                                  favorites.includes(stock.symbol) 
+                                    ? "fill-yellow-400 text-yellow-400" 
+                                    : "text-muted-foreground"
+                                }`} />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={stock.regularMarketChangePercent >= 0} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-foreground">
+                                {formatPrice(stock.regularMarketPrice)}
+                              </span>
+                              <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white">
+                                - {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </>
             )}
           </motion.div>
@@ -643,7 +627,7 @@ const TradeTab = ({
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-3">
                 {marketStocks.filter(s => favorites.includes(s.symbol)).map((stock) => (
                   <div 
                     key={stock.symbol}
@@ -651,37 +635,31 @@ const TradeTab = ({
                       setSelectedStock(stock);
                       setStockDetailOpen(true);
                     }}
-                    className="bg-card border border-border rounded-xl p-3 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+                    className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
                   >
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                      <span className="text-xs font-bold text-foreground">
-                        {stock.symbol.slice(0, 2)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
                       <p className="font-semibold text-foreground">{stock.symbol}</p>
-                      <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      </button>
                     </div>
-                    <div className="w-16 h-8">
+                    <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                    <div className="h-6 mb-2">
                       <MiniChart positive={stock.regularMarketChangePercent >= 0} />
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-foreground text-sm">{formatPrice(stock.regularMarketPrice)}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">
+                        {formatPrice(stock.regularMarketPrice)}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
                         stock.regularMarketChangePercent >= 0 
-                          ? "bg-emerald-500/20 text-emerald-500" 
-                          : "bg-red-500/20 text-red-500"
+                          ? "bg-emerald-500 text-white" 
+                          : "bg-red-500 text-white"
                       }`}>
-                        {stock.regularMarketChangePercent >= 0 ? "+" : ""}
-                        {stock.regularMarketChangePercent.toFixed(2)}%
+                        {stock.regularMarketChangePercent >= 0 ? "+ " : "- "}
+                        {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
                       </span>
                     </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}
-                      className="p-1"
-                    >
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    </button>
                   </div>
                 ))}
               </div>
