@@ -1,28 +1,33 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle, FileEdit } from "lucide-react";
+import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle, FileEdit, BarChart3, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Tipos de ativos disponíveis
 const tiposAtivos = [
-  { id: "acoes", nome: "Ações, Stocks e ETF", cor: "#ef4444" },
-  { id: "bdrs", nome: "BDRs", cor: "#f97316" },
-  { id: "conta_corrente", nome: "Conta Corrente", cor: "#eab308" },
-  { id: "criptoativos", nome: "Criptoativos", cor: "#22c55e" },
-  { id: "debentures", nome: "Debêntures", cor: "#14b8a6" },
-  { id: "fundos", nome: "Fundos", cor: "#06b6d4" },
-  { id: "fiis", nome: "FIIs e REITs", cor: "#3b82f6" },
-  { id: "moedas", nome: "Moedas", cor: "#8b5cf6" },
-  { id: "personalizados", nome: "Personalizados", cor: "#a855f7" },
-  { id: "poupanca", nome: "Poupança", cor: "#d946ef" },
-  { id: "previdencia", nome: "Previdência", cor: "#ec4899" },
-  { id: "renda_fixa_pre", nome: "Renda Fixa Prefixada", cor: "#f43f5e" },
-  { id: "renda_fixa_pos", nome: "Renda Fixa Pós-fixada", cor: "#be185d" },
-  { id: "tesouro", nome: "Tesouro Direto", cor: "#9d174d" },
+  { id: "acoes", nome: "Ações, Stocks e ETF", cor: "#ef4444", fluxo: "ativo" },
+  { id: "bdrs", nome: "BDRs", cor: "#f97316", fluxo: "ativo" },
+  { id: "conta_corrente", nome: "Conta Corrente", cor: "#eab308", fluxo: "simples" },
+  { id: "criptoativos", nome: "Criptoativos", cor: "#22c55e", fluxo: "ativo" },
+  { id: "debentures", nome: "Debêntures", cor: "#14b8a6", fluxo: "renda_fixa" },
+  { id: "fundos", nome: "Fundos", cor: "#06b6d4", fluxo: "ativo" },
+  { id: "fiis", nome: "FIIs e REITs", cor: "#3b82f6", fluxo: "ativo" },
+  { id: "moedas", nome: "Moedas", cor: "#8b5cf6", fluxo: "simples" },
+  { id: "personalizados", nome: "Personalizados", cor: "#a855f7", fluxo: "simples" },
+  { id: "poupanca", nome: "Poupança", cor: "#d946ef", fluxo: "simples" },
+  { id: "previdencia", nome: "Previdência", cor: "#ec4899", fluxo: "renda_fixa" },
+  { id: "renda_fixa_pre", nome: "Renda Fixa Prefixada", cor: "#f43f5e", fluxo: "renda_fixa" },
+  { id: "renda_fixa_pos", nome: "Renda Fixa Pós-fixada", cor: "#be185d", fluxo: "renda_fixa" },
+  { id: "tesouro", nome: "Tesouro Direto", cor: "#9d174d", fluxo: "renda_fixa" },
 ];
+
+// Fluxos:
+// "ativo" - Precisa buscar ativo (Ações, BDRs, FIIs, Criptoativos, Fundos)
+// "simples" - Apenas valor e % CDI opcional (Conta Corrente, Poupança, Moedas, Personalizados)
+// "renda_fixa" - Taxa, vencimento, indexador (Debêntures, Previdência, Renda Fixa, Tesouro)
 
 interface StockData {
   symbol: string;
@@ -231,23 +236,40 @@ const AdicionarInvestimento = () => {
   const [assetDetails, setAssetDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   
-  // Step 4 - Quantity and values
+  // Step 4 - Quantity and values (for "ativo" flow)
   const [quantity, setQuantity] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
   const [brokerageFee, setBrokerageFee] = useState("");
-
-  const totalSteps = 5;
+  
+  // For "simples" flow (Conta Corrente, Poupança, etc)
+  const [investmentValue, setInvestmentValue] = useState("");
+  const [cdiPercentage, setCdiPercentage] = useState("");
+  const [hasRemuneration, setHasRemuneration] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  
+  // For "renda_fixa" flow
+  const [fixedRate, setFixedRate] = useState("");
+  const [maturityDate, setMaturityDate] = useState("");
+  const [indexer, setIndexer] = useState("CDI");
+  
+  // Get current flow type
+  const currentFlow = tiposAtivos.find(t => t.id === selectedTipoAtivo)?.fluxo || "ativo";
+  
+  // Dynamic total steps based on flow
+  const getTotalSteps = () => {
+    if (currentFlow === "simples") return 4; // Tipo -> Banco -> Valor/% CDI -> Confirmação
+    if (currentFlow === "renda_fixa") return 5; // Tipo -> Banco -> Dados -> Valor -> Confirmação
+    return 5; // Tipo -> Banco -> Buscar Ativo -> Valor -> Confirmação
+  };
+  
+  const totalSteps = getTotalSteps();
   
   // Get title based on asset type
   const getAssetTypeTitle = () => {
     const tipo = tiposAtivos.find(t => t.id === selectedTipoAtivo);
     if (!tipo) return "Adicionar Ativo";
-    if (tipo.id === "acoes") return "Adicionar Ação";
-    if (tipo.id === "bdrs") return "Adicionar BDR";
-    if (tipo.id === "fiis") return "Adicionar FII";
-    if (tipo.id === "criptoativos") return "Adicionar Criptoativo";
-    return `Adicionar ${tipo.nome}`;
+    return tipo.nome;
   };
 
   useEffect(() => {
@@ -338,19 +360,34 @@ const AdicionarInvestimento = () => {
     );
   }, [searchTerm]);
 
-  const canAdvance = 
-    step === 1 ? selectedTipoAtivo !== null : 
-    step === 2 ? selectedInstituicao !== "" : 
-    step === 3 ? selectedAsset !== null :
-    step === 4 ? quantity !== "" && purchasePrice !== "" :
-    true;
+  // Dynamic validation based on flow
+  const canAdvance = () => {
+    if (step === 1) return selectedTipoAtivo !== null;
+    if (step === 2) return selectedInstituicao !== "";
+    
+    if (currentFlow === "simples") {
+      if (step === 3) return investmentValue !== "" && startDate !== "";
+      return true; // Step 4 is confirmation
+    }
+    
+    if (currentFlow === "renda_fixa") {
+      if (step === 3) return fixedRate !== "" && maturityDate !== "";
+      if (step === 4) return investmentValue !== "";
+      return true; // Step 5 is confirmation
+    }
+    
+    // Flow "ativo"
+    if (step === 3) return selectedAsset !== null;
+    if (step === 4) return quantity !== "" && purchasePrice !== "";
+    return true;
+  };
 
   const handleAdvance = async () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
       // Final step - save investment to database
-      if (!userId || !selectedAsset) return;
+      if (!userId) return;
       
       try {
         // Get or create portfolio
@@ -376,32 +413,67 @@ const AdicionarInvestimento = () => {
         }
         
         if (portfolioId) {
-          const qty = parseFloat(quantity) || 0;
-          const price = parseFloat(purchasePrice) || 0;
-          const fee = parseFloat(brokerageFee) || 0;
-          const totalInvested = (qty * price) + fee;
-          const currentPrice = assetDetails?.regularMarketPrice || price;
-          const currentValue = qty * currentPrice;
-          const gainValue = currentValue - totalInvested;
-          const gainPercent = totalInvested > 0 ? (gainValue / totalInvested) * 100 : 0;
-          
-          // Get asset type label
           const tipoAtivo = tiposAtivos.find(t => t.id === selectedTipoAtivo);
-          const assetTypeLabel = tipoAtivo?.nome || 'Ação';
+          const assetTypeLabel = tipoAtivo?.nome || 'Outro';
+          
+          let totalInvested = 0;
+          let currentValue = 0;
+          let gainValue = 0;
+          let gainPercent = 0;
+          let assetName = "";
+          let ticker = "";
+          let qty = 1;
+          let price = 0;
+          
+          if (currentFlow === "simples") {
+            // Conta Corrente, Poupança, Moedas, Personalizados
+            totalInvested = parseFloat(investmentValue) || 0;
+            currentValue = totalInvested; // Valor atual = valor investido inicialmente
+            gainValue = 0;
+            gainPercent = 0;
+            assetName = `${assetTypeLabel} - ${selectedInstituicao.split(' ')[0]}`;
+            ticker = selectedTipoAtivo?.toUpperCase() || '';
+            qty = 1;
+            price = totalInvested;
+          } else if (currentFlow === "renda_fixa") {
+            // Debêntures, Previdência, Renda Fixa, Tesouro
+            totalInvested = parseFloat(investmentValue) || 0;
+            currentValue = totalInvested;
+            gainValue = 0;
+            gainPercent = parseFloat(fixedRate) || 0;
+            assetName = `${assetTypeLabel} - ${selectedInstituicao.split(' ')[0]}`;
+            ticker = selectedTipoAtivo?.toUpperCase() || '';
+            qty = 1;
+            price = totalInvested;
+          } else {
+            // Ações, BDRs, FIIs, Criptoativos, Fundos
+            if (!selectedAsset) return;
+            qty = parseFloat(quantity) || 0;
+            price = parseFloat(purchasePrice) || 0;
+            const fee = parseFloat(brokerageFee) || 0;
+            totalInvested = (qty * price) + fee;
+            const currentPrice = assetDetails?.regularMarketPrice || price;
+            currentValue = qty * currentPrice;
+            gainValue = currentValue - totalInvested;
+            gainPercent = totalInvested > 0 ? (gainValue / totalInvested) * 100 : 0;
+            assetName = selectedAsset.shortName || selectedAsset.symbol;
+            ticker = selectedAsset.symbol;
+          }
           
           // Insert investment
           const { error: investmentError } = await supabase.from('investments').insert({
             user_id: userId,
             portfolio_id: portfolioId,
-            asset_name: selectedAsset.shortName || selectedAsset.symbol,
+            asset_name: assetName,
             asset_type: assetTypeLabel,
-            ticker: selectedAsset.symbol,
+            ticker: ticker,
             quantity: qty,
             purchase_price: price,
-            current_price: currentPrice,
+            current_price: price,
             total_invested: totalInvested,
             current_value: currentValue,
             gain_percent: gainPercent,
+            maturity_date: currentFlow === "renda_fixa" ? maturityDate : null,
           });
           
           if (investmentError) {
@@ -430,7 +502,6 @@ const AdicionarInvestimento = () => {
         toast.error("Erro ao salvar investimento");
       }
     }
-  };
 
   const handleCancel = () => {
     navigate("/app");
@@ -589,7 +660,8 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 3 && (
+        {/* Step 3 - Different for each flow */}
+        {step === 3 && currentFlow === "ativo" && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -634,7 +706,6 @@ const AdicionarInvestimento = () => {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Brazil flag emoji for BDRs */}
                     <span className="text-lg">🇧🇷</span>
                     <span className="font-medium text-foreground text-sm">
                       {stock.symbol}: {stock.shortName?.toUpperCase() || stock.symbol}
@@ -669,7 +740,165 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 4 && (
+        {/* Step 3 for SIMPLES flow - Rentabilidade (optional % CDI) */}
+        {step === 3 && currentFlow === "simples" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Informações</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe a data de início e o valor do investimento.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            {/* Form Title */}
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
+            </h2>
+
+            {/* Form Fields */}
+            <div className="space-y-3">
+              {/* Data de início */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data de início:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                  />
+                  {startDate && <Check className="w-4 h-4 text-pink-500" />}
+                </div>
+              </div>
+
+              {/* Conta com remuneração */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Conta com remuneração?:</span>
+                <button
+                  onClick={() => setHasRemuneration(!hasRemuneration)}
+                  className={`px-4 py-1 rounded-full text-sm font-medium transition-all ${
+                    hasRemuneration ? 'bg-pink-500 text-white' : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {hasRemuneration ? 'Sim' : 'Não'}
+                </button>
+              </div>
+
+              {/* % sobre o CDI (opcional) */}
+              {hasRemuneration && (
+                <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                  <span className="text-foreground text-sm">% sobre o CDI:</span>
+                  <input
+                    type="number"
+                    value={cdiPercentage}
+                    onChange={(e) => setCdiPercentage(e.target.value)}
+                    placeholder="0,00% (opcional)"
+                    step="0.01"
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-40"
+                  />
+                </div>
+              )}
+
+              {/* Valor do investimento */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Valor do investimento:</span>
+                <input
+                  type="number"
+                  value={investmentValue}
+                  onChange={(e) => setInvestmentValue(e.target.value)}
+                  placeholder="R$ 0,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3 for RENDA_FIXA flow - Taxa e vencimento */}
+        {step === 3 && currentFlow === "renda_fixa" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Rentabilidade</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe a taxa de rentabilidade e a data de vencimento do seu investimento.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <BarChart3 className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            {/* Form Title */}
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
+            </h2>
+
+            {/* Form Fields */}
+            <div className="space-y-3">
+              {/* Indexador */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Indexador:</span>
+                <select
+                  value={indexer}
+                  onChange={(e) => setIndexer(e.target.value)}
+                  className="bg-transparent text-right text-foreground text-sm border-none outline-none"
+                >
+                  <option value="CDI">CDI</option>
+                  <option value="IPCA">IPCA+</option>
+                  <option value="SELIC">SELIC</option>
+                  <option value="PRE">Prefixado</option>
+                </select>
+              </div>
+
+              {/* Taxa */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Taxa (% a.a.):</span>
+                <input
+                  type="number"
+                  value={fixedRate}
+                  onChange={(e) => setFixedRate(e.target.value)}
+                  placeholder="0,00%"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-24"
+                />
+              </div>
+
+              {/* Vencimento */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data de vencimento:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={maturityDate}
+                    onChange={(e) => setMaturityDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                  />
+                  {maturityDate && <Check className="w-4 h-4 text-pink-500" />}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 4 for ATIVO flow - Quantidade e valores */}
+        {step === 4 && currentFlow === "ativo" && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -695,7 +924,6 @@ const AdicionarInvestimento = () => {
 
             {/* Form Fields */}
             <div className="space-y-3">
-              {/* Data de compra */}
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
                 <span className="text-foreground text-sm">Data de compra:</span>
                 <div className="flex items-center gap-2">
@@ -704,13 +932,11 @@ const AdicionarInvestimento = () => {
                     value={purchaseDate}
                     onChange={(e) => setPurchaseDate(e.target.value)}
                     className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
-                    placeholder="DD.MM.AAAA"
                   />
                   {purchaseDate && <Check className="w-4 h-4 text-pink-500" />}
                 </div>
               </div>
 
-              {/* Quantidade */}
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
                 <span className="text-foreground text-sm">Quantidade:</span>
                 <input
@@ -722,7 +948,6 @@ const AdicionarInvestimento = () => {
                 />
               </div>
 
-              {/* Preço */}
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
                 <span className="text-foreground text-sm">Preço:</span>
                 <input
@@ -735,7 +960,6 @@ const AdicionarInvestimento = () => {
                 />
               </div>
 
-              {/* Taxa */}
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
                 <span className="text-foreground text-sm">Taxa (corretagem e outros):</span>
                 <input
@@ -748,7 +972,6 @@ const AdicionarInvestimento = () => {
                 />
               </div>
 
-              {/* Total investido */}
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
                 <span className="text-foreground text-sm font-medium">Total investido:</span>
                 <span className="font-bold text-foreground">
@@ -761,68 +984,197 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 5 && (
+        {/* Step 4 for SIMPLES flow - Confirmação */}
+        {step === 4 && currentFlow === "simples" && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <h2 className="text-center text-muted-foreground font-medium">
-              Confirmação
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Finalizar a adição da {getAssetTypeTitle()}.</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Observe os dados e confirme se estão corretamente preenchidos.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            {/* Form Title */}
+            <h2 className="text-center text-foreground font-medium">
+              Confirme seus dados
             </h2>
-            
-            <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+
+            {/* Confirmation Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
               <div className="flex items-center gap-3 pb-4 border-b border-border">
-                {selectedAsset && (
-                  <>
-                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                      {selectedAsset.logoUrl ? (
-                        <img src={selectedAsset.logoUrl} alt={selectedAsset.symbol} className="w-10 h-10 object-contain" />
-                      ) : (
-                        <span className="text-sm font-bold text-primary">{selectedAsset.symbol.slice(0, 3)}</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-foreground text-lg">{selectedAsset.symbol}</p>
-                      <p className="text-sm text-muted-foreground">{selectedAsset.shortName}</p>
-                    </div>
-                  </>
-                )}
+                <div
+                  className="w-1.5 h-8 rounded-full"
+                  style={{ backgroundColor: tiposAtivos.find(t => t.id === selectedTipoAtivo)?.cor }}
+                />
+                <div>
+                  <p className="text-pink-500 font-semibold">{selectedInstituicao.split(' ')[0]}</p>
+                  <p className="text-foreground text-sm">{getAssetTypeTitle()}</p>
+                </div>
               </div>
               
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tipo de ativo</span>
-                  <span className="font-medium text-foreground text-right text-sm">{tiposAtivos.find(t => t.id === selectedTipoAtivo)?.nome}</span>
+                  <span className="text-muted-foreground text-sm">Data de início:</span>
+                  <span className="font-medium text-foreground text-sm">
+                    {startDate ? new Date(startDate).toLocaleDateString('pt-BR') : '-'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Instituição</span>
-                  <span className="font-medium text-foreground text-right text-sm">{selectedInstituicao}</span>
+                  <span className="text-muted-foreground text-sm">Conta com remuneração?:</span>
+                  <span className="font-medium text-foreground text-sm">{hasRemuneration ? 'Sim' : 'Não'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Quantidade</span>
-                  <span className="font-medium text-foreground">{quantity} ações</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço de compra</span>
-                  <span className="font-medium text-foreground">{formatCurrency(parseFloat(purchasePrice) || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Preço atual</span>
-                  <span className="font-medium text-foreground">{formatCurrency(assetDetails?.regularMarketPrice || parseFloat(purchasePrice) || 0)}</span>
-                </div>
+                {hasRemuneration && cdiPercentage && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground text-sm">% sobre o CDI:</span>
+                    <span className="font-medium text-foreground text-sm">{cdiPercentage}%</span>
+                  </div>
+                )}
                 <div className="flex justify-between pt-3 border-t border-border">
-                  <span className="font-semibold text-foreground">Total investido</span>
-                  <span className="font-bold text-primary text-lg">
-                    {formatCurrency(parseFloat(quantity) * parseFloat(purchasePrice))}
+                  <span className="text-foreground text-sm font-medium">Valor do investimento:</span>
+                  <span className="font-bold text-foreground">
+                    {formatCurrency(parseFloat(investmentValue) || 0)}
                   </span>
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Step 4 for RENDA_FIXA flow - Valor do investimento */}
+        {step === 4 && currentFlow === "renda_fixa" && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Valor do investimento</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe o valor que você investiu neste título.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div className="space-y-3">
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Valor investido:</span>
+                <input
+                  type="number"
+                  value={investmentValue}
+                  onChange={(e) => setInvestmentValue(e.target.value)}
+                  placeholder="R$ 0,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              {/* Summary */}
+              <div className="bg-muted/50 rounded-2xl p-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Resumo:</p>
+                <p className="text-sm"><strong>Indexador:</strong> {indexer}</p>
+                <p className="text-sm"><strong>Taxa:</strong> {fixedRate}% a.a.</p>
+                <p className="text-sm"><strong>Vencimento:</strong> {maturityDate ? new Date(maturityDate).toLocaleDateString('pt-BR') : '-'}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 5 - Confirmação for ATIVO and RENDA_FIXA flows */}
+        {step === 5 && (currentFlow === "ativo" || currentFlow === "renda_fixa") && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-6"
+          >
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Finalizar a adição.</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Observe os dados e confirme se estão corretamente preenchidos.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-center text-foreground font-medium">Confirme seus dados</h2>
             
-            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
-              <Check className="w-5 h-5 text-emerald-500" />
-              <p className="text-sm text-emerald-700">Pronto para adicionar à sua carteira!</p>
+            <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-border">
+                <div
+                  className="w-1.5 h-8 rounded-full"
+                  style={{ backgroundColor: tiposAtivos.find(t => t.id === selectedTipoAtivo)?.cor }}
+                />
+                <div>
+                  <p className="text-pink-500 font-semibold">
+                    {currentFlow === "ativo" ? selectedAsset?.symbol : selectedInstituicao.split(' ')[0]}
+                  </p>
+                  <p className="text-foreground text-sm">{getAssetTypeTitle()}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground text-sm">Instituição</span>
+                  <span className="font-medium text-foreground text-right text-sm">{selectedInstituicao}</span>
+                </div>
+                {currentFlow === "ativo" && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Quantidade</span>
+                      <span className="font-medium text-foreground">{quantity}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Preço de compra</span>
+                      <span className="font-medium text-foreground">{formatCurrency(parseFloat(purchasePrice) || 0)}</span>
+                    </div>
+                  </>
+                )}
+                {currentFlow === "renda_fixa" && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Indexador</span>
+                      <span className="font-medium text-foreground">{indexer}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Taxa</span>
+                      <span className="font-medium text-foreground">{fixedRate}% a.a.</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground text-sm">Vencimento</span>
+                      <span className="font-medium text-foreground">{maturityDate ? new Date(maturityDate).toLocaleDateString('pt-BR') : '-'}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between pt-3 border-t border-border">
+                  <span className="font-semibold text-foreground">Total investido</span>
+                  <span className="font-bold text-foreground text-lg">
+                    {formatCurrency(
+                      currentFlow === "ativo" 
+                        ? (parseFloat(quantity) || 0) * (parseFloat(purchasePrice) || 0) + (parseFloat(brokerageFee) || 0)
+                        : parseFloat(investmentValue) || 0
+                    )}
+                  </span>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -843,7 +1195,7 @@ const AdicionarInvestimento = () => {
 
           <button
             onClick={handleAdvance}
-            disabled={!canAdvance}
+            disabled={!canAdvance()}
             className="flex-1 h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
