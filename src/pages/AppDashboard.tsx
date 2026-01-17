@@ -9,6 +9,7 @@ import {
   Plus,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   User,
   Wallet,
   TrendingUp,
@@ -25,6 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
+import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 
 interface UserData {
   id: string;
@@ -117,6 +119,7 @@ const AppDashboard = () => {
   const [showValues, setShowValues] = useState(true);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(2);
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [patrimonioDrawerOpen, setPatrimonioDrawerOpen] = useState(false);
 
   // Fetch all user data from database
   useEffect(() => {
@@ -284,9 +287,12 @@ const AppDashboard = () => {
   // Calculate totals
   const totalPatrimonio = userData?.portfolios.reduce((sum, p) => sum + p.total_value, 0) || 0;
   const totalGanhos = userData?.portfolios.reduce((sum, p) => sum + p.total_gain, 0) || 0;
+  const totalInvestido = userData?.investments.reduce((sum, inv) => sum + inv.total_invested, 0) || 0;
   const avgCdiPercent = userData?.portfolios.length 
     ? userData.portfolios.reduce((sum, p) => sum + p.cdi_percent, 0) / userData.portfolios.length 
     : 0;
+  
+  const userName = userData?.profile?.full_name?.split(" ")[0] || userData?.email?.split("@")[0] || "";
 
   // Group investments by type
   const investmentsByType: { [key: string]: typeof userData.investments } = {};
@@ -335,10 +341,17 @@ const AppDashboard = () => {
         <div className="flex-1 pb-20">
           {/* Header */}
           <header className="flex items-center justify-between p-4 safe-area-inset-top">
-            <button className="flex items-center gap-2">
-              <ChevronDown className="w-5 h-5 text-foreground" />
+            <button 
+              onClick={() => setPatrimonioDrawerOpen(true)}
+              className="flex items-center gap-2 active:opacity-70 transition-opacity"
+            >
+              {patrimonioDrawerOpen ? (
+                <ChevronUp className="w-5 h-5 text-foreground" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-foreground" />
+              )}
               <span className="font-semibold text-foreground">
-                Patrimônio {userData?.profile?.full_name?.split(" ")[0] || userData?.email?.split("@")[0] || ""}
+                Patrimônio {userName}
               </span>
             </button>
             <div className="flex items-center gap-3">
@@ -792,6 +805,29 @@ const AppDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Patrimonio Drawer */}
+      <PatrimonioDrawer
+        open={patrimonioDrawerOpen}
+        onOpenChange={setPatrimonioDrawerOpen}
+        userName={userName}
+        portfolios={userData?.portfolios.map(p => ({
+          ...p,
+          updated_at: new Date().toISOString(),
+        })) || []}
+        totalPatrimonio={totalPatrimonio}
+        totalInvestido={totalInvestido}
+        totalGanhos={totalGanhos}
+        showValues={showValues}
+        onAddPortfolio={() => {
+          setPatrimonioDrawerOpen(false);
+          navigate("/adicionar-carteira");
+        }}
+        onSelectPortfolio={(id) => {
+          setPatrimonioDrawerOpen(false);
+          // Could navigate to portfolio detail page
+        }}
+      />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-inset-bottom">
