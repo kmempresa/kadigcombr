@@ -433,7 +433,7 @@ const TradeTab = ({
                         <div className="flex items-start gap-2">
                           <div className="w-1 h-8 bg-muted-foreground rounded-full mt-0.5" />
                           <div>
-                            <h3 className="font-semibold text-foreground">Patrimônio {userName}</h3>
+                            <h3 className="font-semibold text-foreground">{portfolio.name}</h3>
                             <p className="text-xs text-muted-foreground">
                               Atualização: <span className="text-foreground">Em tempo real</span>
                             </p>
