@@ -22,7 +22,8 @@ import {
   Info,
   LogOut,
   Sparkles,
-  Loader2
+  Loader2,
+  Search
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1407,9 +1408,116 @@ const AppDashboard = () => {
           {/* Extrato Tab */}
           {carteiraTab === "extrato" && (
             <div className="p-4 space-y-4">
-              <div className="bg-card border border-border rounded-xl p-6 text-center">
-                <p className="text-muted-foreground">Extrato em breve...</p>
+              {/* Search and Filter */}
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Buscar:"
+                    className="w-full h-11 pl-4 pr-10 bg-card border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                </div>
+                <button className="w-11 h-11 bg-card border border-border rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="6" x2="16" y2="6" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="18" x2="12" y2="18" />
+                    <circle cx="18" cy="6" r="2" />
+                    <circle cx="8" cy="18" r="2" />
+                  </svg>
+                </button>
               </div>
+
+              {/* Transactions grouped by month */}
+              {(() => {
+                // Group investments by month
+                const groupedByMonth: { [key: string]: typeof filteredInvestments } = {};
+                
+                filteredInvestments.forEach(inv => {
+                  const date = new Date((inv as any).created_at || Date.now());
+                  const monthKey = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                  const capitalizedMonth = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+                  
+                  if (!groupedByMonth[capitalizedMonth]) {
+                    groupedByMonth[capitalizedMonth] = [];
+                  }
+                  groupedByMonth[capitalizedMonth].push(inv);
+                });
+
+                const months = Object.keys(groupedByMonth);
+
+                if (months.length === 0) {
+                  return (
+                    <div className="bg-card border border-border rounded-xl p-8 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                        <svg className="w-8 h-8 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                          <polyline points="14,2 14,8 20,8" />
+                          <line x1="16" y1="13" x2="8" y2="13" />
+                          <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma movimentação</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Suas aplicações e resgates aparecerão aqui
+                      </p>
+                    </div>
+                  );
+                }
+
+                return months.map(month => (
+                  <div key={month}>
+                    {/* Month Header */}
+                    <h3 className="text-center font-semibold text-foreground py-3">{month}</h3>
+                    
+                    {/* Transaction Cards */}
+                    <div className="space-y-3">
+                      {groupedByMonth[month].map((inv, idx) => {
+                        const date = new Date((inv as any).created_at || Date.now());
+                        const formattedDate = date.toLocaleDateString('pt-BR');
+                        
+                        return (
+                          <div 
+                            key={inv.id || idx}
+                            className="bg-card border border-border rounded-2xl p-4"
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* Icon */}
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="17,8 12,3 7,8" />
+                                  <line x1="12" y1="3" x2="12" y2="15" />
+                                </svg>
+                              </div>
+                              
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-muted-foreground">Aplicação</p>
+                                <p className="font-medium text-foreground truncate">
+                                  {inv.asset_name}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">{formattedDate}</p>
+                              </div>
+                              
+                              {/* Value */}
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-semibold text-foreground">
+                                  {showValues 
+                                    ? formatCurrency(inv.total_invested)
+                                    : "R$ ••••••"
+                                  }
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           )}
         </div>
