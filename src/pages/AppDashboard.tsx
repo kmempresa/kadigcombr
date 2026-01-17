@@ -618,32 +618,6 @@ const AppDashboard = () => {
                 </button>
               </div>
             </div>
-            
-            {/* Portfolio Quick Selector */}
-            {userData && userData.portfolios.length > 0 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                {userData.portfolios.map((portfolio) => {
-                  const isActive = portfolio.id === activePortfolioId;
-                  return (
-                    <button
-                      key={portfolio.id}
-                      onClick={() => setSelectedPortfolioId(portfolio.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                        isActive 
-                          ? 'bg-primary text-white shadow-sm' 
-                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                      }`}
-                    >
-                      <Wallet className="w-3 h-3" />
-                      <span>{portfolio.name}</span>
-                      {isActive && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/80" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </header>
 
           {/* Sub Tabs */}
