@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Bot, User, Loader2, Mic, Paperclip } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Message {
   id: string;
@@ -10,18 +12,21 @@ interface Message {
   timestamp: Date;
 }
 
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kadig-ai-chat`;
+
 const ConsultorIA = () => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "assistant",
-      content: "Olá! Sou o assistente Kadig 👋\n\nComo posso ajudar você hoje?",
+      content: "Olá! Sou o Kadig AI, seu consultor financeiro pessoal 👋\n\nConheço sua carteira de investimentos e estou aqui para te ajudar com análises personalizadas, recomendações e tirar suas dúvidas.\n\nComo posso ajudar você hoje?",
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,6 +38,130 @@ const ConsultorIA = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Check authentication
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+    };
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const streamChat = async (userMessages: { role: string; content: string }[]) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast.error("Você precisa estar logado para usar o consultor IA");
+      navigate("/auth");
+      return;
+    }
+
+    const resp = await fetch(CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ messages: userMessages }),
+    });
+
+    if (resp.status === 429) {
+      toast.error("Muitas requisições. Aguarde um momento.");
+      throw new Error("Rate limited");
+    }
+
+    if (resp.status === 402) {
+      toast.error("Limite de uso atingido.");
+      throw new Error("Payment required");
+    }
+
+    if (!resp.ok || !resp.body) {
+      const error = await resp.json().catch(() => ({}));
+      toast.error(error.error || "Erro ao processar mensagem");
+      throw new Error(error.error || "Failed to start stream");
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = "";
+    let assistantContent = "";
+
+    // Create assistant message placeholder
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+    }]);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith("\r")) line = line.slice(0, -1);
+        if (line.startsWith(":") || line.trim() === "") continue;
+        if (!line.startsWith("data: ")) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") break;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => prev.map(m => 
+              m.id === assistantId 
+                ? { ...m, content: assistantContent }
+                : m
+            ));
+          }
+        } catch {
+          textBuffer = line + "\n" + textBuffer;
+          break;
+        }
+      }
+    }
+
+    // Final flush
+    if (textBuffer.trim()) {
+      for (let raw of textBuffer.split("\n")) {
+        if (!raw) continue;
+        if (raw.endsWith("\r")) raw = raw.slice(0, -1);
+        if (raw.startsWith(":") || raw.trim() === "") continue;
+        if (!raw.startsWith("data: ")) continue;
+        const jsonStr = raw.slice(6).trim();
+        if (jsonStr === "[DONE]") continue;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content;
+          if (content) {
+            assistantContent += content;
+            setMessages(prev => prev.map(m => 
+              m.id === assistantId 
+                ? { ...m, content: assistantContent }
+                : m
+            ));
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -43,30 +172,24 @@ const ConsultorIA = () => {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
+    const userInput = input.trim();
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
-      const aiResponses = [
-        "Ótima pergunta! Baseado no seu perfil de investidor, recomendo diversificar sua carteira entre renda fixa e variável. Posso detalhar mais sobre cada opção?",
-        "Analisando sua carteira atual, vejo que você tem uma boa exposição em ações. Para equilibrar o risco, sugiro considerar alguns títulos de renda fixa como Tesouro IPCA+.",
-        "Para atingir sua meta de patrimônio, sugiro aumentar seus aportes mensais em pelo menos 15%. Isso pode acelerar significativamente seus objetivos financeiros.",
-        "Considerando o cenário atual de juros, investimentos em renda fixa como CDBs e LCIs estão oferecendo retornos atrativos. Quer que eu explique mais sobre essas opções?",
-      ];
+    try {
+      // Build messages array for AI (without timestamps and ids)
+      const aiMessages = messages
+        .filter(m => m.id !== "welcome")
+        .map(m => ({ role: m.role, content: m.content }));
+      aiMessages.push({ role: "user", content: userInput });
 
-      const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: randomResponse,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      await streamChat(aiMessages);
+    } catch (error) {
+      console.error("Chat error:", error);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -102,17 +225,19 @@ const ConsultorIA = () => {
           </div>
           <div>
             <h1 className="font-semibold text-slate-800 text-sm">Kadig AI</h1>
-            <p className="text-[11px] text-emerald-500 font-medium">Online</p>
+            <p className="text-[11px] text-emerald-500 font-medium">
+              {isAuthenticated ? "Conectado" : "Offline"}
+            </p>
           </div>
         </div>
 
-        <div className="w-10" /> {/* Spacer for centering */}
+        <div className="w-10" />
       </header>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
         <AnimatePresence>
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <motion.div
               key={message.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -157,7 +282,7 @@ const ConsultorIA = () => {
         </AnimatePresence>
 
         {/* Typing Indicator */}
-        {isLoading && (
+        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -254,7 +379,7 @@ const ConsultorIA = () => {
         </div>
         
         <p className="text-center text-[11px] text-slate-400 mt-3">
-          Kadig AI pode cometer erros. Verifique informações importantes.
+          Kadig AI conhece sua carteira e dá recomendações personalizadas
         </p>
       </div>
     </div>
