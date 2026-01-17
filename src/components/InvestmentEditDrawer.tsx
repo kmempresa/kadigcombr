@@ -200,7 +200,7 @@ const InvestmentEditDrawer = ({
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="light-theme bg-background max-h-[90vh]">
+        <DrawerContent className="bg-background max-h-[90vh]">
           <DrawerHeader className="border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
               <DrawerTitle className="font-semibold text-foreground">

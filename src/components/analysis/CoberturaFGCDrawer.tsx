@@ -101,7 +101,7 @@ export default function CoberturaFGCDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-background light-theme">
+      <DrawerContent className="h-[95vh] bg-background">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">

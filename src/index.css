@@ -13,7 +13,7 @@
     --popover: 220 50% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 100% 60%;
+    --primary: 185 80% 50%;
     --primary-foreground: 220 60% 8%;
 
     --secondary: 220 45% 18%;
@@ -22,7 +22,7 @@
     --muted: 220 40% 20%;
     --muted-foreground: 210 20% 70%;
 
-    --accent: 170 70% 50%;
+    --accent: 185 80% 55%;
     --accent-foreground: 220 60% 8%;
 
     --destructive: 0 84% 60%;
@@ -39,7 +39,7 @@
 
     --border: 220 40% 20%;
     --input: 220 40% 20%;
-    --ring: 210 100% 60%;
+    --ring: 185 80% 50%;
 
     --radius: 1rem;
 
@@ -54,17 +54,74 @@
 
     --sidebar-background: 220 60% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary: 185 80% 50%;
     --sidebar-primary-foreground: 220 60% 8%;
     --sidebar-accent: 220 45% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 40% 20%;
-    --sidebar-ring: 210 100% 60%;
+    --sidebar-ring: 185 80% 50%;
+  }
+
+  /* Dark theme - Kadig default */
+  .dark-theme {
+    --background: 220 60% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 50% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 50% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 185 80% 50%;
+    --primary-foreground: 220 60% 8%;
+
+    --secondary: 220 45% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 40% 20%;
+    --muted-foreground: 210 20% 70%;
+
+    --accent: 185 80% 55%;
+    --accent-foreground: 220 60% 8%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 32 95% 44%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 40% 25%;
+    --input: 220 40% 20%;
+    --ring: 185 80% 50%;
+
+    --kadig-deep: 220 65% 6%;
+    --kadig-navy: 220 55% 12%;
+    --kadig-blue: 210 100% 60%;
+    --kadig-light: 210 100% 75%;
+    --kadig-cyan: 185 80% 55%;
+    --kadig-white: 210 40% 98%;
+    --kadig-glass: 220 50% 15%;
+
+    --sidebar-background: 220 60% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 185 80% 50%;
+    --sidebar-primary-foreground: 220 60% 8%;
+    --sidebar-accent: 220 45% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 40% 20%;
+    --sidebar-ring: 185 80% 50%;
   }
 
   /* Light theme for app screens */
   .light-theme {
-    --background: 0 0% 98%;
+    --background: 210 20% 98%;
     --foreground: 220 30% 15%;
 
     --card: 0 0% 100%;
@@ -73,7 +130,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 30% 15%;
 
-    --primary: 210 100% 50%;
+    --primary: 185 80% 45%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 20% 94%;
@@ -82,7 +139,7 @@
     --muted: 220 15% 92%;
     --muted-foreground: 220 15% 45%;
 
-    --accent: 210 100% 60%;
+    --accent: 185 80% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -99,24 +156,24 @@
 
     --border: 220 15% 88%;
     --input: 220 15% 88%;
-    --ring: 210 100% 50%;
+    --ring: 185 80% 45%;
 
     --kadig-deep: 220 30% 95%;
     --kadig-navy: 220 20% 90%;
     --kadig-blue: 210 100% 50%;
     --kadig-light: 210 100% 70%;
-    --kadig-cyan: 210 100% 60%;
+    --kadig-cyan: 185 80% 50%;
     --kadig-white: 220 30% 15%;
     --kadig-glass: 220 20% 96%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 30% 15%;
-    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary: 185 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 94%;
     --sidebar-accent-foreground: 220 30% 25%;
     --sidebar-border: 220 15% 88%;
-    --sidebar-ring: 210 100% 50%;
+    --sidebar-ring: 185 80% 45%;
   }
 }
 
