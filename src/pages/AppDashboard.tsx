@@ -176,20 +176,48 @@ const AppDashboard = () => {
     dragFree: false,
   });
   const [selectedIndex, setSelectedIndex] = useState(2);
+  const [scrollProgress, setScrollProgress] = useState(2); // Float index for smooth interpolation
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
+  const onScroll = useCallback(() => {
+    if (!emblaApi) return;
+    const progress = emblaApi.scrollProgress();
+    const totalSlides = monthlyData.length;
+    const floatIndex = progress * (totalSlides - 1);
+    setScrollProgress(floatIndex);
+  }, [emblaApi]);
+
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
+    emblaApi.on("scroll", onScroll);
     onSelect();
+    onScroll();
     return () => {
       emblaApi.off("select", onSelect);
+      emblaApi.off("scroll", onScroll);
     };
-  }, [emblaApi, onSelect]);
+  }, [emblaApi, onSelect, onScroll]);
+
+  // Interpolate stats values based on scroll progress
+  const interpolatedStats = useMemo(() => {
+    const lowerIndex = Math.floor(scrollProgress);
+    const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
+    const t = scrollProgress - lowerIndex;
+    
+    const lowerStats = monthlyData[lowerIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    const upperStats = monthlyData[upperIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    
+    return {
+      carteira: lowerStats.carteira + (upperStats.carteira - lowerStats.carteira) * t,
+      cdi: lowerStats.cdi + (upperStats.cdi - lowerStats.cdi) * t,
+      ipca: lowerStats.ipca + (upperStats.ipca - lowerStats.ipca) * t,
+    };
+  }, [scrollProgress, monthlyData]);
 
   const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
     setGoalType(type);
@@ -855,15 +883,9 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-success" />
                     <span className="text-xs text-muted-foreground uppercase">Carteira</span>
                   </div>
-                  <motion.p 
-                    key={`carteira-${selectedIndex}`}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="text-lg font-bold text-success"
-                  >
-                    {showValues ? `${monthlyData[selectedIndex]?.stats.carteira.toFixed(2)}%` : "••%"}
-                  </motion.p>
+                  <p className="text-lg font-bold text-success tabular-nums">
+                    {showValues ? `${interpolatedStats.carteira.toFixed(2)}%` : "••%"}
+                  </p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
@@ -871,15 +893,9 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-primary" />
                     <span className="text-xs text-muted-foreground uppercase">CDI</span>
                   </div>
-                  <motion.p 
-                    key={`cdi-${selectedIndex}`}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.05 }}
-                    className="text-lg font-bold text-primary"
-                  >
-                    {showValues ? `${monthlyData[selectedIndex]?.stats.cdi.toFixed(2)}%` : "••%"}
-                  </motion.p>
+                  <p className="text-lg font-bold text-primary tabular-nums">
+                    {showValues ? `${interpolatedStats.cdi.toFixed(2)}%` : "••%"}
+                  </p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
@@ -887,15 +903,9 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-warning" />
                     <span className="text-xs text-muted-foreground uppercase">IPCA</span>
                   </div>
-                  <motion.p 
-                    key={`ipca-${selectedIndex}`}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.1 }}
-                    className="text-lg font-bold text-warning"
-                  >
-                    {showValues ? `${monthlyData[selectedIndex]?.stats.ipca.toFixed(2)}%` : "••%"}
-                  </motion.p>
+                  <p className="text-lg font-bold text-warning tabular-nums">
+                    {showValues ? `${interpolatedStats.ipca.toFixed(2)}%` : "••%"}
+                  </p>
                 </div>
               </div>
 
