@@ -1,9 +1,27 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowRight, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+
+// Tipos de ativos disponíveis
+const tiposAtivos = [
+  { id: "acoes", nome: "Ações, Stocks e ETF", cor: "#ef4444" },
+  { id: "bdrs", nome: "BDRs", cor: "#f97316" },
+  { id: "conta_corrente", nome: "Conta Corrente", cor: "#eab308" },
+  { id: "criptoativos", nome: "Criptoativos", cor: "#22c55e" },
+  { id: "debentures", nome: "Debêntures", cor: "#14b8a6" },
+  { id: "fundos", nome: "Fundos", cor: "#06b6d4" },
+  { id: "fiis", nome: "FIIs e REITs", cor: "#3b82f6" },
+  { id: "moedas", nome: "Moedas", cor: "#8b5cf6" },
+  { id: "personalizados", nome: "Personalizados", cor: "#a855f7" },
+  { id: "poupanca", nome: "Poupança", cor: "#d946ef" },
+  { id: "previdencia", nome: "Previdência", cor: "#ec4899" },
+  { id: "renda_fixa_pre", nome: "Renda Fixa Prefixada", cor: "#f43f5e" },
+  { id: "renda_fixa_pos", nome: "Renda Fixa Pós-fixada", cor: "#be185d" },
+  { id: "tesouro", nome: "Tesouro Direto", cor: "#9d174d" },
+];
 
 interface StockData {
   symbol: string;
@@ -195,11 +213,16 @@ const instituicoesFinanceiras = [
 const AdicionarInvestimento = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  
+  // Step 1 - Asset type selection
+  const [selectedTipoAtivo, setSelectedTipoAtivo] = useState<string | null>(null);
+  
+  // Step 2 - Institution search
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInstituicao, setSelectedInstituicao] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Step 2 - Asset search
+  // Step 3 - Asset search
   const [assetSearchTerm, setAssetSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<StockData[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<StockData | null>(null);
@@ -207,12 +230,12 @@ const AdicionarInvestimento = () => {
   const [assetDetails, setAssetDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   
-  // Step 3 - Quantity and values
+  // Step 4 - Quantity and values
   const [quantity, setQuantity] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -303,9 +326,10 @@ const AdicionarInvestimento = () => {
   }, [searchTerm]);
 
   const canAdvance = 
-    step === 1 ? selectedInstituicao !== "" : 
-    step === 2 ? selectedAsset !== null :
-    step === 3 ? quantity !== "" && purchasePrice !== "" :
+    step === 1 ? selectedTipoAtivo !== null : 
+    step === 2 ? selectedInstituicao !== "" : 
+    step === 3 ? selectedAsset !== null :
+    step === 4 ? quantity !== "" && purchasePrice !== "" :
     true;
 
   const handleAdvance = async () => {
@@ -385,7 +409,7 @@ const AdicionarInvestimento = () => {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-foreground">Adicionar Ação</h1>
+          <h1 className="text-lg font-semibold text-foreground">Adicionar novo ativo</h1>
         </div>
         
         {/* Progress Bar */}
@@ -407,11 +431,56 @@ const AdicionarInvestimento = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="space-y-3"
+          >
+            {/* Help icon in header area */}
+            <div className="flex justify-end -mt-2 mb-2">
+              <button className="p-2 text-muted-foreground">
+                <HelpCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Asset Type List */}
+            <div className="space-y-2">
+              {tiposAtivos.map((tipo) => (
+                <motion.button
+                  key={tipo.id}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedTipoAtivo(tipo.id)}
+                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
+                    selectedTipoAtivo === tipo.id
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-1.5 h-8 rounded-full"
+                      style={{ backgroundColor: tipo.cor }}
+                    />
+                    <span className="text-foreground font-medium text-sm">
+                      {tipo.nome}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
             className="space-y-4"
           >
             <h2 className="text-center text-muted-foreground font-medium">
               Buscar nova instituição
             </h2>
+            <p className="text-center text-xs text-muted-foreground">
+              Tipo: <strong>{tiposAtivos.find(t => t.id === selectedTipoAtivo)?.nome}</strong>
+            </p>
 
             {/* Search Input */}
             <div className="relative">
@@ -473,7 +542,7 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -628,7 +697,7 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -695,7 +764,7 @@ const AdicionarInvestimento = () => {
           </motion.div>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -725,6 +794,10 @@ const AdicionarInvestimento = () => {
               </div>
               
               <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Tipo de ativo</span>
+                  <span className="font-medium text-foreground text-right text-sm">{tiposAtivos.find(t => t.id === selectedTipoAtivo)?.nome}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Instituição</span>
                   <span className="font-medium text-foreground text-right text-sm">{selectedInstituicao}</span>
