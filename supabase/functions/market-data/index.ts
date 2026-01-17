@@ -18,7 +18,53 @@ serve(async (req) => {
       throw new Error('BRAPI_TOKEN not configured');
     }
 
-    const { type = 'all', symbol } = await req.json().catch(() => ({}));
+    const { type = 'all', symbol, category } = await req.json().catch(() => ({}));
+
+    // Buscar notícias do mercado usando Stock News API
+    if (type === 'market-news') {
+      console.log('Fetching market news from Stock News API');
+      
+      if (!STOCK_NEWS_API_KEY) {
+        console.log('STOCK_NEWS_API_KEY not configured, using fallback');
+        return new Response(
+          JSON.stringify({ news: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      try {
+        // Stock News API - buscar notícias gerais do mercado (section=general ou alltickers)
+        const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=3&token=${STOCK_NEWS_API_KEY}`;
+        
+        console.log(`Requesting Stock News API: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
+        
+        const newsResponse = await fetch(newsUrl);
+        const newsData = await newsResponse.json();
+        
+        console.log(`Stock News response:`, JSON.stringify(newsData).slice(0, 500));
+        
+        const news = (newsData.data || []).map((item: any) => ({
+          title: item.title,
+          text: item.text,
+          source_name: item.source_name,
+          date: item.date,
+          news_url: item.news_url,
+          image_url: item.image_url,
+          sentiment: item.sentiment,
+        }));
+        
+        return new Response(
+          JSON.stringify({ news }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (newsError) {
+        console.error('Error fetching market news:', newsError);
+        return new Response(
+          JSON.stringify({ news: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Buscar notícias de uma ação específica usando Google News RSS
     if (type === 'news' && symbol) {
@@ -350,23 +396,41 @@ serve(async (req) => {
     const maioresAltas = sortedByGain.filter(s => s.regularMarketChangePercent > 0).slice(0, 10);
     const maioresBaixas = sortedByGain.filter(s => s.regularMarketChangePercent < 0).slice(-10).reverse();
 
-    // Índices do mercado
+    // Índices do mercado (nacionais e internacionais)
     let indices: any[] = [];
     try {
-      const indicesUrl = `https://brapi.dev/api/quote/%5EBVSP,%5EIFIX?token=${BRAPI_TOKEN}`;
-      const indicesResponse = await fetch(indicesUrl);
-      const indicesData = await indicesResponse.json();
+      // Índices brasileiros
+      const brIndicesUrl = `https://brapi.dev/api/quote/%5EBVSP,%5EIFIX?token=${BRAPI_TOKEN}`;
+      const brIndicesResponse = await fetch(brIndicesUrl);
+      const brIndicesData = await brIndicesResponse.json();
       
-      if (indicesData.results) {
-        indices = indicesData.results.map((idx: any) => ({
+      if (brIndicesData.results) {
+        indices = brIndicesData.results.map((idx: any) => ({
           name: idx.symbol === '^BVSP' ? 'IBOV' : idx.symbol === '^IFIX' ? 'IFIX' : idx.symbol,
           value: idx.regularMarketPrice || 0,
           changePercent: idx.regularMarketChangePercent || 0,
+          type: 'br'
         }));
       }
+      
+      // Adicionar índices internacionais (simulados pois brapi não tem)
+      indices.push(
+        { name: 'S&P 500', value: 5996.66, changePercent: 0.78, type: 'us' },
+        { name: 'NASDAQ', value: 19630.20, changePercent: 1.51, type: 'us' },
+        { name: 'Dow Jones', value: 43153.13, changePercent: -0.02, type: 'us' }
+      );
     } catch (indicesError) {
       console.error('Error fetching indices:', indicesError);
     }
+
+    // Commodities (dados simulados - brapi não oferece commodities)
+    const commodities = [
+      { name: 'Ouro', symbol: 'GOLD', value: 2689.50, changePercent: 0.45, icon: '🥇' },
+      { name: 'Prata', symbol: 'SILVER', value: 30.85, changePercent: -0.32, icon: '🥈' },
+      { name: 'Petróleo', symbol: 'OIL', value: 78.45, changePercent: 1.23, icon: '🛢️' },
+      { name: 'Café', symbol: 'COFFEE', value: 352.20, changePercent: 0.87, icon: '☕' },
+      { name: 'Dólar', symbol: 'USD', value: 6.12, changePercent: -0.15, icon: '💵' },
+    ];
 
     return new Response(
       JSON.stringify({
@@ -374,6 +438,7 @@ serve(async (req) => {
         maioresAltas,
         maioresBaixas,
         indices,
+        commodities,
         lastUpdate: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
