@@ -6,11 +6,11 @@ import {
   EyeOff,
   Search,
   ChevronRight,
+  ChevronDown,
   Plus,
   Link2,
   List,
   TrendingUp,
-  TrendingDown,
   Star,
   Loader2
 } from "lucide-react";
@@ -22,6 +22,12 @@ interface StockQuote {
   regularMarketPrice: number;
   regularMarketChange: number;
   regularMarketChangePercent: number;
+}
+
+interface MarketIndex {
+  name: string;
+  value: number;
+  changePercent: number;
 }
 
 const popularStocks = [
@@ -54,6 +60,16 @@ const TradeTab = ({
   const [marketStocks, setMarketStocks] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [marketSubTab, setMarketSubTab] = useState<"dados" | "carteiras">("dados");
+  const [indicesExpanded, setIndicesExpanded] = useState(true);
+  const [altasExpanded, setAltasExpanded] = useState(true);
+  const [baixasExpanded, setBaixasExpanded] = useState(true);
+
+  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([
+    { name: "IBOV", value: 164799.99, changePercent: -0.46 },
+    { name: "IFIX", value: 3809.30, changePercent: 0.13 },
+    { name: "IDIV", value: 11587.36, changePercent: -0.45 },
+  ]);
 
   const fetchMarketStocks = async () => {
     setLoadingMarket(true);
@@ -71,7 +87,8 @@ const TradeTab = ({
           regularMarketChange: stock.regularMarketChange || 0,
           regularMarketChangePercent: stock.regularMarketChangePercent || 0,
         })));
-        setLastUpdate(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+        const now = new Date();
+        setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       }
     } catch (error) {
       console.error("Error fetching market:", error);
@@ -82,7 +99,8 @@ const TradeTab = ({
         regularMarketChange: (Math.random() - 0.5) * 5,
         regularMarketChangePercent: (Math.random() - 0.5) * 10,
       })));
-      setLastUpdate(new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+      const now = new Date();
+      setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     }
     setLoadingMarket(false);
   };
@@ -108,6 +126,10 @@ const TradeTab = ({
     return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
+  const formatNumber = (num: number) => {
+    return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   const tabs = [
     { id: "meus-ativos", label: "Meus ativos" },
     { id: "patrimonio", label: "Patrimônio" },
@@ -121,6 +143,25 @@ const TradeTab = ({
         s.shortName.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : marketStocks;
+
+  const maioresAltas = [...filteredMarketStocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0, 6);
+  const maioresBaixas = [...filteredMarketStocks].sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0, 6);
+
+  // Mini chart component
+  const MiniChart = ({ positive }: { positive: boolean }) => (
+    <svg viewBox="0 0 80 24" className="w-full h-6">
+      <path
+        d={positive 
+          ? "M0,18 L8,16 L16,17 L24,14 L32,15 L40,12 L48,13 L56,10 L64,8 L72,9 L80,6"
+          : "M0,6 L8,8 L16,7 L24,10 L32,9 L40,12 L48,11 L56,14 L64,16 L72,15 L80,18"
+        }
+        fill="none"
+        stroke={positive ? "#22c55e" : "#ef4444"}
+        strokeWidth="1.5"
+        strokeDasharray="3 2"
+      />
+    </svg>
+  );
 
   return (
     <div className="flex-1 pb-20 bg-background">
@@ -176,45 +217,15 @@ const TradeTab = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`px-4 py-2 text-sm font-medium whitespace-nowrap rounded-lg transition-colors ${
               activeTab === tab.id 
-                ? "text-foreground border-foreground" 
-                : "text-muted-foreground border-transparent"
+                ? "bg-muted text-foreground" 
+                : "text-muted-foreground"
             }`}
           >
             {tab.label}
           </button>
         ))}
-      </div>
-
-      {/* Portfolio Selector */}
-      <div className="p-4 flex items-center gap-3">
-        <button className="flex-1 flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
-          <span className="text-foreground font-medium">Patrimônio {userName}</span>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </button>
-        <button className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center">
-          <List className="w-5 h-5 text-muted-foreground" />
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-            1
-          </span>
-        </button>
-      </div>
-
-      {/* Real-time indicator */}
-      <div className="px-4 pb-4">
-        <div className="flex flex-col items-center gap-1 py-3">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-orange-400" />
-            <span className="text-sm text-muted-foreground">
-              Atualização <span className="text-foreground font-medium">em tempo real</span>
-            </span>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Última atualização: {lastUpdate}
-          </span>
-        </div>
-        <div className="h-px bg-border" />
       </div>
 
       {/* Content */}
@@ -226,109 +237,140 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-4"
           >
-            {userAssets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                {/* Plus button with hand pointer */}
-                <div className="relative mb-6">
-                  <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                    <Plus className="w-8 h-8 text-white" />
+            {/* Portfolio Selector */}
+            <div className="p-4 flex items-center gap-3">
+              <button className="flex-1 flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+                <span className="text-foreground font-medium">Patrimônio {userName}</span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <button className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center">
+                <List className="w-5 h-5 text-muted-foreground" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  1
+                </span>
+              </button>
+            </div>
+
+            {/* Real-time indicator */}
+            <div className="px-4 pb-4">
+              <div className="flex flex-col items-center gap-1 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-orange-400" />
+                  <span className="text-sm text-muted-foreground">
+                    Atualização <span className="text-foreground font-medium">em tempo real</span>
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Última atualização: {lastUpdate}
+                </span>
+              </div>
+              <div className="h-px bg-border" />
+            </div>
+
+            <div className="px-4">
+              {userAssets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  {/* Plus button with hand pointer */}
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                      <Plus className="w-8 h-8 text-white" />
+                    </div>
+                    {/* Hand pointer */}
+                    <svg 
+                      width="40" 
+                      height="48" 
+                      viewBox="0 0 40 48" 
+                      fill="none" 
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/4"
+                    >
+                      <path 
+                        d="M20 8C20 5.79086 21.7909 4 24 4C26.2091 4 28 5.79086 28 8V20" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M28 16C28 13.7909 29.7909 12 32 12C34.2091 12 36 13.7909 36 16V24" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M12 24V8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8V20" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round"
+                      />
+                      <path 
+                        d="M12 24L8 28C6 30 6 34 8 36L12 40H32C36 40 36 36 36 32V24" 
+                        stroke="#9CA3AF" 
+                        strokeWidth="2.5" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </div>
-                  {/* Hand pointer */}
-                  <svg 
-                    width="40" 
-                    height="48" 
-                    viewBox="0 0 40 48" 
-                    fill="none" 
-                    className="absolute -bottom-4 left-1/2 -translate-x-1/4"
-                  >
-                    <path 
-                      d="M20 8C20 5.79086 21.7909 4 24 4C26.2091 4 28 5.79086 28 8V20" 
-                      stroke="#9CA3AF" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round"
-                    />
-                    <path 
-                      d="M28 16C28 13.7909 29.7909 12 32 12C34.2091 12 36 13.7909 36 16V24" 
-                      stroke="#9CA3AF" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round"
-                    />
-                    <path 
-                      d="M12 24V8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8V20" 
-                      stroke="#9CA3AF" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round"
-                    />
-                    <path 
-                      d="M12 24L8 28C6 30 6 34 8 36L12 40H32C36 40 36 36 36 32V24" 
-                      stroke="#9CA3AF" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+
+                  <h3 className="text-lg font-semibold text-foreground text-center mb-2">
+                    Adicione ativos da bolsa<br/>na sua carteira
+                  </h3>
+                  <p className="text-sm text-muted-foreground text-center mb-8">
+                    Você não possui ativos da bolsa nesta carteira
+                  </p>
+
+                  <div className="w-full max-w-xs space-y-3">
+                    <button
+                      onClick={onAddAsset}
+                      className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Plus className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="font-medium text-foreground">Adicionar ativos</span>
+                    </button>
+
+                    <button
+                      onClick={onAddConnection}
+                      className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Link2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <span className="font-medium text-foreground">Adicionar conexão</span>
+                    </button>
+                  </div>
                 </div>
-
-                <h3 className="text-lg font-semibold text-foreground text-center mb-2">
-                  Adicione ativos da bolsa<br/>na sua carteira
-                </h3>
-                <p className="text-sm text-muted-foreground text-center mb-8">
-                  Você não possui ativos da bolsa nesta carteira
-                </p>
-
-                <div className="w-full max-w-xs space-y-3">
-                  <button
-                    onClick={onAddAsset}
-                    className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Plus className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="font-medium text-foreground">Adicionar ativos</span>
-                  </button>
-
-                  <button
-                    onClick={onAddConnection}
-                    className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Link2 className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="font-medium text-foreground">Adicionar conexão</span>
-                  </button>
+              ) : (
+                <div className="space-y-2">
+                  {userAssets.map((asset, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">
+                          {(asset.ticker || asset.asset_name)?.slice(0, 2)}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-foreground">{asset.ticker || asset.asset_name}</p>
+                        <p className="text-xs text-muted-foreground">{asset.asset_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-foreground">{formatPrice(asset.current_value)}</p>
+                        <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                          {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {userAssets.map((asset, index) => (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">
-                        {(asset.ticker || asset.asset_name)?.slice(0, 2)}
-                      </span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-foreground">{asset.ticker || asset.asset_name}</p>
-                      <p className="text-xs text-muted-foreground">{asset.asset_name}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-foreground">{formatPrice(asset.current_value)}</p>
-                      <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                        {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+              )}
+            </div>
           </motion.div>
         )}
 
@@ -339,29 +381,64 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-4 space-y-4"
           >
-            <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 text-white">
-              <p className="text-white/70 text-sm mb-1">Patrimônio em Renda Variável</p>
-              <p className="text-3xl font-bold mb-4">
-                {showValues ? "R$ 0,00" : "R$ ••••••"}
-              </p>
-              <div className="flex gap-4">
-                <div className="flex-1 bg-white/10 rounded-lg p-3">
-                  <p className="text-white/60 text-xs">Resultado</p>
-                  <p className="text-white font-semibold">R$ 0,00</p>
+            {/* Portfolio Selector */}
+            <div className="p-4">
+              <button className="w-full flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+                <span className="text-foreground font-medium">Patrimônio {userName}</span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Real-time indicator */}
+            <div className="px-4 pb-4">
+              <div className="flex flex-col items-center gap-1 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Atualização <span className="text-foreground font-medium">em tempo real</span>
+                  </span>
                 </div>
-                <div className="flex-1 bg-white/10 rounded-lg p-3">
-                  <p className="text-white/60 text-xs">Rentabilidade</p>
-                  <p className="text-white font-semibold">0,00%</p>
-                </div>
+                <span className="text-xs text-muted-foreground">
+                  Última atualização: {lastUpdate}
+                </span>
               </div>
             </div>
 
-            <div className="bg-card border border-border rounded-xl p-4">
-              <h3 className="font-semibold text-foreground mb-4">Alocação por tipo</h3>
-              <div className="flex items-center justify-center py-6">
-                <p className="text-sm text-muted-foreground">Sem ativos para exibir</p>
+            {/* Section title */}
+            <div className="px-4 pb-4">
+              <p className="text-center text-muted-foreground font-medium">Meu patrimônio na bolsa</p>
+            </div>
+
+            {/* Patrimônio Card */}
+            <div className="px-4">
+              <div className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-1 h-12 bg-primary rounded-full" />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-semibold text-foreground">Patrimônio {userName}</h3>
+                      <span className="text-xs text-muted-foreground border border-border rounded-full px-3 py-1">
+                        PRINCIPAL
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Atualização: <span className="text-foreground">Em tempo real</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Saldo bruto atual:</span>
+                    <span className="font-semibold text-foreground">
+                      {showValues ? "R$ 0,00" : "R$ ••••••"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Variação do dia:</span>
+                    <span className="font-semibold text-emerald-500">+ 0,00%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -374,61 +451,197 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-4 space-y-2"
           >
+            {/* Sub-tabs */}
+            <div className="flex gap-3 px-4 py-4 overflow-x-auto scrollbar-hide">
+              <button 
+                onClick={() => setMarketSubTab("dados")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
+                  marketSubTab === "dados" 
+                    ? "bg-muted" 
+                    : "bg-card border border-border"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <span className="font-medium text-foreground text-sm">Dados do<br/>mercado</span>
+              </button>
+              <button 
+                onClick={() => setMarketSubTab("carteiras")}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
+                  marketSubTab === "carteiras" 
+                    ? "bg-muted" 
+                    : "bg-card border border-border"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">btg</span>
+                </div>
+                <span className="font-medium text-foreground text-sm">Carteiras<br/>BTG Pactual</span>
+              </button>
+            </div>
+
             {loadingMarket ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
                 <p className="text-sm text-muted-foreground">Carregando cotações...</p>
               </div>
             ) : (
-              filteredMarketStocks.map((stock, index) => (
-                <motion.div
-                  key={stock.symbol}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
-                >
-                  <button onClick={() => toggleFavorite(stock.symbol)} className="p-1">
-                    <Star 
-                      className={`w-5 h-5 ${
-                        favorites.includes(stock.symbol) 
-                          ? "fill-yellow-400 text-yellow-400" 
-                          : "text-muted-foreground"
-                      }`} 
-                    />
+              <>
+                {/* Last update */}
+                <div className="px-4 pb-4">
+                  <p className="text-center text-sm text-muted-foreground">
+                    Última atualização: {lastUpdate}
+                  </p>
+                </div>
+
+                {/* Índices do mercado */}
+                <div className="px-4 pb-4">
+                  <button 
+                    onClick={() => setIndicesExpanded(!indicesExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Índices do mercado</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${indicesExpanded ? "" : "-rotate-180"}`} />
                   </button>
+                  
+                  <AnimatePresence>
+                    {indicesExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="flex gap-3 overflow-x-auto scrollbar-hide pt-3"
+                      >
+                        {marketIndices.map((index) => (
+                          <div 
+                            key={index.name}
+                            className="flex-shrink-0 w-36 bg-card border border-border rounded-xl p-4"
+                          >
+                            <p className="font-semibold text-foreground mb-2">{index.name}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={index.changePercent >= 0} />
+                            </div>
+                            <p className="text-sm text-foreground mb-1">{formatNumber(index.value)}</p>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              index.changePercent >= 0 
+                                ? "bg-emerald-500 text-white" 
+                                : "bg-red-500 text-white"
+                            }`}>
+                              {index.changePercent >= 0 ? "+ " : "- "}{Math.abs(index.changePercent).toFixed(2)}%
+                            </span>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-bold text-primary">
-                      {stock.symbol.slice(0, 2)}
-                    </span>
-                  </div>
+                {/* Maiores altas */}
+                <div className="px-4 pb-4">
+                  <button 
+                    onClick={() => setAltasExpanded(!altasExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Maiores altas</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${altasExpanded ? "" : "-rotate-180"}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {altasExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid grid-cols-2 gap-3 pt-3"
+                      >
+                        {maioresAltas.map((stock) => (
+                          <div 
+                            key={stock.symbol}
+                            className="bg-card border border-border rounded-xl p-4"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-foreground">{stock.symbol}</p>
+                              <button onClick={() => toggleFavorite(stock.symbol)}>
+                                <Star className={`w-4 h-4 ${
+                                  favorites.includes(stock.symbol) 
+                                    ? "fill-yellow-400 text-yellow-400" 
+                                    : "text-muted-foreground"
+                                }`} />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={stock.regularMarketChangePercent >= 0} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-foreground">
+                                {formatPrice(stock.regularMarketPrice)}
+                              </span>
+                              <span className="text-xs px-2 py-1 rounded-full bg-emerald-500 text-white">
+                                + {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">{stock.symbol}</span>
-                      {stock.regularMarketChange >= 0 ? (
-                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-red-500" />
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-medium text-foreground">{formatPrice(stock.regularMarketPrice)}</p>
-                    <p className={`text-xs ${stock.regularMarketChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                      {stock.regularMarketChange >= 0 ? "+" : ""}
-                      {stock.regularMarketChangePercent.toFixed(2)}%
-                    </p>
-                  </div>
-
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                </motion.div>
-              ))
+                {/* Maiores baixas */}
+                <div className="px-4 pb-4">
+                  <button 
+                    onClick={() => setBaixasExpanded(!baixasExpanded)}
+                    className="flex items-center justify-center gap-2 w-full py-2"
+                  >
+                    <span className="font-medium text-foreground">Maiores baixas</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${baixasExpanded ? "" : "-rotate-180"}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {baixasExpanded && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="grid grid-cols-2 gap-3 pt-3"
+                      >
+                        {maioresBaixas.map((stock) => (
+                          <div 
+                            key={stock.symbol}
+                            className="bg-card border border-border rounded-xl p-4"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-foreground">{stock.symbol}</p>
+                              <button onClick={() => toggleFavorite(stock.symbol)}>
+                                <Star className={`w-4 h-4 ${
+                                  favorites.includes(stock.symbol) 
+                                    ? "fill-yellow-400 text-yellow-400" 
+                                    : "text-muted-foreground"
+                                }`} />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                            <div className="h-6 mb-2">
+                              <MiniChart positive={stock.regularMarketChangePercent >= 0} />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium text-foreground">
+                                {formatPrice(stock.regularMarketPrice)}
+                              </span>
+                              <span className="text-xs px-2 py-1 rounded-full bg-red-500 text-white">
+                                - {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
             )}
           </motion.div>
         )}
@@ -440,50 +653,48 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="px-4"
+            className="px-4 pt-4"
           >
             {favorites.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Star className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">Nenhum favorito</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Sem favoritos</h3>
                 <p className="text-sm text-muted-foreground text-center">
-                  Toque na ⭐ de um ativo na aba Mercado<br/>para adicionar aqui
+                  Adicione ações aos favoritos para<br/>acompanhar de perto
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {marketStocks
-                  .filter(stock => favorites.includes(stock.symbol))
-                  .map((stock, index) => (
-                    <motion.div 
-                      key={stock.symbol}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
-                    >
+              <div className="grid grid-cols-2 gap-3">
+                {marketStocks.filter(s => favorites.includes(s.symbol)).map((stock) => (
+                  <div 
+                    key={stock.symbol}
+                    className="bg-card border border-border rounded-xl p-4"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-semibold text-foreground">{stock.symbol}</p>
                       <button onClick={() => toggleFavorite(stock.symbol)}>
-                        <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       </button>
-                      
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{stock.symbol.slice(0, 2)}</span>
-                      </div>
-                      
-                      <div className="flex-1">
-                        <span className="font-semibold text-foreground">{stock.symbol}</span>
-                        <p className="text-xs text-muted-foreground">{stock.shortName}</p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <p className="font-medium text-foreground">{formatPrice(stock.regularMarketPrice)}</p>
-                        <p className={`text-xs ${stock.regularMarketChange >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                          {stock.regularMarketChange >= 0 ? "+" : ""}
-                          {stock.regularMarketChangePercent.toFixed(2)}%
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2 truncate">{stock.shortName}</p>
+                    <div className="h-6 mb-2">
+                      <MiniChart positive={stock.regularMarketChangePercent >= 0} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">
+                        {formatPrice(stock.regularMarketPrice)}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        stock.regularMarketChangePercent >= 0 
+                          ? "bg-emerald-500 text-white" 
+                          : "bg-red-500 text-white"
+                      }`}>
+                        {stock.regularMarketChangePercent >= 0 ? "+ " : "- "}
+                        {Math.abs(stock.regularMarketChangePercent).toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </motion.div>
