@@ -15,6 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StockQuote {
   symbol: string;
@@ -29,12 +30,6 @@ interface MarketIndex {
   value: number;
   changePercent: number;
 }
-
-const popularStocks = [
-  "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", 
-  "WEGE3", "RENT3", "MGLU3", "BBAS3", "B3SA3",
-  "SUZB3", "JBSS3", "LREN3", "RADL3", "RAIL3"
-];
 
 interface TradeTabProps {
   showValues: boolean;
@@ -58,6 +53,8 @@ const TradeTab = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [lastUpdate, setLastUpdate] = useState<string>("-");
   const [marketStocks, setMarketStocks] = useState<StockQuote[]>([]);
+  const [maioresAltas, setMaioresAltas] = useState<StockQuote[]>([]);
+  const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [marketSubTab, setMarketSubTab] = useState<"dados" | "carteiras">("dados");
@@ -74,35 +71,77 @@ const TradeTab = ({
   const fetchMarketStocks = async () => {
     setLoadingMarket(true);
     try {
-      const response = await fetch(
-        `https://brapi.dev/api/quote/${popularStocks.join(",")}?token=`
-      );
-      const data = await response.json();
+      const { data, error } = await supabase.functions.invoke('market-data', {
+        body: { type: 'all' }
+      });
       
-      if (data.results) {
-        setMarketStocks(data.results.map((stock: any) => ({
-          symbol: stock.symbol,
-          shortName: stock.shortName || stock.longName || stock.symbol,
-          regularMarketPrice: stock.regularMarketPrice || 0,
-          regularMarketChange: stock.regularMarketChange || 0,
-          regularMarketChangePercent: stock.regularMarketChangePercent || 0,
-        })));
+      if (error) throw error;
+      
+      if (data) {
+        setMarketStocks(data.stocks || []);
+        setMaioresAltas(data.maioresAltas || []);
+        setMaioresBaixas(data.maioresBaixas || []);
+        if (data.indices && data.indices.length > 0) {
+          setMarketIndices([
+            ...data.indices,
+            { name: "IDIV", value: 11587.36, changePercent: -0.45 }
+          ]);
+        }
         const now = new Date();
         setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       }
     } catch (error) {
       console.error("Error fetching market:", error);
-      setMarketStocks(popularStocks.map(ticker => ({
-        symbol: ticker,
-        shortName: ticker,
-        regularMarketPrice: Math.random() * 100 + 10,
-        regularMarketChange: (Math.random() - 0.5) * 5,
-        regularMarketChangePercent: (Math.random() - 0.5) * 10,
-      })));
+      // Fallback com dados simulados
+      const mockStocks = generateMockStocks();
+      setMarketStocks(mockStocks);
+      setMaioresAltas(mockStocks.filter(s => s.regularMarketChangePercent > 0).slice(0, 10));
+      setMaioresBaixas(mockStocks.filter(s => s.regularMarketChangePercent < 0).slice(0, 10));
       const now = new Date();
       setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     }
     setLoadingMarket(false);
+  };
+
+  const generateMockStocks = (): StockQuote[] => {
+    const stocks = [
+      { symbol: "VAMO3", shortName: "Vamos Locação De Caminhões" },
+      { symbol: "BRKM5", shortName: "Braskem S.a." },
+      { symbol: "DIRR3", shortName: "Direcional Engenharia S.a." },
+      { symbol: "BRAV3", shortName: "Brava Energia S.a." },
+      { symbol: "RENT4", shortName: "Localiza Rent A Car S.a." },
+      { symbol: "RAIZ4", shortName: "Raizen S.a." },
+      { symbol: "CSMG3", shortName: "Cia Saneamento De Minas Gerais" },
+      { symbol: "CSAN3", shortName: "Cosan S.a." },
+      { symbol: "ASAI3", shortName: "Assaí Atacadista" },
+      { symbol: "IRBR3", shortName: "IRB Brasil Resseguros" },
+      { symbol: "PETR4", shortName: "Petrobras S.a." },
+      { symbol: "VALE3", shortName: "Vale S.a." },
+      { symbol: "ITUB4", shortName: "Itaú Unibanco" },
+      { symbol: "BBDC4", shortName: "Bradesco S.a." },
+      { symbol: "ABEV3", shortName: "Ambev S.a." },
+      { symbol: "WEGE3", shortName: "WEG S.a." },
+      { symbol: "MGLU3", shortName: "Magazine Luiza" },
+      { symbol: "BBAS3", shortName: "Banco do Brasil" },
+      { symbol: "B3SA3", shortName: "B3 S.a." },
+      { symbol: "SUZB3", shortName: "Suzano S.a." },
+      { symbol: "JBSS3", shortName: "JBS S.a." },
+      { symbol: "LREN3", shortName: "Lojas Renner" },
+      { symbol: "RADL3", shortName: "Raia Drogasil" },
+      { symbol: "RAIL3", shortName: "Rumo S.a." },
+      { symbol: "HAPV3", shortName: "Hapvida" },
+      { symbol: "RDOR3", shortName: "Rede D'Or" },
+      { symbol: "CSNA3", shortName: "CSN" },
+      { symbol: "GGBR4", shortName: "Gerdau" },
+      { symbol: "USIM5", shortName: "Usiminas" },
+    ];
+    
+    return stocks.map(s => ({
+      ...s,
+      regularMarketPrice: Math.random() * 80 + 5,
+      regularMarketChange: (Math.random() - 0.5) * 5,
+      regularMarketChangePercent: (Math.random() - 0.5) * 12,
+    }));
   };
 
   useEffect(() => {
@@ -144,8 +183,8 @@ const TradeTab = ({
       )
     : marketStocks;
 
-  const maioresAltas = [...filteredMarketStocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0, 6);
-  const maioresBaixas = [...filteredMarketStocks].sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0, 6);
+  const filteredAltas = maioresAltas.length > 0 ? maioresAltas : [...filteredMarketStocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0, 10);
+  const filteredBaixas = maioresBaixas.length > 0 ? maioresBaixas : [...filteredMarketStocks].sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0, 10);
 
   // Mini chart component
   const MiniChart = ({ positive }: { positive: boolean }) => (
@@ -556,7 +595,7 @@ const TradeTab = ({
                         exit={{ opacity: 0, height: 0 }}
                         className="grid grid-cols-2 gap-3 pt-3"
                       >
-                        {maioresAltas.map((stock) => (
+                        {filteredAltas.map((stock) => (
                           <div 
                             key={stock.symbol}
                             className="bg-card border border-border rounded-xl p-4"
@@ -608,7 +647,7 @@ const TradeTab = ({
                         exit={{ opacity: 0, height: 0 }}
                         className="grid grid-cols-2 gap-3 pt-3"
                       >
-                        {maioresBaixas.map((stock) => (
+                        {filteredBaixas.map((stock) => (
                           <div 
                             key={stock.symbol}
                             className="bg-card border border-border rounded-xl p-4"
