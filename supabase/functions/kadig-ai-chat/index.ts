@@ -11,7 +11,159 @@ interface Message {
   content: string;
 }
 
-// Search real-time market data
+// ==================== MARKET DATA FUNCTIONS ====================
+
+// Fetch stock data from BRAPI
+async function fetchStockData(symbols: string[]): Promise<any[]> {
+  const BRAPI_TOKEN = Deno.env.get("BRAPI_TOKEN");
+  if (!BRAPI_TOKEN || symbols.length === 0) return [];
+
+  try {
+    const url = `https://brapi.dev/api/quote/${symbols.join(",")}?token=${BRAPI_TOKEN}&fundamental=true`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error("Error fetching stock data:", error);
+    return [];
+  }
+}
+
+// Fetch detailed stock info from BRAPI
+async function fetchStockDetail(symbol: string): Promise<any | null> {
+  const BRAPI_TOKEN = Deno.env.get("BRAPI_TOKEN");
+  if (!BRAPI_TOKEN) return null;
+
+  try {
+    const url = `https://brapi.dev/api/quote/${symbol}?token=${BRAPI_TOKEN}&fundamental=true&dividends=true&range=1y&interval=1d`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.results?.[0] || null;
+  } catch (error) {
+    console.error("Error fetching stock detail:", error);
+    return null;
+  }
+}
+
+// Fetch market indices
+async function fetchMarketIndices(): Promise<any> {
+  const BRAPI_TOKEN = Deno.env.get("BRAPI_TOKEN");
+  if (!BRAPI_TOKEN) return {};
+
+  try {
+    const url = `https://brapi.dev/api/quote/%5EBVSP,%5EIFIX?token=${BRAPI_TOKEN}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    const indices: any = {};
+    data.results?.forEach((idx: any) => {
+      const name = idx.symbol === '^BVSP' ? 'IBOV' : idx.symbol === '^IFIX' ? 'IFIX' : idx.symbol;
+      indices[name] = {
+        value: idx.regularMarketPrice,
+        change: idx.regularMarketChangePercent,
+      };
+    });
+    return indices;
+  } catch (error) {
+    console.error("Error fetching indices:", error);
+    return {};
+  }
+}
+
+// Fetch economic indicators from BCB
+async function fetchEconomicIndicators(): Promise<any> {
+  try {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    
+    const formatDate = (date: Date) => {
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    };
+    
+    const startDate = formatDate(oneMonthAgo);
+    const endDate = formatDate(today);
+    
+    const [cdiResponse, selicResponse] = await Promise.all([
+      fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?formato=json&dataInicial=${startDate}&dataFinal=${endDate}`),
+      fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados?formato=json&dataInicial=${startDate}&dataFinal=${endDate}`),
+    ]);
+    
+    const cdiData = await cdiResponse.json();
+    const selicData = await selicResponse.json();
+    
+    return {
+      cdiDiario: cdiData.length > 0 ? parseFloat(cdiData[cdiData.length - 1].valor) : 0.05,
+      selicMeta: selicData.length > 0 ? parseFloat(selicData[selicData.length - 1].valor) : 14.25,
+    };
+  } catch (error) {
+    console.error("Error fetching economic indicators:", error);
+    return { cdiDiario: 0.05, selicMeta: 14.25 };
+  }
+}
+
+// Fetch market news from Stock News API
+async function fetchMarketNews(query?: string): Promise<any[]> {
+  const STOCK_NEWS_API_KEY = Deno.env.get("STOCK_NEWS_API_KEY");
+  if (!STOCK_NEWS_API_KEY) return [];
+
+  try {
+    const url = `https://stocknewsapi.com/api/v1/category?section=general&items=5&token=${STOCK_NEWS_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    return (data.data || []).map((item: any) => ({
+      title: item.title,
+      source: item.source_name,
+      date: item.date,
+      sentiment: item.sentiment,
+    }));
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return [];
+  }
+}
+
+// Fetch crypto prices
+async function fetchCryptoPrices(): Promise<any> {
+  try {
+    const cryptoIds = 'bitcoin,ethereum,solana';
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds}&vs_currencies=brl&include_24hr_change=true`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    return {
+      bitcoin: { price: data.bitcoin?.brl || 0, change: data.bitcoin?.brl_24h_change || 0 },
+      ethereum: { price: data.ethereum?.brl || 0, change: data.ethereum?.brl_24h_change || 0 },
+      solana: { price: data.solana?.brl || 0, change: data.solana?.brl_24h_change || 0 },
+    };
+  } catch (error) {
+    console.error("Error fetching crypto:", error);
+    return {};
+  }
+}
+
+// Fetch currency prices
+async function fetchCurrencyPrices(): Promise<any> {
+  try {
+    const url = `https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    return {
+      dolar: { price: parseFloat(data.USDBRL?.bid) || 0, change: parseFloat(data.USDBRL?.pctChange) || 0 },
+      euro: { price: parseFloat(data.EURBRL?.bid) || 0, change: parseFloat(data.EURBRL?.pctChange) || 0 },
+    };
+  } catch (error) {
+    console.error("Error fetching currencies:", error);
+    return {};
+  }
+}
+
+// Search real-time market data with Perplexity
 async function searchMarket(query: string): Promise<{ content: string; citations: string[] }> {
   const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
   if (!PERPLEXITY_API_KEY) return { content: "", citations: [] };
@@ -42,6 +194,8 @@ async function searchMarket(query: string): Promise<{ content: string; citations
   }
 }
 
+// ==================== ANALYSIS FUNCTIONS ====================
+
 // Keywords that trigger market search
 function needsMarketData(msg: string): boolean {
   const keywords = [
@@ -51,9 +205,17 @@ function needsMarketData(msg: string): boolean {
     "investir", "melhor", "recomenda", "vale a pena", "devo", "qual", "onde",
     "carteira", "alocar", "diversificar", "risco", "retorno", "rentabilidade",
     "dólar", "dolar", "euro", "copom", "economia", "mercado", "bolsa", "ibovespa",
-    "dividendo", "yield", "proventos", "pagamento", "data-com", "ex-dividendo"
+    "dividendo", "yield", "proventos", "pagamento", "data-com", "ex-dividendo",
+    "previsão", "projeção", "ganho", "rendimento", "lucro", "meta"
   ];
   return keywords.some(k => msg.toLowerCase().includes(k));
+}
+
+// Extract stock tickers from message
+function extractTickers(msg: string): string[] {
+  const tickerPattern = /\b([A-Z]{4}[0-9]{1,2})\b/g;
+  const matches = msg.toUpperCase().match(tickerPattern) || [];
+  return [...new Set(matches)];
 }
 
 // Build optimized search query
@@ -70,6 +232,7 @@ function buildQuery(msg: string): string {
   if (m.includes("reserva de emergência")) return "Melhores investimentos reserva emergência liquidez diária Brasil";
   if (m.includes("longo prazo")) return "Melhores investimentos longo prazo Brasil aposentadoria";
   if (m.includes("curto prazo")) return "Melhores investimentos curto prazo Brasil liquidez";
+  if (m.includes("previsão") || m.includes("projeção")) return "Previsões mercado financeiro Brasil 2025 ações SELIC inflação";
   return `${msg} investimentos Brasil mercado financeiro análise`;
 }
 
@@ -78,25 +241,21 @@ function calculateFinancialHealth(profile: any, patrimonio: number, renda: numbe
   const issues: string[] = [];
   let score = 50;
 
-  // Profile completeness
   if (!profile?.investor_profile) { score -= 10; issues.push("Perfil de investidor não definido"); }
   if (!profile?.investment_goal) { score -= 5; issues.push("Objetivo de investimento não definido"); }
   if (!profile?.risk_tolerance) { score -= 5; issues.push("Tolerância ao risco não definida"); }
   if (!renda) { score -= 10; issues.push("Renda mensal não informada"); }
 
-  // Emergency fund check (should have 6-12 months of expenses)
   const emergencyTarget = renda * 6;
   if (patrimonio < emergencyTarget && renda > 0) {
     score -= 15;
     issues.push(`Patrimônio abaixo da reserva de emergência ideal (R$ ${emergencyTarget.toLocaleString("pt-BR")})`);
   }
 
-  // Has investments
   if (patrimonio > 0) score += 20;
   if (patrimonio > renda * 12) score += 10;
   if (patrimonio > renda * 24) score += 10;
 
-  // Determine status
   let status = "🔴 Crítico";
   if (score >= 40) status = "🟠 Atenção";
   if (score >= 60) status = "🟡 Regular";
@@ -114,7 +273,6 @@ function getIdealAllocation(profile: string, risk: string): { [key: string]: num
   if (profile === "arrojado" || risk === "alto") {
     return { "Renda Fixa": 30, "Renda Variável": 55, "Alternativos": 15 };
   }
-  // Moderado (default)
   return { "Renda Fixa": 55, "Renda Variável": 35, "Alternativos": 10 };
 }
 
@@ -127,7 +285,6 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
   const analysis: string[] = [];
   let score = 50;
 
-  // Group by type
   const byType: { [key: string]: number } = {};
   investments.forEach((inv: any) => {
     const type = inv.asset_type || "outro";
@@ -136,7 +293,6 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
 
   const types = Object.keys(byType);
   
-  // Check number of asset types
   if (types.length === 1) {
     score -= 20;
     analysis.push("⚠️ Carteira concentrada em apenas 1 tipo de ativo");
@@ -145,14 +301,12 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
     analysis.push("✅ Boa diversificação por tipo de ativo");
   }
 
-  // Check concentration
   const maxConcentration = Math.max(...Object.values(byType)) / patrimonio * 100;
   if (maxConcentration > 70) {
     score -= 15;
     analysis.push(`⚠️ Alta concentração (${maxConcentration.toFixed(0)}% em um único tipo)`);
   }
 
-  // Check individual positions
   const largestPosition = investments.reduce((max: any, inv: any) => 
     (Number(inv.current_value) || 0) > (Number(max?.current_value) || 0) ? inv : max, investments[0]);
   
@@ -161,13 +315,11 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
     analysis.push(`⚠️ Posição muito grande: ${largestPosition?.asset_name} (${positionPct.toFixed(0)}%)`);
   }
 
-  // Has renda fixa?
   const hasRendaFixa = types.some(t => ["renda_fixa", "tesouro", "cdb", "lci", "lca"].includes(t));
   if (!hasRendaFixa) {
     analysis.push("💡 Considere adicionar renda fixa para estabilidade");
   }
 
-  // Has renda variável?
   const hasRendaVariavel = types.some(t => ["acao", "fii", "etf"].includes(t));
   if (!hasRendaVariavel && patrimonio > 10000) {
     analysis.push("💡 Com reserva formada, considere renda variável para crescimento");
@@ -175,6 +327,42 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
 
   return { score: Math.max(0, Math.min(100, score)), analysis };
 }
+
+// Calculate projected gains
+function calculateProjectedGains(investments: any[], economicData: any): any {
+  const projections: any = {
+    pessimista: { rendaFixa: 0, rendaVariavel: 0, total: 0 },
+    moderado: { rendaFixa: 0, rendaVariavel: 0, total: 0 },
+    otimista: { rendaFixa: 0, rendaVariavel: 0, total: 0 },
+  };
+
+  const selicAnual = economicData.selicMeta || 14.25;
+  
+  investments.forEach((inv: any) => {
+    const value = Number(inv.current_value) || 0;
+    const type = inv.asset_type || "";
+    
+    if (["renda_fixa", "tesouro", "cdb", "lci", "lca"].includes(type)) {
+      // Renda fixa: baseado na SELIC
+      projections.pessimista.rendaFixa += value * ((selicAnual - 2) / 100);
+      projections.moderado.rendaFixa += value * (selicAnual / 100);
+      projections.otimista.rendaFixa += value * ((selicAnual + 1) / 100);
+    } else if (["acao", "fii", "etf"].includes(type)) {
+      // Renda variável: cenários
+      projections.pessimista.rendaVariavel += value * -0.10; // -10%
+      projections.moderado.rendaVariavel += value * 0.12; // +12%
+      projections.otimista.rendaVariavel += value * 0.25; // +25%
+    }
+  });
+
+  projections.pessimista.total = projections.pessimista.rendaFixa + projections.pessimista.rendaVariavel;
+  projections.moderado.total = projections.moderado.rendaFixa + projections.moderado.rendaVariavel;
+  projections.otimista.total = projections.otimista.rendaFixa + projections.otimista.rendaVariavel;
+
+  return projections;
+}
+
+// ==================== MAIN HANDLER ====================
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -201,14 +389,36 @@ serve(async (req) => {
     }
 
     const lastMsg = messages[messages.length - 1]?.content || "";
+    const mentionedTickers = extractTickers(lastMsg);
+    const needsMarket = needsMarketData(lastMsg);
     
-    // Parallel data fetching
-    const [marketResult, profileResult, portfoliosResult, investmentsResult, conversationsResult] = await Promise.all([
-      needsMarketData(lastMsg) ? searchMarket(buildQuery(lastMsg)) : Promise.resolve({ content: "", citations: [] }),
+    console.log(`Processing message. Needs market: ${needsMarket}, Tickers: ${mentionedTickers.join(", ")}`);
+
+    // Parallel data fetching - ALL sources
+    const [
+      marketSearchResult,
+      profileResult,
+      portfoliosResult,
+      investmentsResult,
+      conversationsResult,
+      economicData,
+      indices,
+      currencies,
+      cryptos,
+      stocksData,
+      marketNews
+    ] = await Promise.all([
+      needsMarket ? searchMarket(buildQuery(lastMsg)) : Promise.resolve({ content: "", citations: [] }),
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("portfolios").select("*").eq("user_id", user.id),
       supabase.from("investments").select("*").eq("user_id", user.id).order("current_value", { ascending: false }),
       supabase.from("chat_conversations").select("id").eq("user_id", user.id),
+      needsMarket ? fetchEconomicIndicators() : Promise.resolve({ cdiDiario: 0.05, selicMeta: 14.25 }),
+      needsMarket ? fetchMarketIndices() : Promise.resolve({}),
+      needsMarket ? fetchCurrencyPrices() : Promise.resolve({}),
+      needsMarket ? fetchCryptoPrices() : Promise.resolve({}),
+      mentionedTickers.length > 0 ? fetchStockData(mentionedTickers) : Promise.resolve([]),
+      needsMarket ? fetchMarketNews() : Promise.resolve([]),
     ]);
 
     const profile = profileResult.data;
@@ -224,10 +434,11 @@ serve(async (req) => {
     const renda = Number(profile?.monthly_income) || 0;
     const rentabilidade = totalInvestido > 0 ? ((totalPatrimonio - totalInvestido) / totalInvestido) * 100 : 0;
     
-    // Financial health analysis
+    // Analysis
     const health = calculateFinancialHealth(profile, totalPatrimonio, renda);
     const diversification = analyzeDiversification(investments, totalPatrimonio);
     const idealAllocation = getIdealAllocation(profile?.investor_profile, profile?.risk_tolerance);
+    const projectedGains = calculateProjectedGains(investments, economicData);
 
     // Current allocation
     const currentAllocation: { [key: string]: number } = {};
@@ -253,13 +464,46 @@ serve(async (req) => {
 **📅 ${brazilDate} às ${brazilTime}**
 **💬 Conversa #${conversationCount + 1} com este usuário**
 
-${marketResult.content ? `
 ---
-## 🌐 DADOS DE MERCADO EM TEMPO REAL
 
-${marketResult.content}
+## 🌐 DADOS DE MERCADO EM TEMPO REAL (BRAPI + Stock News API)
 
-${marketResult.citations.length > 0 ? `*Fontes: ${marketResult.citations.slice(0, 3).join(", ")}*` : ""}
+### 📈 Índices
+${indices.IBOV ? `- **IBOV:** ${indices.IBOV.value?.toLocaleString("pt-BR")} (${indices.IBOV.change >= 0 ? "+" : ""}${indices.IBOV.change?.toFixed(2)}%)` : ""}
+${indices.IFIX ? `- **IFIX:** ${indices.IFIX.value?.toLocaleString("pt-BR")} (${indices.IFIX.change >= 0 ? "+" : ""}${indices.IFIX.change?.toFixed(2)}%)` : ""}
+
+### 💰 Indicadores Econômicos
+- **SELIC Meta:** ${economicData.selicMeta}% a.a.
+- **CDI Diário:** ${economicData.cdiDiario}%
+
+### 💵 Câmbio
+${currencies.dolar ? `- **Dólar:** R$ ${currencies.dolar.price?.toFixed(4)} (${currencies.dolar.change >= 0 ? "+" : ""}${currencies.dolar.change?.toFixed(2)}%)` : ""}
+${currencies.euro ? `- **Euro:** R$ ${currencies.euro.price?.toFixed(4)} (${currencies.euro.change >= 0 ? "+" : ""}${currencies.euro.change?.toFixed(2)}%)` : ""}
+
+### ₿ Criptomoedas
+${cryptos.bitcoin ? `- **Bitcoin:** R$ ${cryptos.bitcoin.price?.toLocaleString("pt-BR")} (${cryptos.bitcoin.change >= 0 ? "+" : ""}${cryptos.bitcoin.change?.toFixed(2)}%)` : ""}
+${cryptos.ethereum ? `- **Ethereum:** R$ ${cryptos.ethereum.price?.toLocaleString("pt-BR")} (${cryptos.ethereum.change >= 0 ? "+" : ""}${cryptos.ethereum.change?.toFixed(2)}%)` : ""}
+
+${stocksData.length > 0 ? `
+### 📊 Ações Mencionadas (Dados BRAPI em tempo real)
+${stocksData.map((s: any) => `
+**${s.symbol}** - ${s.shortName || s.longName}
+- Preço: R$ ${s.regularMarketPrice?.toFixed(2)} (${s.regularMarketChangePercent >= 0 ? "+" : ""}${s.regularMarketChangePercent?.toFixed(2)}%)
+- P/L: ${s.priceEarnings?.toFixed(2) || "N/A"} | P/VP: ${s.priceToBook?.toFixed(2) || "N/A"}
+- Dividend Yield: ${s.dividendYield ? (s.dividendYield * 100).toFixed(2) + "%" : "N/A"}
+- Volume: ${s.regularMarketVolume?.toLocaleString("pt-BR") || "N/A"}
+`).join("\n")}
+` : ""}
+
+${marketNews.length > 0 ? `
+### 📰 Últimas Notícias do Mercado (Stock News API)
+${marketNews.slice(0, 3).map((n: any) => `- **${n.title}** (${n.source}) ${n.sentiment ? `[${n.sentiment}]` : ""}`).join("\n")}
+` : ""}
+
+${marketSearchResult.content ? `
+### 🔍 Análise de Mercado em Tempo Real (Perplexity)
+${marketSearchResult.content}
+${marketSearchResult.citations.length > 0 ? `\n*Fontes: ${marketSearchResult.citations.slice(0, 3).join(", ")}*` : ""}
 ` : ""}
 
 ---
@@ -295,6 +539,18 @@ ${health.issues.length > 0 ? `**Pontos de atenção:**\n${health.issues.map(i =>
 | Rentabilidade | ${rentabilidade >= 0 ? "+" : ""}${rentabilidade.toFixed(2)}% |
 | Carteiras | ${portfolios.length} |
 | Ativos | ${investments.length} |
+
+---
+
+## 🎯 PROJEÇÃO DE GANHOS (12 meses)
+
+Baseado na SELIC atual (${economicData.selicMeta}% a.a.) e cenários de mercado:
+
+| Cenário | Renda Fixa | Renda Variável | **Total Projetado** |
+|---------|------------|----------------|---------------------|
+| 🔴 Pessimista | R$ ${projectedGains.pessimista.rendaFixa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${projectedGains.pessimista.rendaVariavel.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | **R$ ${projectedGains.pessimista.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}** |
+| 🟡 Moderado | R$ ${projectedGains.moderado.rendaFixa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${projectedGains.moderado.rendaVariavel.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | **R$ ${projectedGains.moderado.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}** |
+| 🟢 Otimista | R$ ${projectedGains.otimista.rendaFixa.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${projectedGains.otimista.rendaVariavel.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | **R$ ${projectedGains.otimista.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}** |
 
 ---
 
@@ -341,13 +597,15 @@ ${investments.filter((i: any) => i.maturity_date).sort((a: any, b: any) => new D
 `;
 
     // MEGA System Prompt
-    const systemPrompt = `# 🤖 KADIG AI — CONSULTOR FINANCEIRO PESSOAL DEFINITIVO
+    const systemPrompt = `# 🤖 BIANCA — CONSULTORA FINANCEIRA PESSOAL KADIG
 
-Você é o Kadig AI, o consultor financeiro mais avançado e completo do Brasil. Você combina:
-- 🧠 Inteligência artificial de ponta
-- 📊 Dados em tempo real do mercado
-- 👤 Conhecimento profundo do usuário
-- 📈 Análises e simulações personalizadas
+Você é a Bianca, a consultora financeira mais avançada e completa do Brasil, integrada com:
+- 📊 **BRAPI** - Dados em tempo real de ações, FIIs e índices da B3
+- 📰 **Stock News API** - Notícias do mercado financeiro
+- 🏦 **Banco Central** - Indicadores econômicos (SELIC, CDI, IPCA)
+- 🔍 **Perplexity** - Análises de mercado em tempo real
+- 💹 **CoinGecko** - Cotações de criptomoedas
+- 💵 **AwesomeAPI** - Câmbio em tempo real
 
 ## 🎯 SUAS MISSÕES
 
@@ -356,6 +614,7 @@ Você é o Kadig AI, o consultor financeiro mais avançado e completo do Brasil.
 - Avalie TIMING de mercado e oportunidades
 - Calcule RISCO vs RETORNO para cada situação
 - Sugira os MELHORES investimentos para o perfil
+- Use dados REAIS das APIs para embasar recomendações
 
 ### 2. PLANEJADOR FINANCEIRO
 - Ajude a definir e atingir METAS financeiras
@@ -369,11 +628,11 @@ Você é o Kadig AI, o consultor financeiro mais avançado e completo do Brasil.
 - Sugira REBALANCEAMENTO quando necessário
 - Compare rentabilidade com benchmarks (CDI, Ibovespa)
 
-### 4. EDUCADOR FINANCEIRO
-- Explique conceitos de forma SIMPLES e PRÁTICA
-- Use EXEMPLOS com os números do próprio usuário
-- Ensine sobre diferentes tipos de investimentos
-- Desmistifique o mercado financeiro
+### 4. PREVISOR DE GANHOS
+- Faça PROJEÇÕES de rendimentos baseadas em dados reais
+- Calcule cenários pessimista, moderado e otimista
+- Use a SELIC atual para projetar renda fixa
+- Considere histórico para projetar renda variável
 
 ### 5. SIMULADOR FINANCEIRO
 Quando relevante, faça SIMULAÇÕES:
@@ -395,16 +654,21 @@ Quando relevante, faça SIMULAÇÕES:
    - Como isso se aplica ao perfil do usuário?
    - Combina com seus objetivos e tolerância a risco?
 
-2. **ANÁLISE TÉCNICA**
+2. **DADOS REAIS**
+   - Use cotações REAIS da BRAPI
+   - Cite indicadores ATUAIS do BCB
+   - Referencie notícias RECENTES
+
+3. **ANÁLISE TÉCNICA**
    - Dados de mercado relevantes
    - Riscos e oportunidades
    - Comparação com alternativas
 
-3. **RECOMENDAÇÃO CLARA**
+4. **RECOMENDAÇÃO CLARA**
    - ✅ Recomendo / ⚠️ Com ressalvas / ❌ Não recomendo
    - Justificativa baseada em dados
 
-4. **PRÓXIMOS PASSOS**
+5. **PRÓXIMOS PASSOS**
    - Ações concretas que o usuário pode tomar
    - Quanto investir, onde, como
 
@@ -431,51 +695,71 @@ Sempre que identificar, mencione:
 - NUNCA prometa retornos garantidos
 - Seja HONESTO sobre limitações
 - Incentive buscar profissionais certificados para decisões grandes
-- Deixe claro que você é uma IA assistente
 
-## 🎨 ESTILO
+## 🎨 ESTILO DE COMUNICAÇÃO
 
-- Use **negrito** para destacar informações importantes
-- Use emojis com moderação para organizar
-- Seja DIRETO e OBJETIVO
-- Personalize CADA resposta com dados do usuário
-- Mantenha tom amigável mas profissional
+- Seja AMIGÁVEL e ACESSÍVEL, mas PROFISSIONAL
+- Use emojis para tornar a leitura mais agradável
+- Organize respostas com headers e bullets
+- Seja CONCISO mas COMPLETO
+- Personalize usando o nome do usuário quando disponível
 
----
+## 📊 CONTEXTO ATUAL DO USUÁRIO
 
-# DADOS ATUAIS DO USUÁRIO
+${ctx}`;
 
-${ctx}
-
----
-
-Você tem TODOS os dados acima. Use-os ativamente para personalizar cada resposta!
-Seja o consultor financeiro que todo brasileiro merece ter.`;
-
+    // Call Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("API key não configurada");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "API key não configurada" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages
+        ],
         stream: true,
+        temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
 
-    if (!response.ok) {
-      const s = response.status;
-      if (s === 429) return new Response(JSON.stringify({ error: "Aguarde um momento" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (s === 402) return new Response(JSON.stringify({ error: "Limite atingido" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      return new Response(JSON.stringify({ error: "Erro" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Muitas requisições. Aguarde um momento." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "Limite de uso atingido." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const errorText = await aiResponse.text();
+      console.error("AI error:", aiResponse.status, errorText);
+      return new Response(JSON.stringify({ error: "Erro ao processar mensagem" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
+    return new Response(aiResponse.body, {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    });
 
   } catch (error) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ error: String(error) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
