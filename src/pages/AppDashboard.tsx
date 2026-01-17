@@ -39,6 +39,7 @@ import RiscoRetornoDrawer from "@/components/analysis/RiscoRetornoDrawer";
 import GanhoCapitalDrawer from "@/components/analysis/GanhoCapitalDrawer";
 import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
+import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 
 interface UserData {
   id: string;
@@ -151,6 +152,7 @@ const AppDashboard = () => {
   const [ganhoCapitalOpen, setGanhoCapitalOpen] = useState(false);
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
+  const [proventosOpen, setProventosOpen] = useState(false);
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
@@ -1105,6 +1107,7 @@ const AppDashboard = () => {
               {/* Proventos */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setProventosOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-violet-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-violet-500/10 hover:border-violet-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1600,6 +1603,13 @@ const AppDashboard = () => {
         onOpenChange={setCoberturaFGCOpen}
         investments={userData?.investments || []}
         totalPatrimonio={totalPatrimonio}
+        formatCurrency={formatCurrency}
+      />
+
+      <ProventosDrawer
+        open={proventosOpen}
+        onOpenChange={setProventosOpen}
+        investments={userData?.investments || []}
         formatCurrency={formatCurrency}
       />
     </div>
