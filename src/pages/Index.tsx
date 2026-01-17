@@ -8,7 +8,7 @@ import { FloatingElements } from "@/components/FloatingElements";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background relative light-theme" data-theme="light">
+    <div className="min-h-screen bg-background relative">
       <FloatingElements />
       <Header />
       <main className="relative z-10">

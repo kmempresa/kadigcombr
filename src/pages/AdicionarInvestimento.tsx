@@ -722,7 +722,7 @@ const AdicionarInvestimento = () => {
 
 
   return (
-    <div className="min-h-screen bg-background flex flex-col fixed inset-0">
+    <div className="light-theme min-h-screen bg-background flex flex-col fixed inset-0">
       {/* Header */}
       <header className="p-4 border-b border-border safe-area-inset-top">
         <div className="flex items-center justify-center relative">
