@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle, FileEdit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Tipos de ativos disponíveis
 const tiposAtivos = [
@@ -355,11 +356,13 @@ const AdicionarInvestimento = () => {
         // Get or create portfolio
         let { data: portfolios } = await supabase
           .from('portfolios')
-          .select('id')
+          .select('id, total_value, total_gain')
           .eq('user_id', userId)
           .limit(1);
         
         let portfolioId = portfolios?.[0]?.id;
+        let currentPortfolioValue = portfolios?.[0]?.total_value || 0;
+        let currentPortfolioGain = portfolios?.[0]?.total_gain || 0;
         
         if (!portfolioId) {
           const { data: newPortfolio } = await supabase
@@ -368,31 +371,63 @@ const AdicionarInvestimento = () => {
             .select('id')
             .single();
           portfolioId = newPortfolio?.id;
+          currentPortfolioValue = 0;
+          currentPortfolioGain = 0;
         }
         
         if (portfolioId) {
-          const totalInvested = parseFloat(quantity) * parseFloat(purchasePrice);
-          const currentValue = parseFloat(quantity) * (assetDetails?.regularMarketPrice || parseFloat(purchasePrice));
-          const gainPercent = ((currentValue - totalInvested) / totalInvested) * 100;
+          const qty = parseFloat(quantity) || 0;
+          const price = parseFloat(purchasePrice) || 0;
+          const fee = parseFloat(brokerageFee) || 0;
+          const totalInvested = (qty * price) + fee;
+          const currentPrice = assetDetails?.regularMarketPrice || price;
+          const currentValue = qty * currentPrice;
+          const gainValue = currentValue - totalInvested;
+          const gainPercent = totalInvested > 0 ? (gainValue / totalInvested) * 100 : 0;
           
-          await supabase.from('investments').insert({
+          // Get asset type label
+          const tipoAtivo = tiposAtivos.find(t => t.id === selectedTipoAtivo);
+          const assetTypeLabel = tipoAtivo?.nome || 'Ação';
+          
+          // Insert investment
+          const { error: investmentError } = await supabase.from('investments').insert({
             user_id: userId,
             portfolio_id: portfolioId,
             asset_name: selectedAsset.shortName || selectedAsset.symbol,
-            asset_type: 'Ação',
+            asset_type: assetTypeLabel,
             ticker: selectedAsset.symbol,
-            quantity: parseFloat(quantity),
-            purchase_price: parseFloat(purchasePrice),
-            current_price: assetDetails?.regularMarketPrice || parseFloat(purchasePrice),
+            quantity: qty,
+            purchase_price: price,
+            current_price: currentPrice,
             total_invested: totalInvested,
             current_value: currentValue,
             gain_percent: gainPercent,
           });
+          
+          if (investmentError) {
+            console.error("Error inserting investment:", investmentError);
+            toast.error("Erro ao salvar investimento");
+            return;
+          }
+          
+          // Update portfolio totals
+          const newTotalValue = Number(currentPortfolioValue) + currentValue;
+          const newTotalGain = Number(currentPortfolioGain) + gainValue;
+          const cdiPercent = newTotalValue > 0 ? ((newTotalGain / newTotalValue) * 100) : 0;
+          
+          await supabase.from('portfolios').update({
+            total_value: newTotalValue,
+            total_gain: newTotalGain,
+            cdi_percent: cdiPercent,
+          }).eq('id', portfolioId);
+          
+          toast.success("Investimento adicionado com sucesso!");
         }
         
         navigate("/app");
       } catch (error) {
         console.error("Error saving investment:", error);
+        toast.error("Erro ao salvar investimento");
       }
     }
   };
