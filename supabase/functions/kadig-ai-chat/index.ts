@@ -394,13 +394,20 @@ serve(async (req) => {
     
     console.log(`Processing message. Needs market: ${needsMarket}, Tickers: ${mentionedTickers.join(", ")}`);
 
-    // Parallel data fetching - ALL sources
+    // Parallel data fetching - ALL sources including history and goals
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    const historyStartDate = threeMonthsAgo.toISOString().split('T')[0];
+
     const [
       marketSearchResult,
       profileResult,
       portfoliosResult,
       investmentsResult,
       conversationsResult,
+      goalsResult,
+      historyResult,
+      movementsResult,
       economicData,
       indices,
       currencies,
@@ -413,6 +420,9 @@ serve(async (req) => {
       supabase.from("portfolios").select("*").eq("user_id", user.id),
       supabase.from("investments").select("*").eq("user_id", user.id).order("current_value", { ascending: false }),
       supabase.from("chat_conversations").select("id").eq("user_id", user.id),
+      supabase.from("goals").select("*").eq("user_id", user.id),
+      supabase.from("portfolio_history").select("*").eq("user_id", user.id).gte("snapshot_date", historyStartDate).order("snapshot_date", { ascending: false }).limit(90),
+      supabase.from("movements").select("*").eq("user_id", user.id).order("movement_date", { ascending: false }).limit(20),
       needsMarket ? fetchEconomicIndicators() : Promise.resolve({ cdiDiario: 0.05, selicMeta: 14.25 }),
       needsMarket ? fetchMarketIndices() : Promise.resolve({}),
       needsMarket ? fetchCurrencyPrices() : Promise.resolve({}),
@@ -425,6 +435,9 @@ serve(async (req) => {
     const portfolios = portfoliosResult.data || [];
     const investments = investmentsResult.data || [];
     const conversationCount = conversationsResult.data?.length || 0;
+    const goals = goalsResult.data || [];
+    const portfolioHistory = historyResult.data || [];
+    const recentMovements = movementsResult.data || [];
 
     // Calculate metrics
     let totalPatrimonio = 0, totalInvestido = 0, totalGanhos = 0;
@@ -594,6 +607,44 @@ ${investments.filter((i: any) => i.maturity_date).sort((a: any, b: any) => new D
   const status = days < 0 ? "🔴 VENCIDO" : days < 30 ? "🟠 URGENTE" : "🟢";
   return `- ${status} **${inv.asset_name}**: ${new Date(inv.maturity_date).toLocaleDateString("pt-BR")} (${days > 0 ? `${days} dias` : "vencido"})`;
 }).join("\n") || "Nenhum vencimento cadastrado"}
+
+---
+
+## 🎯 METAS FINANCEIRAS DO USUÁRIO
+
+${goals.length > 0 ? goals.map((g: any) => {
+  const progress = g.target_value > 0 ? (Number(g.current_value || totalPatrimonio) / g.target_value * 100) : 0;
+  const targetDate = g.target_date ? new Date(g.target_date).toLocaleDateString("pt-BR") : "Sem prazo";
+  const type = g.type === "patrimonio" ? "🏆 Meta de Patrimônio" : "💰 Renda Passiva";
+  return `${type}
+- **Meta:** R$ ${Number(g.target_value).toLocaleString("pt-BR")}
+- **Atual:** R$ ${Number(g.current_value || totalPatrimonio).toLocaleString("pt-BR")} (${progress.toFixed(0)}%)
+- **Prazo:** ${targetDate}`;
+}).join("\n\n") : "Nenhuma meta cadastrada - sugerir que o usuário defina metas!"}
+
+---
+
+## 📈 HISTÓRICO PATRIMONIAL (Dados Reais)
+
+${portfolioHistory.length > 0 ? `Últimos registros:
+${portfolioHistory.slice(0, 10).map((h: any) => {
+  const date = new Date(h.snapshot_date).toLocaleDateString("pt-BR");
+  const change = h.total_invested > 0 ? ((h.total_value - h.total_invested) / h.total_invested * 100) : 0;
+  return `- ${date}: R$ ${Number(h.total_value).toLocaleString("pt-BR")} (${change >= 0 ? "+" : ""}${change.toFixed(1)}%)`;
+}).join("\n")}
+
+**CDI 12m:** ${portfolioHistory[0]?.cdi_accumulated?.toFixed(2) || 0}% | **IPCA 12m:** ${portfolioHistory[0]?.ipca_accumulated?.toFixed(2) || 0}%
+` : "Sem histórico ainda - dados começam a ser coletados diariamente"}
+
+---
+
+## 📋 MOVIMENTAÇÕES RECENTES
+
+${recentMovements.length > 0 ? recentMovements.slice(0, 10).map((m: any) => {
+  const date = new Date(m.movement_date).toLocaleDateString("pt-BR");
+  const type = m.type === "aplicacao" ? "➕" : m.type === "resgate" ? "➖" : "↔️";
+  return `${type} ${date}: ${m.asset_name} - R$ ${Number(m.total_value).toLocaleString("pt-BR")}`;
+}).join("\n") : "Nenhuma movimentação recente"}
 `;
 
     // MEGA System Prompt - Humanized
