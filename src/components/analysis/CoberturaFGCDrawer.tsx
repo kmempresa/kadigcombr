@@ -24,14 +24,16 @@ interface CoberturaFGCDrawerProps {
 const FGC_LIMIT = 250000;
 const FGC_TOTAL_LIMIT = 1000000;
 
-// Asset types covered by FGC
-const FGC_COVERED_TYPES = [
-  'renda_fixa_pre',
-  'renda_fixa_pos',
-  'poupanca',
-  'conta_corrente',
-  'debentures',
-];
+// Check if asset type is covered by FGC
+const isCoveredByFGC = (assetType: string): boolean => {
+  const normalized = assetType.toLowerCase().trim();
+  const coveredTypes = [
+    'renda fixa pré', 'renda fixa pós', 'renda_fixa_pre', 'renda_fixa_pos',
+    'poupança', 'poupanca', 'conta corrente', 'conta_corrente',
+    'debêntures', 'debentures', 'cdb', 'lci', 'lca', 'lc', 'rdb'
+  ];
+  return coveredTypes.some(type => normalized.includes(type));
+};
 
 export default function CoberturaFGCDrawer({
   open,
@@ -44,7 +46,7 @@ export default function CoberturaFGCDrawer({
 
   // Filter investments covered by FGC
   const coveredInvestments = investments.filter(inv => 
-    FGC_COVERED_TYPES.includes(inv.asset_type)
+    isCoveredByFGC(inv.asset_type)
   );
 
   // Calculate total covered value
@@ -64,9 +66,16 @@ export default function CoberturaFGCDrawer({
   // Group by institution (emissor)
   const byEmissor = coveredInvestments.reduce((acc, inv) => {
     let emissor = 'Outros';
+    // Check for bank in name
     if (inv.asset_name.includes('BANCO')) {
       const match = inv.asset_name.match(/BANCO\s+([A-Z0-9]+)/i);
       if (match) emissor = `BANCO ${match[1].toUpperCase()}`;
+    } else if (inv.asset_name.includes(' - ')) {
+      // Extract institution from "Asset - INSTITUTION" format
+      const parts = inv.asset_name.split(' - ');
+      if (parts.length > 1) {
+        emissor = parts[1].trim().toUpperCase();
+      }
     }
     
     if (!acc[emissor]) {

@@ -21,21 +21,37 @@ interface DistribuicaoDrawerProps {
   formatCurrency: (value: number) => string;
 }
 
-const typeLabels: { [key: string]: string } = {
-  acoes: 'Ações',
-  bdrs: 'BDRs',
-  conta_corrente: 'Conta Corrente',
-  criptoativos: 'Criptoativos',
-  debentures: 'Debêntures',
-  fundos: 'Fundos',
-  fiis: 'FIIs',
-  moedas: 'Moedas',
-  personalizados: 'Personalizados',
-  poupanca: 'Poupança',
-  previdencia: 'Previdência',
-  renda_fixa_pre: 'Renda Fixa Pré',
-  renda_fixa_pos: 'Renda Fixa Pós',
-  tesouro: 'Tesouro Direto',
+// Normalize asset types from database to display labels
+const normalizeType = (type: string): string => {
+  const normalized = type.toLowerCase().trim();
+  const typeMap: { [key: string]: string } = {
+    'ação': 'Ações',
+    'ações': 'Ações',
+    'acoes': 'Ações',
+    'ações, stocks e etf': 'Ações',
+    'bdrs': 'BDRs',
+    'conta corrente': 'Conta Corrente',
+    'conta_corrente': 'Conta Corrente',
+    'criptoativos': 'Criptoativos',
+    'debêntures': 'Debêntures',
+    'debentures': 'Debêntures',
+    'fundos': 'Fundos',
+    'fiis': 'FIIs',
+    'fiis e reits': 'FIIs',
+    'moedas': 'Moedas',
+    'personalizados': 'Personalizados',
+    'poupança': 'Poupança',
+    'poupanca': 'Poupança',
+    'previdência': 'Previdência',
+    'previdencia': 'Previdência',
+    'renda fixa pré': 'Renda Fixa Pré',
+    'renda_fixa_pre': 'Renda Fixa Pré',
+    'renda fixa pós': 'Renda Fixa Pós',
+    'renda_fixa_pos': 'Renda Fixa Pós',
+    'tesouro direto': 'Tesouro Direto',
+    'tesouro': 'Tesouro Direto',
+  };
+  return typeMap[normalized] || type;
 };
 
 const COLORS = [
@@ -60,8 +76,7 @@ export default function DistribuicaoDrawer({
 
   // Group by asset type (Classes)
   const classeData = investments.reduce((acc, inv) => {
-    const type = inv.asset_type;
-    const label = typeLabels[type] || type;
+    const label = normalizeType(inv.asset_type);
     if (!acc[label]) acc[label] = 0;
     acc[label] += inv.current_value;
     return acc;
@@ -83,8 +98,7 @@ export default function DistribuicaoDrawer({
   };
 
   const estrategiaData = investments.reduce((acc, inv) => {
-    const type = inv.asset_type;
-    const label = typeLabels[type] || type;
+    const label = normalizeType(inv.asset_type);
     const estrategia = estrategiaMapping[label] || 'Outros';
     if (!acc[estrategia]) acc[estrategia] = 0;
     acc[estrategia] += inv.current_value;
@@ -94,11 +108,19 @@ export default function DistribuicaoDrawer({
   // Group by institution (extract from asset_name)
   const instituicaoData = investments.reduce((acc, inv) => {
     let instituicao = 'Outros';
+    // Check for bank in name
     if (inv.asset_name.includes('BANCO')) {
       const match = inv.asset_name.match(/BANCO\s+([A-Z0-9]+)/i);
       if (match) instituicao = `BANCO ${match[1].toUpperCase()}`;
-    } else if (inv.ticker) {
-      instituicao = inv.ticker.split('.')[0] || 'Outros';
+    } else if (inv.asset_name.includes(' - ')) {
+      // Extract institution from "Asset - INSTITUTION" format
+      const parts = inv.asset_name.split(' - ');
+      if (parts.length > 1) {
+        instituicao = parts[1].trim().toUpperCase();
+      }
+    } else if (inv.ticker && inv.ticker !== 'CONTA_CORRENTE') {
+      // Use ticker as proxy for broker/exchange
+      instituicao = 'Corretora';
     }
     if (!acc[instituicao]) acc[instituicao] = 0;
     acc[instituicao] += inv.current_value;
