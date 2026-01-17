@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // Lucide icons
 import { 
@@ -721,7 +721,20 @@ const AppDashboard = () => {
 
           {/* Resumo Content */}
           {carteiraTab === "resumo" && (
-            <div className="p-4 space-y-6">
+            <motion.div 
+              className="p-4 space-y-6"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.2}
+              onDragEnd={(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+                const threshold = 50;
+                if (info.offset.x < -threshold && currentMonthIndex < monthlyData.length - 1) {
+                  setCurrentMonthIndex(prev => prev + 1);
+                } else if (info.offset.x > threshold && currentMonthIndex > 0) {
+                  setCurrentMonthIndex(prev => prev - 1);
+                }
+              }}
+            >
               {/* Chart Section */}
               <div className="relative flex items-center justify-center py-8">
                 <div className="relative w-72 h-72">
@@ -1060,7 +1073,7 @@ const AppDashboard = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Ativos Tab */}
