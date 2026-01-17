@@ -10,12 +10,12 @@ export const Header = () => {
       className="fixed top-0 left-0 right-0 z-50"
     >
       <div className="mx-6 mt-4">
-        <div className="glass-strong rounded-2xl px-6 py-3 flex items-center justify-between">
+        <div className="glass-strong rounded-2xl px-8 py-4 flex items-center justify-between">
           <motion.div
             whileHover={{ scale: 1.05 }}
             className="flex items-center gap-3"
           >
-            <img src={kadigLogo} alt="Kadig" className="h-10" />
+            <img src={kadigLogo} alt="Kadig" className="h-12" />
           </motion.div>
 
           <nav className="hidden md:flex items-center gap-1">
