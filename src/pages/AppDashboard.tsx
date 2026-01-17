@@ -1826,7 +1826,7 @@ const AppDashboard = () => {
 
           <div className="px-4">
             {[
-              { icon: Shield, label: "Segurança", action: () => {} },
+              { icon: Shield, label: "Segurança", action: () => navigate("/seguranca") },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
               { icon: MessageSquare, label: "Suporte", action: () => {} },
               { icon: Info, label: "Sobre", action: () => {} },
