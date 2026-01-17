@@ -548,81 +548,108 @@ const AppDashboard = () => {
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
 
-              {/* Portfolio Summary - Always show carousel */}
+              {/* Metas da carteira - Always show carousel */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-foreground rounded-full" />
-                  <h2 className="font-semibold text-foreground">Suas Carteiras</h2>
+                  <h2 className="font-semibold text-foreground">Metas da carteira</h2>
                 </div>
 
                 {/* Horizontal Carousel */}
                 <div className="overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
                   <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
-                    {/* Add Portfolio Card - Always first */}
-                    <motion.div
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate("/adicionar-investimento")}
-                      className="bg-gradient-to-br from-primary/10 to-violet-500/10 border-2 border-dashed border-primary/30 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all"
-                      style={{ minWidth: '160px', height: '140px' }}
+                    {/* Renda Passiva Card */}
+                    <div 
+                      className="bg-card border border-border rounded-2xl p-4 flex flex-col"
+                      style={{ minWidth: '200px', height: '280px' }}
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mb-2">
-                        <Plus className="w-5 h-5 text-primary" />
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-4 bg-primary rounded-full" />
+                          <h3 className="font-semibold text-foreground text-sm">Renda Passiva</h3>
+                        </div>
+                        <button className="text-muted-foreground">
+                          <span className="text-lg">•••</span>
+                        </button>
                       </div>
-                      <span className="text-sm font-medium text-primary">Nova Carteira</span>
-                    </motion.div>
-
-                    {/* Existing Portfolios */}
-                    {userData?.portfolios && userData.portfolios.map((portfolio, index) => (
-                      <motion.div
-                        key={portfolio.id}
-                        whileTap={{ scale: 0.98 }}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-card border border-border rounded-xl p-4 cursor-pointer hover:border-primary/30 transition-all"
-                        style={{ minWidth: '200px', height: '140px' }}
-                      >
-                        <div className="flex flex-col h-full justify-between">
+                      <p className="text-xs text-primary mb-4">Definir Meta</p>
+                      
+                      {/* Circular Button */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          className="relative w-24 h-24"
+                        >
+                          <div className="absolute inset-0 bg-cyan-100 rounded-full opacity-40" />
+                          <div className="absolute inset-2 bg-cyan-200 rounded-full opacity-60" />
+                          <div className="absolute inset-4 bg-cyan-300/80 rounded-full flex items-center justify-center">
+                            <Plus className="w-8 h-8 text-white" />
+                          </div>
+                        </motion.button>
+                      </div>
+                      
+                      {/* Stats */}
+                      <div className="space-y-2 mt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-3 bg-muted-foreground/30 rounded-full" />
                           <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 rounded-full bg-primary" />
-                              <h3 className="font-medium text-foreground text-sm">{portfolio.name}</h3>
-                            </div>
-                            <p className="text-xl font-bold text-foreground">{formatCurrency(portfolio.total_value)}</p>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-xs font-semibold ${portfolio.total_gain >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                              {portfolio.total_gain >= 0 ? "+" : ""}{formatCurrency(portfolio.total_gain)}
-                            </span>
-                            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                              {portfolio.cdi_percent.toFixed(0)}% CDI
-                            </span>
+                            <p className="text-[10px] text-muted-foreground">Média últ. 12 meses</p>
+                            <p className="text-sm font-semibold text-foreground">R$ -</p>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-3 bg-primary rounded-full" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Meta</p>
+                            <p className="text-sm font-semibold text-foreground">R$ -</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-                    {/* Empty placeholder cards when no portfolios */}
-                    {(!userData?.portfolios || userData.portfolios.length === 0) && (
-                      <>
-                        <div 
-                          className="bg-muted/30 border border-dashed border-muted-foreground/20 rounded-xl p-4 flex items-center justify-center"
-                          style={{ minWidth: '200px', height: '140px' }}
+                    {/* Patrimônio Card */}
+                    <div 
+                      className="bg-card border border-border rounded-2xl p-4 flex flex-col"
+                      style={{ minWidth: '200px', height: '280px' }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1 h-4 bg-primary rounded-full" />
+                        <h3 className="font-semibold text-foreground text-sm">Patrimônio</h3>
+                      </div>
+                      <p className="text-xs text-primary mb-4">Definir Meta</p>
+                      
+                      {/* Circular Button */}
+                      <div className="flex-1 flex items-center justify-center">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          className="relative w-24 h-24"
                         >
-                          <p className="text-xs text-muted-foreground text-center">
-                            Sua primeira<br/>carteira aqui
-                          </p>
+                          <div className="absolute inset-0 bg-cyan-100 rounded-full opacity-40" />
+                          <div className="absolute inset-2 bg-cyan-200 rounded-full opacity-60" />
+                          <div className="absolute inset-4 bg-cyan-300/80 rounded-full flex items-center justify-center">
+                            <Plus className="w-8 h-8 text-white" />
+                          </div>
+                        </motion.button>
+                      </div>
+                      
+                      {/* Stats */}
+                      <div className="space-y-2 mt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-3 bg-muted-foreground/30 rounded-full" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Saldo Bruto Atual</p>
+                            <p className="text-sm font-semibold text-foreground">{formatCurrency(totalPatrimonio)}</p>
+                          </div>
                         </div>
-                        <div 
-                          className="bg-muted/20 border border-dashed border-muted-foreground/10 rounded-xl p-4 flex items-center justify-center"
-                          style={{ minWidth: '160px', height: '140px' }}
-                        >
-                          <p className="text-xs text-muted-foreground/50 text-center">
-                            Deslize →
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1 h-3 bg-primary rounded-full" />
+                          <div>
+                            <p className="text-[10px] text-muted-foreground">Meta</p>
+                            <p className="text-sm font-semibold text-foreground">R$ -</p>
+                          </div>
                         </div>
-                      </>
-                    )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
