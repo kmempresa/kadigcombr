@@ -116,71 +116,84 @@ const AppDashboard = () => {
           {carteiraTab === "resumo" && (
             <div className="p-4 space-y-6">
               {/* Chart Section */}
-              <div className="relative flex items-center justify-center py-6">
+              <div className="relative flex items-center justify-center py-8">
                 {/* Ring Chart */}
-                <div className="relative w-56 h-56">
-                  <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-                    {/* Background ring */}
+                <div className="relative w-72 h-72">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    {/* Background ring - thin gray */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="70"
+                      r="85"
                       fill="none"
                       stroke="hsl(var(--muted))"
-                      strokeWidth="20"
+                      strokeWidth="3"
                     />
-                    {/* Dark Blue segment - 50% (Ações) */}
+                    
+                    {/* Colored segments - starting from top */}
+                    {/* Dark Blue segment - 45% */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="70"
+                      r="85"
                       fill="none"
                       stroke="hsl(210 90% 35%)"
-                      strokeWidth="20"
-                      strokeDasharray="219.8 439.6"
-                      strokeDashoffset="0"
+                      strokeWidth="18"
+                      strokeDasharray="240.33 534.07"
+                      strokeDashoffset="133.52"
+                      strokeLinecap="round"
+                      className="-rotate-90 origin-center"
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                     />
-                    {/* Medium Blue segment - 30% (Renda Fixa) */}
+                    
+                    {/* Medium Blue segment - 30% */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="70"
+                      r="85"
                       fill="none"
                       stroke="hsl(210 80% 50%)"
-                      strokeWidth="20"
-                      strokeDasharray="131.88 439.6"
-                      strokeDashoffset="-219.8"
+                      strokeWidth="18"
+                      strokeDasharray="160.22 534.07"
+                      strokeDashoffset="-106.81"
+                      strokeLinecap="round"
+                      className="-rotate-90 origin-center"
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                     />
-                    {/* Light Blue segment - 20% (Fundos) */}
+                    
+                    {/* Light Blue segment - 15% */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="70"
+                      r="85"
                       fill="none"
                       stroke="hsl(210 70% 65%)"
-                      strokeWidth="20"
-                      strokeDasharray="87.92 439.6"
-                      strokeDashoffset="-351.68"
+                      strokeWidth="18"
+                      strokeDasharray="80.11 534.07"
+                      strokeDashoffset="-267.04"
+                      strokeLinecap="round"
+                      className="-rotate-90 origin-center"
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                     />
                   </svg>
                   
                   {/* Center content */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                    <span className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full mb-1">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+                    <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
                       JANEIRO 2026
                     </span>
-                    <span className="text-lg font-bold text-foreground flex items-center gap-0.5 leading-tight">
-                      {showValues ? "R$ 127.450" : "R$ ••••••"}
-                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-2xl font-bold text-foreground flex items-center gap-1 leading-tight">
+                      {showValues ? "R$ 127.450,53" : "R$ ••••••"}
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     </span>
-                    <span className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+                    <span className="text-xs text-muted-foreground mt-1 leading-tight">
                       CARTEIRA <span className="text-primary font-semibold">88%</span> DO CDI
                     </span>
-                    <div className="mt-1">
-                      <span className="text-[9px] text-muted-foreground">GANHO DE CAPITAL</span>
-                      <div className="mt-0.5">
-                        <span className="text-xs font-semibold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">
-                          {showValues ? "+R$ 3.280" : "+R$ ••••"}
+                    <div className="mt-3">
+                      <span className="text-[10px] text-muted-foreground tracking-wide">GANHO DE CAPITAL</span>
+                      <div className="mt-1">
+                        <span className="text-sm font-semibold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                          {showValues ? "R$ 3.280,00" : "R$ ••••"}
                         </span>
                       </div>
                     </div>
@@ -188,7 +201,7 @@ const AppDashboard = () => {
                 </div>
 
                 {/* Chart icon button */}
-                <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border flex items-center justify-center">
+                <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-sm">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
