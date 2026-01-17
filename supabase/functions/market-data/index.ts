@@ -17,6 +17,62 @@ serve(async (req) => {
       throw new Error('BRAPI_TOKEN not configured');
     }
 
+    const { type = 'all', symbol } = await req.json().catch(() => ({}));
+
+    // Se for buscar detalhes de uma ação específica
+    if (type === 'detail' && symbol) {
+      console.log(`Fetching details for ${symbol}`);
+      
+      const url = `https://brapi.dev/api/quote/${symbol}?token=${BRAPI_TOKEN}&fundamental=true`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        const stock = data.results[0];
+        
+        return new Response(
+          JSON.stringify({
+            symbol: stock.symbol,
+            shortName: stock.shortName || stock.longName || stock.symbol,
+            longName: stock.longName || stock.shortName || stock.symbol,
+            regularMarketPrice: stock.regularMarketPrice || 0,
+            regularMarketChange: stock.regularMarketChange || 0,
+            regularMarketChangePercent: stock.regularMarketChangePercent || 0,
+            logoUrl: stock.logourl || null,
+            currency: stock.currency || 'BRL',
+            // Indicadores fundamentalistas
+            priceEarnings: stock.priceEarnings || null,
+            earningsPerShare: stock.earningsPerShare || null,
+            bookValuePerShare: stock.bookValuePerShare || null,
+            priceToBook: stock.priceToBook || null,
+            dividendYield: stock.dividendYield || null,
+            // Dados históricos
+            historicalDataPrice: stock.historicalDataPrice || [],
+            // Dados adicionais
+            marketCap: stock.marketCap || null,
+            averageDailyVolume10Day: stock.averageDailyVolume10Day || null,
+            averageDailyVolume3Month: stock.averageDailyVolume3Month || null,
+            fiftyTwoWeekHigh: stock.fiftyTwoWeekHigh || null,
+            fiftyTwoWeekLow: stock.fiftyTwoWeekLow || null,
+            fiftyTwoWeekHighChange: stock.fiftyTwoWeekHighChange || null,
+            fiftyTwoWeekLowChange: stock.fiftyTwoWeekLowChange || null,
+            // Dados de volatilidade
+            regularMarketDayHigh: stock.regularMarketDayHigh || null,
+            regularMarketDayLow: stock.regularMarketDayLow || null,
+            regularMarketOpen: stock.regularMarketOpen || null,
+            regularMarketPreviousClose: stock.regularMarketPreviousClose || null,
+            regularMarketVolume: stock.regularMarketVolume || null,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ error: 'Stock not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Lista ampla de ações populares brasileiras
     const allStocks = [
       // Maiores da B3
@@ -55,8 +111,6 @@ serve(async (req) => {
       "ASAI3", "CRFB3", "PCAR3", "SMTO3", "SBSP3", "SAPR11"
     ];
 
-    const { type = 'all' } = await req.json().catch(() => ({}));
-
     let stocksToFetch = allStocks;
     
     // Buscar em lotes para evitar timeout
@@ -86,6 +140,7 @@ serve(async (req) => {
       regularMarketPrice: stock.regularMarketPrice || 0,
       regularMarketChange: stock.regularMarketChange || 0,
       regularMarketChangePercent: stock.regularMarketChangePercent || 0,
+      logoUrl: stock.logourl || null,
     }));
 
     const sortedByGain = [...stocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent);
