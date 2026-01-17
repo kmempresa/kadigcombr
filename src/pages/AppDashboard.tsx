@@ -222,17 +222,24 @@ const AppDashboard = () => {
               </div>
 
               {/* Promo Card */}
-              <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                  <span className="text-2xl text-muted-foreground">$</span>
+              <button
+                onClick={() => navigate("/consultor-ia")}
+                className="w-full bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-4 hover:from-primary/20 hover:to-violet-500/20 transition-all active:scale-[0.98]"
+              >
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-7 h-7 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">Consultor Kadig IA</h3>
+                <div className="flex-1 text-left">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    Consultor Kadig IA
+                    <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full">NOVO</span>
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Tire dúvidas e receba recomendações personalizadas!
                   </p>
                 </div>
-              </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
 
               {/* Goals Section */}
               <div className="space-y-4">
