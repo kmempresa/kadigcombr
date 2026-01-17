@@ -6,17 +6,13 @@ import {
   EyeOff,
   Search,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Plus,
   Link2,
+  List,
   TrendingUp,
   TrendingDown,
-  RefreshCw,
   Star,
-  Loader2,
-  BarChart3,
-  Wallet
+  Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -58,7 +54,6 @@ const TradeTab = ({
   const [marketStocks, setMarketStocks] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [patrimonioExpanded, setPatrimonioExpanded] = useState(false);
 
   const fetchMarketStocks = async () => {
     setLoadingMarket(true);
@@ -129,40 +124,29 @@ const TradeTab = ({
 
   return (
     <div className="flex-1 pb-20 bg-background">
-      {/* Header - Same pattern as Carteira */}
-      <header className="flex items-center justify-between p-4 safe-area-inset-top">
-        <button 
-          onClick={() => setPatrimonioExpanded(!patrimonioExpanded)}
-          className="flex items-center gap-2 active:opacity-70 transition-opacity"
-        >
-          {patrimonioExpanded ? (
-            <ChevronUp className="w-5 h-5 text-foreground" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-foreground" />
-          )}
-          <span className="font-semibold text-foreground">
-            Trade {userName}
-          </span>
-        </button>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setSearchOpen(!searchOpen)}
-            className="p-2 text-muted-foreground"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-          <button className="p-2 text-muted-foreground" onClick={onToggleValues}>
-            {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-          </button>
-          <button className="p-2 text-muted-foreground">
-            <HelpCircle className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={onAddAsset}
-            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md"
-          >
-            <Plus className="w-5 h-5 text-white" />
-          </button>
+      {/* Header */}
+      <header className="p-4 safe-area-inset-top">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-foreground">Kadig Trade</h1>
+          <div className="flex items-center gap-2">
+            <button className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50">
+              <HelpCircle className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={onToggleValues}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50"
+            >
+              {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={() => setSearchOpen(!searchOpen)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                searchOpen ? "bg-muted text-foreground" : "bg-muted/50 text-muted-foreground"
+              }`}
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -173,57 +157,65 @@ const TradeTab = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="px-4 pb-2"
+            className="px-4 pb-3"
           >
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar ativo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 pl-10 bg-muted/50 border-border"
-                autoFocus
-              />
-            </div>
+            <Input
+              placeholder="Buscar ativo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-11 bg-muted/30 border-border"
+              autoFocus
+            />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Sub Tabs - Same pattern as Carteira */}
-      <div className="flex border-b border-border px-4 overflow-x-auto bg-card/50">
+      {/* Tabs */}
+      <div className="flex px-4 gap-1 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
-          <motion.button
+          <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            whileTap={{ scale: 0.95 }}
-            className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${
-              activeTab === tab.id ? "text-foreground" : "text-muted-foreground"
+            className={`px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+              activeTab === tab.id 
+                ? "text-foreground border-foreground" 
+                : "text-muted-foreground border-transparent"
             }`}
           >
             {tab.label}
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="tradeTab"
-                className="absolute bottom-0 left-2 right-2 h-[3px] bg-primary rounded-full"
-              />
-            )}
-          </motion.button>
+          </button>
         ))}
       </div>
 
+      {/* Portfolio Selector */}
+      <div className="p-4 flex items-center gap-3">
+        <button className="flex-1 flex items-center justify-between bg-card border border-border rounded-xl px-4 py-3">
+          <span className="text-foreground font-medium">Patrimônio {userName}</span>
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+        </button>
+        <button className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center">
+          <List className="w-5 h-5 text-muted-foreground" />
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+            1
+          </span>
+        </button>
+      </div>
+
       {/* Real-time indicator */}
-      {(activeTab === "mercado" || activeTab === "favoritos") && (
-        <div className="px-4 py-3 flex items-center justify-between bg-muted/30">
+      <div className="px-4 pb-4">
+        <div className="flex flex-col items-center gap-1 py-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-muted-foreground">Tempo real</span>
+            <div className="w-2 h-2 rounded-full bg-orange-400" />
+            <span className="text-sm text-muted-foreground">
+              Atualização <span className="text-foreground font-medium">em tempo real</span>
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <RefreshCw className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{lastUpdate}</span>
-          </div>
+          <span className="text-xs text-muted-foreground">
+            Última atualização: {lastUpdate}
+          </span>
         </div>
-      )}
+        <div className="h-px bg-border" />
+      </div>
 
       {/* Content */}
       <AnimatePresence mode="wait">
@@ -234,62 +226,104 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4"
+            className="px-4"
           >
             {userAssets.length === 0 ? (
-              <div className="bg-card border border-dashed border-border rounded-2xl p-8 text-center">
-                <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-semibold text-foreground mb-2">
-                  Adicione ativos da bolsa
+              <div className="flex flex-col items-center justify-center py-8">
+                {/* Plus button with hand pointer */}
+                <div className="relative mb-6">
+                  <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                    <Plus className="w-8 h-8 text-white" />
+                  </div>
+                  {/* Hand pointer */}
+                  <svg 
+                    width="40" 
+                    height="48" 
+                    viewBox="0 0 40 48" 
+                    fill="none" 
+                    className="absolute -bottom-4 left-1/2 -translate-x-1/4"
+                  >
+                    <path 
+                      d="M20 8C20 5.79086 21.7909 4 24 4C26.2091 4 28 5.79086 28 8V20" 
+                      stroke="#9CA3AF" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round"
+                    />
+                    <path 
+                      d="M28 16C28 13.7909 29.7909 12 32 12C34.2091 12 36 13.7909 36 16V24" 
+                      stroke="#9CA3AF" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round"
+                    />
+                    <path 
+                      d="M12 24V8C12 5.79086 13.7909 4 16 4C18.2091 4 20 5.79086 20 8V20" 
+                      stroke="#9CA3AF" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round"
+                    />
+                    <path 
+                      d="M12 24L8 28C6 30 6 34 8 36L12 40H32C36 40 36 36 36 32V24" 
+                      stroke="#9CA3AF" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+
+                <h3 className="text-lg font-semibold text-foreground text-center mb-2">
+                  Adicione ativos da bolsa<br/>na sua carteira
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Você não possui ativos de renda variável nesta carteira
+                <p className="text-sm text-muted-foreground text-center mb-8">
+                  Você não possui ativos da bolsa nesta carteira
                 </p>
-                
-                <div className="space-y-3">
+
+                <div className="w-full max-w-xs space-y-3">
                   <button
                     onClick={onAddAsset}
-                    className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-medium flex items-center justify-center gap-2"
+                    className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
                   >
-                    <Plus className="w-4 h-4" />
-                    Adicionar ativos
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Plus className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="font-medium text-foreground">Adicionar ativos</span>
                   </button>
-                  
+
                   <button
                     onClick={onAddConnection}
-                    className="w-full bg-card border border-border py-3 rounded-xl font-medium flex items-center justify-center gap-2 text-foreground"
+                    className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4"
                   >
-                    <Link2 className="w-4 h-4" />
-                    Adicionar conexão
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Link2 className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="font-medium text-foreground">Adicionar conexão</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {userAssets.map((asset, index) => (
                   <motion.div 
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-card border border-border rounded-xl p-4"
+                    className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">
-                          {(asset.ticker || asset.asset_name)?.slice(0, 2)}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-foreground">{asset.ticker || asset.asset_name}</p>
-                        <p className="text-xs text-muted-foreground">{asset.asset_name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-foreground">{formatPrice(asset.current_value)}</p>
-                        <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                          {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
-                        </p>
-                      </div>
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary">
+                        {(asset.ticker || asset.asset_name)?.slice(0, 2)}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground">{asset.ticker || asset.asset_name}</p>
+                      <p className="text-xs text-muted-foreground">{asset.asset_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-foreground">{formatPrice(asset.current_value)}</p>
+                      <p className={`text-xs ${asset.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                        {asset.gain_percent >= 0 ? "+" : ""}{asset.gain_percent?.toFixed(2)}%
+                      </p>
                     </div>
                   </motion.div>
                 ))}
@@ -305,9 +339,8 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4 space-y-4"
+            className="px-4 space-y-4"
           >
-            {/* Summary Card */}
             <div className="bg-gradient-to-br from-primary to-primary/80 rounded-2xl p-5 text-white">
               <p className="text-white/70 text-sm mb-1">Patrimônio em Renda Variável</p>
               <p className="text-3xl font-bold mb-4">
@@ -325,7 +358,6 @@ const TradeTab = ({
               </div>
             </div>
 
-            {/* Allocation */}
             <div className="bg-card border border-border rounded-xl p-4">
               <h3 className="font-semibold text-foreground mb-4">Alocação por tipo</h3>
               <div className="flex items-center justify-center py-6">
@@ -342,7 +374,7 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4 space-y-2"
+            className="px-4 space-y-2"
           >
             {loadingMarket ? (
               <div className="flex flex-col items-center justify-center py-12">
@@ -358,10 +390,7 @@ const TradeTab = ({
                   transition={{ delay: index * 0.02 }}
                   className="bg-card border border-border rounded-xl p-4 flex items-center gap-3"
                 >
-                  <button
-                    onClick={() => toggleFavorite(stock.symbol)}
-                    className="p-1"
-                  >
+                  <button onClick={() => toggleFavorite(stock.symbol)} className="p-1">
                     <Star 
                       className={`w-5 h-5 ${
                         favorites.includes(stock.symbol) 
@@ -411,14 +440,14 @@ const TradeTab = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="p-4"
+            className="px-4"
           >
             {favorites.length === 0 ? (
-              <div className="bg-card border border-dashed border-border rounded-2xl p-8 text-center">
-                <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <div className="flex flex-col items-center justify-center py-12">
+                <Star className="w-12 h-12 text-muted-foreground/30 mb-4" />
                 <h3 className="font-semibold text-foreground mb-2">Nenhum favorito</h3>
-                <p className="text-sm text-muted-foreground">
-                  Toque na ⭐ de um ativo na aba Mercado para adicionar aqui
+                <p className="text-sm text-muted-foreground text-center">
+                  Toque na ⭐ de um ativo na aba Mercado<br/>para adicionar aqui
                 </p>
               </div>
             ) : (
