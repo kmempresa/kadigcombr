@@ -21,48 +21,174 @@ serve(async (req) => {
 
     // Se for buscar detalhes de uma ação específica
     if (type === 'detail' && symbol) {
-      console.log(`Fetching details for ${symbol}`);
+      console.log(`Fetching all details for ${symbol}`);
       
-      const url = `https://brapi.dev/api/quote/${symbol}?token=${BRAPI_TOKEN}&fundamental=true`;
+      // Buscar dados com fundamental=true, dividends=true, modules e range
+      const url = `https://brapi.dev/api/quote/${symbol}?token=${BRAPI_TOKEN}&fundamental=true&dividends=true&range=1y&interval=1d&modules=summaryProfile,defaultKeyStatistics,financialData,balanceSheetHistory,incomeStatementHistory`;
+      
+      console.log(`Requesting: ${url.replace(BRAPI_TOKEN, '***')}`);
+      
       const response = await fetch(url);
       const data = await response.json();
+      
+      console.log(`Response keys: ${Object.keys(data).join(', ')}`);
       
       if (data.results && data.results.length > 0) {
         const stock = data.results[0];
         
+        console.log(`Stock data keys: ${Object.keys(stock).join(', ')}`);
+        
+        // Extrair dados do summaryProfile
+        const summaryProfile = stock.summaryProfile || {};
+        
+        // Extrair dados do defaultKeyStatistics
+        const keyStats = stock.defaultKeyStatistics || {};
+        
+        // Extrair dados financeiros
+        const financialData = stock.financialData || {};
+        
+        // Extrair balanço patrimonial
+        const balanceSheet = stock.balanceSheetHistory?.balanceSheetStatements?.[0] || {};
+        
+        // Extrair demonstração de resultados
+        const incomeStatement = stock.incomeStatementHistory?.incomeStatementHistory?.[0] || {};
+        
+        // Processar dados históricos para gráfico
+        const historicalData = (stock.historicalDataPrice || []).map((item: any) => ({
+          date: item.date,
+          open: item.open,
+          high: item.high,
+          low: item.low,
+          close: item.close,
+          volume: item.volume,
+        }));
+        
+        // Processar dividendos
+        const dividendsData = (stock.dividendsData?.cashDividends || []).map((div: any) => ({
+          paymentDate: div.paymentDate,
+          rate: div.rate,
+          type: div.type,
+          relatedTo: div.relatedTo,
+        }));
+        
+        const result = {
+          // Dados básicos
+          symbol: stock.symbol,
+          shortName: stock.shortName || stock.longName || stock.symbol,
+          longName: stock.longName || stock.shortName || stock.symbol,
+          currency: stock.currency || 'BRL',
+          logoUrl: stock.logourl || null,
+          
+          // Preços em tempo real
+          regularMarketPrice: stock.regularMarketPrice || 0,
+          regularMarketChange: stock.regularMarketChange || 0,
+          regularMarketChangePercent: stock.regularMarketChangePercent || 0,
+          regularMarketOpen: stock.regularMarketOpen || null,
+          regularMarketDayHigh: stock.regularMarketDayHigh || null,
+          regularMarketDayLow: stock.regularMarketDayLow || null,
+          regularMarketPreviousClose: stock.regularMarketPreviousClose || null,
+          regularMarketVolume: stock.regularMarketVolume || null,
+          regularMarketTime: stock.regularMarketTime || null,
+          
+          // Dados de 52 semanas
+          fiftyTwoWeekHigh: stock.fiftyTwoWeekHigh || null,
+          fiftyTwoWeekLow: stock.fiftyTwoWeekLow || null,
+          fiftyTwoWeekHighChange: stock.fiftyTwoWeekHighChange || null,
+          fiftyTwoWeekHighChangePercent: stock.fiftyTwoWeekHighChangePercent || null,
+          fiftyTwoWeekLowChange: stock.fiftyTwoWeekLowChange || null,
+          fiftyTwoWeekLowChangePercent: stock.fiftyTwoWeekLowChangePercent || null,
+          
+          // Volume médio
+          averageDailyVolume10Day: stock.averageDailyVolume10Day || null,
+          averageDailyVolume3Month: stock.averageDailyVolume3Month || null,
+          
+          // Indicadores fundamentalistas básicos
+          marketCap: stock.marketCap || null,
+          priceEarnings: stock.priceEarnings || keyStats.trailingPE || null,
+          earningsPerShare: stock.earningsPerShare || keyStats.trailingEps || null,
+          bookValuePerShare: stock.bookValuePerShare || keyStats.bookValue || null,
+          priceToBook: stock.priceToBook || keyStats.priceToBook || null,
+          
+          // Dividendos
+          dividendYield: keyStats.dividendYield || stock.dividendYield || null,
+          dividendRate: keyStats.dividendRate || null,
+          payoutRatio: keyStats.payoutRatio || null,
+          exDividendDate: keyStats.exDividendDate || null,
+          lastDividendValue: keyStats.lastDividendValue || null,
+          lastDividendDate: keyStats.lastDividendDate || null,
+          
+          // Indicadores de valor
+          enterpriseValue: keyStats.enterpriseValue || null,
+          forwardPE: keyStats.forwardPE || null,
+          pegRatio: keyStats.pegRatio || null,
+          enterpriseToRevenue: keyStats.enterpriseToRevenue || null,
+          enterpriseToEbitda: keyStats.enterpriseToEbitda || null,
+          
+          // Indicadores de rentabilidade
+          profitMargins: keyStats.profitMargins || financialData.profitMargins || null,
+          returnOnAssets: financialData.returnOnAssets || null,
+          returnOnEquity: financialData.returnOnEquity || null,
+          
+          // Indicadores financeiros
+          totalCash: financialData.totalCash || null,
+          totalCashPerShare: financialData.totalCashPerShare || null,
+          totalDebt: financialData.totalDebt || null,
+          debtToEquity: financialData.debtToEquity || null,
+          currentRatio: financialData.currentRatio || null,
+          quickRatio: financialData.quickRatio || null,
+          
+          // Receita e lucro
+          totalRevenue: financialData.totalRevenue || null,
+          revenuePerShare: financialData.revenuePerShare || null,
+          revenueGrowth: financialData.revenueGrowth || null,
+          grossMargins: financialData.grossMargins || null,
+          ebitdaMargins: financialData.ebitdaMargins || null,
+          operatingMargins: financialData.operatingMargins || null,
+          ebitda: financialData.ebitda || null,
+          operatingCashflow: financialData.operatingCashflow || null,
+          freeCashflow: financialData.freeCashflow || null,
+          
+          // Dados da empresa (summaryProfile)
+          sector: summaryProfile.sector || null,
+          industry: summaryProfile.industry || null,
+          website: summaryProfile.website || null,
+          longBusinessSummary: summaryProfile.longBusinessSummary || null,
+          fullTimeEmployees: summaryProfile.fullTimeEmployees || null,
+          city: summaryProfile.city || null,
+          state: summaryProfile.state || null,
+          country: summaryProfile.country || null,
+          
+          // Balanço patrimonial (último)
+          totalAssets: balanceSheet.totalAssets || null,
+          totalLiabilities: balanceSheet.totalLiab || null,
+          totalStockholderEquity: balanceSheet.totalStockholderEquity || null,
+          
+          // Demonstração de resultados (último)
+          grossProfit: incomeStatement.grossProfit || null,
+          netIncome: incomeStatement.netIncome || null,
+          operatingIncome: incomeStatement.operatingIncome || null,
+          
+          // Beta e volatilidade
+          beta: keyStats.beta || null,
+          
+          // Shares
+          sharesOutstanding: keyStats.sharesOutstanding || null,
+          floatShares: keyStats.floatShares || null,
+          
+          // Dados históricos (para gráfico)
+          historicalData: historicalData.slice(-30), // Últimos 30 dias
+          
+          // Dividendos históricos
+          dividendsHistory: dividendsData.slice(0, 12), // Últimos 12 pagamentos
+          
+          // Timestamp
+          lastUpdate: new Date().toISOString(),
+        };
+        
+        console.log(`Returning ${Object.keys(result).length} fields`);
+        
         return new Response(
-          JSON.stringify({
-            symbol: stock.symbol,
-            shortName: stock.shortName || stock.longName || stock.symbol,
-            longName: stock.longName || stock.shortName || stock.symbol,
-            regularMarketPrice: stock.regularMarketPrice || 0,
-            regularMarketChange: stock.regularMarketChange || 0,
-            regularMarketChangePercent: stock.regularMarketChangePercent || 0,
-            logoUrl: stock.logourl || null,
-            currency: stock.currency || 'BRL',
-            // Indicadores fundamentalistas
-            priceEarnings: stock.priceEarnings || null,
-            earningsPerShare: stock.earningsPerShare || null,
-            bookValuePerShare: stock.bookValuePerShare || null,
-            priceToBook: stock.priceToBook || null,
-            dividendYield: stock.dividendYield || null,
-            // Dados históricos
-            historicalDataPrice: stock.historicalDataPrice || [],
-            // Dados adicionais
-            marketCap: stock.marketCap || null,
-            averageDailyVolume10Day: stock.averageDailyVolume10Day || null,
-            averageDailyVolume3Month: stock.averageDailyVolume3Month || null,
-            fiftyTwoWeekHigh: stock.fiftyTwoWeekHigh || null,
-            fiftyTwoWeekLow: stock.fiftyTwoWeekLow || null,
-            fiftyTwoWeekHighChange: stock.fiftyTwoWeekHighChange || null,
-            fiftyTwoWeekLowChange: stock.fiftyTwoWeekLowChange || null,
-            // Dados de volatilidade
-            regularMarketDayHigh: stock.regularMarketDayHigh || null,
-            regularMarketDayLow: stock.regularMarketDayLow || null,
-            regularMarketOpen: stock.regularMarketOpen || null,
-            regularMarketPreviousClose: stock.regularMarketPreviousClose || null,
-            regularMarketVolume: stock.regularMarketVolume || null,
-          }),
+          JSON.stringify(result),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -111,14 +237,12 @@ serve(async (req) => {
       "ASAI3", "CRFB3", "PCAR3", "SMTO3", "SBSP3", "SAPR11"
     ];
 
-    let stocksToFetch = allStocks;
-    
     // Buscar em lotes para evitar timeout
     const batchSize = 20;
     const results: any[] = [];
     
-    for (let i = 0; i < Math.min(stocksToFetch.length, 60); i += batchSize) {
-      const batch = stocksToFetch.slice(i, i + batchSize);
+    for (let i = 0; i < Math.min(allStocks.length, 60); i += batchSize) {
+      const batch = allStocks.slice(i, i + batchSize);
       const url = `https://brapi.dev/api/quote/${batch.join(",")}?token=${BRAPI_TOKEN}`;
       
       try {

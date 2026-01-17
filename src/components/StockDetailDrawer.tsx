@@ -5,19 +5,24 @@ import {
   Bell, 
   Star, 
   FileText,
-  Loader2
+  Loader2,
+  Globe,
+  Building2,
+  Users,
+  MapPin,
+  ExternalLink
 } from "lucide-react";
 import { 
   AreaChart, 
   Area, 
   XAxis, 
+  YAxis,
   ResponsiveContainer,
   BarChart,
   Bar,
   LineChart,
   Line,
   Tooltip,
-  ComposedChart
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,44 +41,99 @@ interface StockDetailDrawerProps {
 }
 
 interface StockDetails {
+  // Básico
   symbol: string;
   shortName: string;
   longName: string;
+  currency: string;
+  logoUrl: string | null;
+  
+  // Preços
   regularMarketPrice: number;
   regularMarketChange: number;
   regularMarketChangePercent: number;
-  logoUrl: string | null;
+  regularMarketOpen: number | null;
+  regularMarketDayHigh: number | null;
+  regularMarketDayLow: number | null;
+  regularMarketPreviousClose: number | null;
+  regularMarketVolume: number | null;
+  
+  // 52 semanas
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  
+  // Volume
+  averageDailyVolume10Day: number | null;
+  averageDailyVolume3Month: number | null;
+  
+  // Fundamentalistas
+  marketCap: number | null;
   priceEarnings: number | null;
   earningsPerShare: number | null;
   priceToBook: number | null;
+  
+  // Dividendos
   dividendYield: number | null;
-  marketCap: number | null;
-  fiftyTwoWeekHigh: number | null;
-  fiftyTwoWeekLow: number | null;
-  regularMarketDayHigh: number | null;
-  regularMarketDayLow: number | null;
-  regularMarketVolume: number | null;
+  payoutRatio: number | null;
+  lastDividendValue: number | null;
+  
+  // Valor
+  enterpriseValue: number | null;
+  forwardPE: number | null;
+  pegRatio: number | null;
+  enterpriseToRevenue: number | null;
+  enterpriseToEbitda: number | null;
+  
+  // Rentabilidade
+  profitMargins: number | null;
+  returnOnAssets: number | null;
+  returnOnEquity: number | null;
+  
+  // Financeiros
+  totalCash: number | null;
+  totalDebt: number | null;
+  debtToEquity: number | null;
+  currentRatio: number | null;
+  
+  // Receita
+  totalRevenue: number | null;
+  revenueGrowth: number | null;
+  grossMargins: number | null;
+  ebitdaMargins: number | null;
+  operatingMargins: number | null;
+  ebitda: number | null;
+  freeCashflow: number | null;
+  
+  // Empresa
+  sector: string | null;
+  industry: string | null;
+  website: string | null;
+  longBusinessSummary: string | null;
+  fullTimeEmployees: number | null;
+  city: string | null;
+  state: string | null;
+  
+  // Balanço
+  totalAssets: number | null;
+  totalLiabilities: number | null;
+  totalStockholderEquity: number | null;
+  
+  // DRE
+  grossProfit: number | null;
+  netIncome: number | null;
+  
+  // Volatilidade
+  beta: number | null;
+  
+  // Ações
+  sharesOutstanding: number | null;
+  
+  // Dados históricos
+  historicalData: { date: number; close: number; volume: number }[];
+  
+  // Dividendos
+  dividendsHistory: { paymentDate: string; rate: number; type: string }[];
 }
-
-// Sector stocks mock data (would need another API for real sector data)
-const getSectorStocks = () => [
-  { symbol: "RAIL3", name: "Rumo S.a.", price: 13.60, change: -0.95 },
-  { symbol: "CCRO3", name: "CCR S.a.", price: 12.50, change: 0.32 },
-];
-
-const generateDividendData = () => [
-  { month: "Mai.", value: Math.random() * 1 + 0.2 },
-  { month: "Ago.", value: Math.random() * 1.5 + 0.3 },
-  { month: "Dez.", value: Math.random() * 1 + 0.2 },
-];
-
-const generateResultsData = () => [
-  { year: "2021", receita: 12, custos: 6, lucro: 2 },
-  { year: "2022", receita: 14, custos: 7, lucro: 2.2 },
-  { year: "2023", receita: 13, custos: 6.5, lucro: 2.1 },
-  { year: "2024", receita: 15, custos: 7.5, lucro: 2.5 },
-  { year: "2025", receita: 15.6, custos: 7.9, lucro: 2.7 },
-];
 
 const StockDetailDrawer = ({
   isOpen,
@@ -83,11 +143,9 @@ const StockDetailDrawer = ({
   onToggleFavorite,
   isFavorite = false
 }: StockDetailDrawerProps) => {
-  const [chartPeriod, setChartPeriod] = useState<"5d" | "1m" | "1y" | "ytd">("5d");
-  const [resultsPeriod, setResultsPeriod] = useState<"5" | "10">("5");
   const [loading, setLoading] = useState(false);
   const [stockDetails, setStockDetails] = useState<StockDetails | null>(null);
-  const [chartData, setChartData] = useState<{day: number; value: number}[]>([]);
+  const [activeInfoTab, setActiveInfoTab] = useState<"indicadores" | "empresa" | "financeiro">("indicadores");
   
   useEffect(() => {
     if (isOpen && stock) {
@@ -106,88 +164,67 @@ const StockDetailDrawer = ({
       
       if (data) {
         setStockDetails(data);
-        // Generate chart data based on price
-        const basePrice = data.regularMarketPrice || 100;
-        const generatedChart = [];
-        let value = basePrice * 0.95;
-        for (let i = 0; i < 30; i++) {
-          value += (Math.random() - 0.48) * (basePrice * 0.02);
-          generatedChart.push({ day: i, value: Math.max(value, basePrice * 0.8) });
-        }
-        // Ensure last value is close to current price
-        generatedChart[generatedChart.length - 1].value = basePrice;
-        setChartData(generatedChart);
       }
     } catch (error) {
       console.error("Error fetching stock details:", error);
-      // Use basic stock data as fallback
-      if (stock) {
-        setStockDetails({
-          symbol: stock.symbol,
-          shortName: stock.shortName,
-          longName: stock.shortName,
-          regularMarketPrice: stock.regularMarketPrice,
-          regularMarketChange: 0,
-          regularMarketChangePercent: stock.regularMarketChangePercent,
-          logoUrl: null,
-          priceEarnings: null,
-          earningsPerShare: null,
-          priceToBook: null,
-          dividendYield: null,
-          marketCap: null,
-          fiftyTwoWeekHigh: null,
-          fiftyTwoWeekLow: null,
-          regularMarketDayHigh: null,
-          regularMarketDayLow: null,
-          regularMarketVolume: null,
-        });
-      }
     }
     setLoading(false);
   };
 
   if (!stock) return null;
 
-  const dividendData = generateDividendData();
-  const resultsData = generateResultsData();
-  const sectorStocks = getSectorStocks();
   const isPositive = (stockDetails?.regularMarketChangePercent ?? stock.regularMarketChangePercent) >= 0;
   const currentPrice = stockDetails?.regularMarketPrice ?? stock.regularMarketPrice;
   const changePercent = stockDetails?.regularMarketChangePercent ?? stock.regularMarketChangePercent;
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | null) => {
+    if (price === null) return "-";
     if (!showValues) return "R$ ••••••";
     return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   };
 
   const formatLargeNumber = (num: number | null) => {
-    if (num === null) return "-";
+    if (num === null || num === undefined) return "-";
     if (num >= 1e12) return `R$ ${(num / 1e12).toFixed(2)}T`;
     if (num >= 1e9) return `R$ ${(num / 1e9).toFixed(2)}B`;
     if (num >= 1e6) return `R$ ${(num / 1e6).toFixed(2)}M`;
+    if (num >= 1e3) return `R$ ${(num / 1e3).toFixed(2)}K`;
     return `R$ ${num.toFixed(2)}`;
   };
 
-  const formatIndicator = (value: number | null, suffix = "") => {
+  const formatPercent = (value: number | null) => {
     if (value === null || value === undefined) return "-";
-    return `${value.toFixed(2)}${suffix}`;
+    // API returns as decimal (0.15 = 15%)
+    const percent = value > 1 ? value : value * 100;
+    return `${percent.toFixed(2)}%`;
   };
 
-  // Mini chart for sector stocks
-  const MiniChart = ({ positive }: { positive: boolean }) => (
-    <svg viewBox="0 0 80 24" className="w-20 h-6">
-      <path
-        d={positive 
-          ? "M0,18 L8,16 L16,17 L24,14 L32,15 L40,12 L48,13 L56,10 L64,8 L72,9 L80,6"
-          : "M0,6 L8,8 L16,7 L24,10 L32,9 L40,12 L48,11 L56,14 L64,16 L72,15 L80,18"
-        }
-        fill="none"
-        stroke={positive ? "#22c55e" : "#ef4444"}
-        strokeWidth="1.5"
-        strokeDasharray="3 2"
-      />
-    </svg>
-  );
+  const formatNumber = (value: number | null, decimals = 2) => {
+    if (value === null || value === undefined) return "-";
+    return value.toFixed(decimals);
+  };
+
+  const formatVolume = (volume: number | null) => {
+    if (volume === null) return "-";
+    if (volume >= 1e9) return `${(volume / 1e9).toFixed(2)}B`;
+    if (volume >= 1e6) return `${(volume / 1e6).toFixed(2)}M`;
+    if (volume >= 1e3) return `${(volume / 1e3).toFixed(0)}K`;
+    return volume.toString();
+  };
+
+  // Prepare chart data from historical data
+  const chartData = stockDetails?.historicalData?.map((item, index) => ({
+    day: index,
+    value: item.close,
+    volume: item.volume,
+  })) || [];
+
+  // Prepare dividend chart data
+  const dividendChartData = stockDetails?.dividendsHistory?.slice(0, 6).reverse().map((div) => ({
+    date: new Date(div.paymentDate).toLocaleDateString("pt-BR", { month: "short" }),
+    value: div.rate,
+    type: div.type,
+  })) || [];
 
   return (
     <AnimatePresence>
@@ -213,7 +250,7 @@ const StockDetailDrawer = ({
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">Carregando dados...</p>
+                <p className="text-muted-foreground">Carregando dados em tempo real...</p>
               </div>
             ) : (
               <>
@@ -229,44 +266,51 @@ const StockDetailDrawer = ({
                           className="w-16 h-16 object-contain"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
                           }}
                         />
-                      ) : null}
-                      <span className={`text-xl font-bold text-foreground ${stockDetails?.logoUrl ? 'hidden' : ''}`}>
-                        {stock.symbol.slice(0, 3)}
-                      </span>
+                      ) : (
+                        <span className="text-xl font-bold text-foreground">
+                          {stock.symbol.slice(0, 3)}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Stock Info */}
                   <div className="text-center mb-4">
                     <h2 className="text-xl font-bold text-foreground">{stock.symbol}</h2>
-                    <p className="text-sm text-muted-foreground uppercase px-4">
+                    <p className="text-sm text-muted-foreground uppercase px-4 line-clamp-2">
                       {stockDetails?.longName || stock.shortName}
                     </p>
+                    {stockDetails?.sector && (
+                      <p className="text-xs text-primary mt-1">
+                        {stockDetails.sector} • {stockDetails.industry}
+                      </p>
+                    )}
                   </div>
 
                   {/* Price Chart */}
-                  <div className="h-16 mb-4">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <Area 
-                          type="monotone" 
-                          dataKey="value" 
-                          stroke={isPositive ? "#22c55e" : "#ef4444"} 
-                          strokeWidth={2}
-                          fill="url(#colorValue)" 
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
+                  {chartData.length > 0 && (
+                    <div className="h-20 mb-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor={isPositive ? "#22c55e" : "#ef4444"} stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <Area 
+                            type="monotone" 
+                            dataKey="value" 
+                            stroke={isPositive ? "#22c55e" : "#ef4444"} 
+                            strokeWidth={2}
+                            fill="url(#colorValue)" 
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
 
                   {/* Price and Variation */}
                   <div className="flex items-center justify-between">
@@ -296,226 +340,433 @@ const StockDetailDrawer = ({
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto px-4 pb-20">
-                  {/* Informações - Dados Reais */}
+                  
+                  {/* Preços do Dia */}
                   <section className="py-4">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">Informações</h3>
-                    <div className="border-t border-border pt-4">
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Preço/lucro</p>
-                          <p className="font-semibold text-foreground">
-                            {formatIndicator(stockDetails?.priceEarnings ?? null)}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">P/VP</p>
-                          <p className="font-semibold text-foreground">
-                            {formatIndicator(stockDetails?.priceToBook ?? null)}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">LPA</p>
-                          <p className="font-semibold text-foreground">
-                            R$ {formatIndicator(stockDetails?.earningsPerShare ?? null)}
-                          </p>
-                        </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Cotação do Dia</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-card border border-border rounded-xl p-3">
+                        <p className="text-xs text-muted-foreground">Abertura</p>
+                        <p className="font-semibold text-foreground">{formatPrice(stockDetails?.regularMarketOpen ?? null)}</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Dividend Yield</p>
-                          <p className="font-semibold text-foreground">
-                            {formatIndicator(stockDetails?.dividendYield ?? null, "%")}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Máx. 52 sem</p>
-                          <p className="font-semibold text-foreground">
-                            {stockDetails?.fiftyTwoWeekHigh ? formatPrice(stockDetails.fiftyTwoWeekHigh) : "-"}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Mín. 52 sem</p>
-                          <p className="font-semibold text-foreground">
-                            {stockDetails?.fiftyTwoWeekLow ? formatPrice(stockDetails.fiftyTwoWeekLow) : "-"}
-                          </p>
-                        </div>
+                      <div className="bg-card border border-border rounded-xl p-3">
+                        <p className="text-xs text-muted-foreground">Fech. Anterior</p>
+                        <p className="font-semibold text-foreground">{formatPrice(stockDetails?.regularMarketPreviousClose ?? null)}</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Máx. Dia</p>
-                          <p className="font-semibold text-foreground">
-                            {stockDetails?.regularMarketDayHigh ? formatPrice(stockDetails.regularMarketDayHigh) : "-"}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Mín. Dia</p>
-                          <p className="font-semibold text-foreground">
-                            {stockDetails?.regularMarketDayLow ? formatPrice(stockDetails.regularMarketDayLow) : "-"}
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Volume</p>
-                          <p className="font-semibold text-foreground">
-                            {stockDetails?.regularMarketVolume 
-                              ? (stockDetails.regularMarketVolume / 1e6).toFixed(1) + "M"
-                              : "-"}
-                          </p>
-                        </div>
+                      <div className="bg-card border border-border rounded-xl p-3">
+                        <p className="text-xs text-muted-foreground">Máxima</p>
+                        <p className="font-semibold text-emerald-500">{formatPrice(stockDetails?.regularMarketDayHigh ?? null)}</p>
+                      </div>
+                      <div className="bg-card border border-border rounded-xl p-3">
+                        <p className="text-xs text-muted-foreground">Mínima</p>
+                        <p className="font-semibold text-red-500">{formatPrice(stockDetails?.regularMarketDayLow ?? null)}</p>
                       </div>
                     </div>
                   </section>
 
-                  {/* Market Cap */}
+                  {/* Volume */}
                   <section className="py-4 border-t border-border">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Valor de mercado</span>
-                      <span className="font-semibold text-foreground">
-                        {formatLargeNumber(stockDetails?.marketCap ?? null)}
-                      </span>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Volume</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Hoje</p>
+                        <p className="font-semibold text-foreground">{formatVolume(stockDetails?.regularMarketVolume ?? null)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Média 10d</p>
+                        <p className="font-semibold text-foreground">{formatVolume(stockDetails?.averageDailyVolume10Day ?? null)}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Média 3m</p>
+                        <p className="font-semibold text-foreground">{formatVolume(stockDetails?.averageDailyVolume3Month ?? null)}</p>
+                      </div>
                     </div>
                   </section>
 
-                  {/* Ações do setor */}
+                  {/* 52 Semanas */}
                   <section className="py-4 border-t border-border">
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Ações do setor</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Outro:</p>
-                    
-                    <div className="space-y-3">
-                      {sectorStocks.map((s) => (
-                        <div key={s.symbol} className="bg-card border border-border rounded-xl p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <button>
-                              <Star className="w-5 h-5 text-muted-foreground" />
-                            </button>
-                            <div>
-                              <p className="font-semibold text-foreground">{s.symbol}</p>
-                              <p className="text-xs text-muted-foreground">{s.name}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <MiniChart positive={s.change >= 0} />
-                            <div className="text-right">
-                              <p className="font-semibold text-foreground">{formatPrice(s.price)}</p>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                s.change >= 0 ? "bg-emerald-500 text-white" : "bg-red-500 text-white"
-                              }`}>
-                                {s.change >= 0 ? "+" : ""}{s.change.toFixed(2)}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                    <h3 className="text-lg font-semibold text-foreground mb-4">52 Semanas</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs text-muted-foreground w-16">{formatPrice(stockDetails?.fiftyTwoWeekLow ?? null)}</span>
+                      <div className="flex-1 h-2 bg-muted rounded-full relative">
+                        <div 
+                          className="absolute h-3 w-3 bg-primary rounded-full top-1/2 -translate-y-1/2"
+                          style={{
+                            left: stockDetails?.fiftyTwoWeekLow && stockDetails?.fiftyTwoWeekHigh 
+                              ? `${((currentPrice - stockDetails.fiftyTwoWeekLow) / (stockDetails.fiftyTwoWeekHigh - stockDetails.fiftyTwoWeekLow)) * 100}%`
+                              : '50%'
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-16 text-right">{formatPrice(stockDetails?.fiftyTwoWeekHigh ?? null)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Mínima</span>
+                      <span>Máxima</span>
                     </div>
                   </section>
 
-                  {/* Comparação do setor */}
+                  {/* Tabs de Informações */}
                   <section className="py-4 border-t border-border">
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Comparação do setor</h3>
-                    <p className="text-sm text-muted-foreground mb-4">5 dias</p>
-                    
-                    <div className="flex gap-2 mb-4">
-                      {["5d", "1m", "1y", "ytd"].map((period) => (
+                    <div className="flex gap-2 mb-4 overflow-x-auto">
+                      {[
+                        { id: "indicadores", label: "Indicadores" },
+                        { id: "empresa", label: "Empresa" },
+                        { id: "financeiro", label: "Financeiro" },
+                      ].map((tab) => (
                         <button
-                          key={period}
-                          onClick={() => setChartPeriod(period as any)}
-                          className={`px-4 py-2 rounded-full text-sm font-medium ${
-                            chartPeriod === period 
-                              ? "bg-muted text-foreground" 
-                              : "text-muted-foreground"
+                          key={tab.id}
+                          onClick={() => setActiveInfoTab(tab.id as any)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+                            activeInfoTab === tab.id 
+                              ? "bg-primary text-white" 
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
-                          {period === "5d" ? "5 DIAS" : period === "1m" ? "1 MÊS" : period === "1y" ? "1 ANO" : "YTD"}
+                          {tab.label}
                         </button>
                       ))}
                     </div>
 
-                    <div className="bg-muted/30 rounded-xl p-4 h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
-                          <Line type="monotone" dataKey="value" stroke="#22d3ee" strokeWidth={2} dot={false} />
-                          <Line type="monotone" dataKey="value" stroke="#ec4899" strokeWidth={2} dot={false} 
-                            data={chartData.map((d) => ({ ...d, value: d.value * 0.95 }))} 
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
+                    {activeInfoTab === "indicadores" && (
+                      <div className="space-y-4">
+                        {/* Valuation */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Valuation</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">P/L</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.priceEarnings ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">P/VP</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.priceToBook ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">P/L Futuro</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.forwardPE ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">EV/Receita</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.enterpriseToRevenue ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">EV/EBITDA</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.enterpriseToEbitda ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">PEG Ratio</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.pegRatio ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dividendos */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Dividendos</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Div. Yield</p>
+                              <p className="font-semibold text-emerald-500">{formatPercent(stockDetails?.dividendYield ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Payout</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.payoutRatio ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Último Div.</p>
+                              <p className="font-semibold text-foreground">{formatPrice(stockDetails?.lastDividendValue ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Rentabilidade */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Rentabilidade</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">ROE</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.returnOnEquity ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">ROA</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.returnOnAssets ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Margem Liq.</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.profitMargins ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Volatilidade */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Risco</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Beta</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.beta ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">LPA</p>
+                              <p className="font-semibold text-foreground">{formatPrice(stockDetails?.earningsPerShare ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeInfoTab === "empresa" && (
+                      <div className="space-y-4">
+                        {/* Sobre */}
+                        {stockDetails?.longBusinessSummary && (
+                          <div className="bg-card border border-border rounded-xl p-4">
+                            <h4 className="font-medium text-foreground mb-2">Sobre</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-4">
+                              {stockDetails.longBusinessSummary}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Info cards */}
+                        <div className="space-y-2">
+                          {stockDetails?.sector && (
+                            <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
+                              <Building2 className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Setor / Indústria</p>
+                                <p className="font-medium text-foreground">{stockDetails.sector} • {stockDetails.industry}</p>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {stockDetails?.fullTimeEmployees && (
+                            <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
+                              <Users className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Funcionários</p>
+                                <p className="font-medium text-foreground">{stockDetails.fullTimeEmployees.toLocaleString("pt-BR")}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {stockDetails?.city && (
+                            <div className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl">
+                              <MapPin className="w-5 h-5 text-primary" />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Localização</p>
+                                <p className="font-medium text-foreground">{stockDetails.city}, {stockDetails.state}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          {stockDetails?.website && (
+                            <a 
+                              href={stockDetails.website} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl"
+                            >
+                              <Globe className="w-5 h-5 text-primary" />
+                              <div className="flex-1">
+                                <p className="text-xs text-muted-foreground">Website</p>
+                                <p className="font-medium text-primary">{stockDetails.website}</p>
+                              </div>
+                              <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                            </a>
+                          )}
+                        </div>
+
+                        {/* Ações */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Ações em Circulação</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Total</p>
+                              <p className="font-semibold text-foreground">{formatVolume(stockDetails?.sharesOutstanding ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Valor Mercado</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.marketCap ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeInfoTab === "financeiro" && (
+                      <div className="space-y-4">
+                        {/* Valor da Empresa */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Valor</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Market Cap</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.marketCap ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Enterprise Value</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.enterpriseValue ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dívida */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Endividamento</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Dívida Total</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.totalDebt ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Caixa Total</p>
+                              <p className="font-semibold text-emerald-500">{formatLargeNumber(stockDetails?.totalCash ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Dív./Patrimônio</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.debtToEquity ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Liquidez Corr.</p>
+                              <p className="font-semibold text-foreground">{formatNumber(stockDetails?.currentRatio ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Receita e Lucro */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Resultados</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Receita Total</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.totalRevenue ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Cresc. Receita</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.revenueGrowth ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">EBITDA</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.ebitda ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Lucro Líquido</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.netIncome ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Margens */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Margens</h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Bruta</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.grossMargins ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">EBITDA</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.ebitdaMargins ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Operacional</p>
+                              <p className="font-semibold text-foreground">{formatPercent(stockDetails?.operatingMargins ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Balanço */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Balanço Patrimonial</h4>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Ativos Totais</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.totalAssets ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border">
+                              <p className="text-xs text-muted-foreground">Passivos Totais</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.totalLiabilities ?? null)}</p>
+                            </div>
+                            <div className="text-center p-3 bg-card rounded-lg border border-border col-span-2">
+                              <p className="text-xs text-muted-foreground">Patrimônio Líquido</p>
+                              <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.totalStockholderEquity ?? null)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Free Cash Flow */}
+                        <div>
+                          <h4 className="text-sm font-medium text-muted-foreground mb-2">Fluxo de Caixa</h4>
+                          <div className="text-center p-3 bg-card rounded-lg border border-border">
+                            <p className="text-xs text-muted-foreground">Free Cash Flow</p>
+                            <p className="font-semibold text-foreground">{formatLargeNumber(stockDetails?.freeCashflow ?? null)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </section>
 
-                  {/* Notícias relacionadas */}
+                  {/* Histórico de Dividendos */}
+                  {dividendChartData.length > 0 && (
+                    <section className="py-4 border-t border-border">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">Histórico de Dividendos</h3>
+                      <p className="text-sm text-muted-foreground mb-4">Últimos pagamentos</p>
+                      
+                      <div className="bg-card border border-border rounded-xl p-4 h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dividendChartData}>
+                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
+                            <YAxis hide />
+                            <Tooltip 
+                              formatter={(value: number) => [`R$ ${value.toFixed(4)}`, 'Valor']}
+                              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                            />
+                            <Bar dataKey="value" fill="#818cf8" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Gráfico de Preço Histórico */}
+                  {chartData.length > 0 && (
+                    <section className="py-4 border-t border-border">
+                      <h3 className="text-lg font-semibold text-foreground mb-1">Histórico de Preços</h3>
+                      <p className="text-sm text-muted-foreground mb-4">Últimos 30 dias</p>
+                      
+                      <div className="bg-card border border-border rounded-xl p-4 h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <YAxis hide domain={['auto', 'auto']} />
+                            <Tooltip 
+                              formatter={(value: number) => [formatPrice(value), 'Preço']}
+                              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="value" 
+                              stroke={isPositive ? "#22c55e" : "#ef4444"} 
+                              strokeWidth={2} 
+                              dot={false} 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Notícias */}
                   <section className="py-4 border-t border-border">
                     <h3 className="text-lg font-semibold text-foreground mb-4">Notícias relacionadas</h3>
-                    
                     <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center justify-center">
                       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-3">
                         <FileText className="w-8 h-8 text-muted-foreground" />
                       </div>
-                      <p className="text-muted-foreground text-center">
-                        Nenhuma notícia relacionada<br/>encontrada
+                      <p className="text-muted-foreground text-center text-sm">
+                        Notícias não disponíveis na API gratuita.<br/>
+                        Requer integração com API de notícias.
                       </p>
-                    </div>
-                  </section>
-
-                  {/* Histórico de proventos */}
-                  <section className="py-4 border-t border-border">
-                    <h3 className="text-lg font-semibold text-foreground mb-1">Histórico de proventos</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Últimos 12 meses</p>
-                    
-                    <div className="bg-card border border-border rounded-xl p-4 h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={dividendData}>
-                          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                          <Bar dataKey="value" fill="#818cf8" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </section>
-
-                  {/* Resultado */}
-                  <section className="py-4 border-t border-border">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="text-lg font-semibold text-foreground">Resultado</h3>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setResultsPeriod("5")}
-                          className={`px-4 py-2 rounded-full text-sm font-medium ${
-                            resultsPeriod === "5" ? "bg-muted text-foreground" : "text-muted-foreground"
-                          }`}
-                        >
-                          5 ANOS
-                        </button>
-                        <button
-                          onClick={() => setResultsPeriod("10")}
-                          className={`px-4 py-2 rounded-full text-sm font-medium ${
-                            resultsPeriod === "10" ? "bg-muted text-foreground" : "text-muted-foreground"
-                          }`}
-                        >
-                          10 ANOS
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">Últimos {resultsPeriod} anos</p>
-                    
-                    <div className="bg-card border border-border rounded-xl p-4 h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={resultsData}>
-                          <XAxis dataKey="year" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: 'white', 
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              fontSize: '12px'
-                            }}
-                            formatter={(value: number, name: string) => [
-                              `R$ ${value.toFixed(2)}B`,
-                              name === 'receita' ? 'Receita líquida' : name === 'custos' ? 'Custos' : 'Lucro líquido'
-                            ]}
-                          />
-                          <Bar dataKey="receita" fill="#818cf8" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="custos" fill="#fb923c" radius={[4, 4, 0, 0]} />
-                          <Line type="monotone" dataKey="lucro" stroke="#ec4899" strokeWidth={2} dot={{ fill: '#ec4899', r: 4 }} />
-                        </ComposedChart>
-                      </ResponsiveContainer>
                     </div>
                   </section>
                 </div>
