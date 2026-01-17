@@ -251,6 +251,56 @@ export type Database = {
           },
         ]
       }
+      portfolio_history: {
+        Row: {
+          cdi_accumulated: number | null
+          created_at: string
+          gain_percent: number
+          id: string
+          ipca_accumulated: number | null
+          portfolio_id: string
+          snapshot_date: string
+          total_gain: number
+          total_invested: number
+          total_value: number
+          user_id: string
+        }
+        Insert: {
+          cdi_accumulated?: number | null
+          created_at?: string
+          gain_percent?: number
+          id?: string
+          ipca_accumulated?: number | null
+          portfolio_id: string
+          snapshot_date?: string
+          total_gain?: number
+          total_invested?: number
+          total_value?: number
+          user_id: string
+        }
+        Update: {
+          cdi_accumulated?: number | null
+          created_at?: string
+          gain_percent?: number
+          id?: string
+          ipca_accumulated?: number | null
+          portfolio_id?: string
+          snapshot_date?: string
+          total_gain?: number
+          total_invested?: number
+          total_value?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_history_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolios: {
         Row: {
           cdi_percent: number | null
