@@ -57,6 +57,26 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        kadig: {
+          navy: "hsl(var(--kadig-navy))",
+          "navy-light": "hsl(var(--kadig-navy-light))",
+          slate: "hsl(var(--kadig-slate))",
+          success: "hsl(var(--kadig-success))",
+          "success-light": "hsl(var(--kadig-success-light))",
+          warning: "hsl(var(--kadig-warning))",
+          glow: "hsl(var(--kadig-glow))",
+        },
+      },
+      boxShadow: {
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        glow: "var(--shadow-glow)",
+      },
+      backgroundImage: {
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-card": "var(--gradient-card)",
+        "gradient-accent": "var(--gradient-accent)",
       },
       borderRadius: {
         lg: "var(--radius)",
