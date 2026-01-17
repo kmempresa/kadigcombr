@@ -1043,6 +1043,7 @@ const AppDashboard = () => {
               {/* Distribuição da Carteira */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setDistribuicaoOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-orange-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-orange-500/10 hover:border-orange-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1070,6 +1071,7 @@ const AppDashboard = () => {
               {/* Evolução da Carteira */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setEvolucaoOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-rose-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-rose-500/10 hover:border-rose-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1129,6 +1131,7 @@ const AppDashboard = () => {
               {/* Ganho de Capital */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setGanhoCapitalOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-emerald-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1155,7 +1158,7 @@ const AppDashboard = () => {
               {/* Rentabilidade */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate("/consultor-ia")}
+                onClick={() => setRentabilidadeOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-pink-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1180,6 +1183,7 @@ const AppDashboard = () => {
               {/* Rentabilidade Real */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setRentabilidadeRealOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-indigo-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1206,6 +1210,7 @@ const AppDashboard = () => {
               {/* Risco x Retorno */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setRiscoRetornoOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-purple-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1259,6 +1264,7 @@ const AppDashboard = () => {
               {/* Comparador de Ativos */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setComparadorOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-blue-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1285,6 +1291,7 @@ const AppDashboard = () => {
               {/* Cobertura do FGC */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setCoberturaFGCOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-teal-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -1522,6 +1529,78 @@ const AppDashboard = () => {
         onOpenChange={setEditDrawerOpen}
         investment={editingInvestment}
         onSuccess={() => setRefreshKey(prev => prev + 1)}
+      />
+
+      {/* Analysis Drawers */}
+      <DistribuicaoDrawer
+        open={distribuicaoOpen}
+        onOpenChange={setDistribuicaoOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        formatCurrency={formatCurrency}
+      />
+
+      <EvolucaoDrawer
+        open={evolucaoOpen}
+        onOpenChange={setEvolucaoOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
+        formatCurrency={formatCurrency}
+        economicIndicators={economicIndicators}
+      />
+
+      <RentabilidadeDrawer
+        open={rentabilidadeOpen}
+        onOpenChange={setRentabilidadeOpen}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
+        formatCurrency={formatCurrency}
+        economicIndicators={economicIndicators}
+      />
+
+      <RentabilidadeRealDrawer
+        open={rentabilidadeRealOpen}
+        onOpenChange={setRentabilidadeRealOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
+        formatCurrency={formatCurrency}
+        economicIndicators={economicIndicators}
+      />
+
+      <RiscoRetornoDrawer
+        open={riscoRetornoOpen}
+        onOpenChange={setRiscoRetornoOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
+        economicIndicators={economicIndicators}
+      />
+
+      <GanhoCapitalDrawer
+        open={ganhoCapitalOpen}
+        onOpenChange={setGanhoCapitalOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
+        formatCurrency={formatCurrency}
+      />
+
+      <ComparadorAtivosDrawer
+        open={comparadorOpen}
+        onOpenChange={setComparadorOpen}
+        investments={userData?.investments || []}
+        formatCurrency={formatCurrency}
+        economicIndicators={economicIndicators}
+      />
+
+      <CoberturaFGCDrawer
+        open={coberturaFGCOpen}
+        onOpenChange={setCoberturaFGCOpen}
+        investments={userData?.investments || []}
+        totalPatrimonio={totalPatrimonio}
+        formatCurrency={formatCurrency}
       />
     </div>
   );
