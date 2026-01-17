@@ -34,17 +34,24 @@ serve(async (req) => {
 
       try {
         // Stock News API - buscar notícias gerais do mercado
-        // API limit seems to be around 20 items max
         const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=20&token=${STOCK_NEWS_API_KEY}`;
-        
+
         console.log(`Requesting Stock News API: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
-        
+
         const newsResponse = await fetch(newsUrl);
-        const newsData = await newsResponse.json();
-        
+        const rawText = await newsResponse.text();
+        let newsData: any = {};
+        try {
+          newsData = JSON.parse(rawText);
+        } catch {
+          newsData = { parse_error: true, raw: rawText?.slice?.(0, 300) };
+        }
+
+        console.log(`Stock News status: ${newsResponse.status}`);
+        if (newsData?.error) console.log(`Stock News error: ${newsData.error}`);
         console.log(`Stock News response: total items = ${newsData.data?.length || 0}`);
-        
-        const news = (newsData.data || []).map((item: any) => ({
+
+        let news = (newsData.data || []).map((item: any) => ({
           title: item.title,
           text: item.text,
           source_name: item.source_name,
@@ -53,9 +60,56 @@ serve(async (req) => {
           image_url: item.image_url,
           sentiment: item.sentiment,
         }));
+
+        // Fallback: se a StockNewsAPI não retornar nada (limite, rate-limit, etc.), usar Google News RSS
+        if (!newsResponse.ok || news.length === 0) {
+          console.log('Stock News returned empty; falling back to Google News RSS');
+
+          const query = 'mercado financeiro brasil ibovespa selic dolar';
+          const googleNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
+          console.log(`Requesting Google News RSS: ${googleNewsUrl}`);
+
+          const rssResponse = await fetch(googleNewsUrl);
+          const xmlText = await rssResponse.text();
+
+          const items: any[] = [];
+          const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+          const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/;
+          const linkRegex = /<link>(.*?)<\/link>/;
+          const pubDateRegex = /<pubDate>(.*?)<\/pubDate>/;
+          const sourceRegex = /<source.*?>(.*?)<\/source>/;
+
+          let match;
+          let count = 0;
+          while ((match = itemRegex.exec(xmlText)) !== null && count < 30) {
+            const itemContent = match[1];
+            const titleMatch = itemContent.match(titleRegex);
+            const linkMatch = itemContent.match(linkRegex);
+            const pubDateMatch = itemContent.match(pubDateRegex);
+            const sourceMatch = itemContent.match(sourceRegex);
+
+            if (titleMatch && linkMatch) {
+              const title = titleMatch[1] || titleMatch[2] || '';
+              items.push({
+                title,
+                text: '',
+                source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+                date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
+                news_url: linkMatch[1],
+                image_url: null,
+                sentiment: null,
+              });
+              count++;
+            }
+          }
+
+          news = items;
+          console.log(`Google News fallback items: ${news.length}`);
+        }
+
         const newsCount = news.length;
-        const totalPages = Math.ceil(newsCount / 5); // 5 news per page
-        
+        const totalPages = Math.max(1, Math.ceil(newsCount / 5)); // 5 news per page
+
         return new Response(
           JSON.stringify({ news, totalPages }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -63,7 +117,7 @@ serve(async (req) => {
       } catch (newsError) {
         console.error('Error fetching market news:', newsError);
         return new Response(
-          JSON.stringify({ news: [] }),
+          JSON.stringify({ news: [], totalPages: 1 }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
