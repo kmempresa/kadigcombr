@@ -15,7 +15,6 @@ const Auth = () => {
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
     setIsLoading(true);
-    // Simulated login - will integrate with Supabase later
     setTimeout(() => {
       setIsLoading(false);
       navigate("/onboarding");
@@ -27,7 +26,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden fixed inset-0">
+    <div className="light-theme min-h-screen bg-background relative overflow-hidden fixed inset-0">
       {/* Background curved shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Top right curve */}
@@ -35,8 +34,8 @@ const Auth = () => {
           <svg viewBox="0 0 400 400" className="w-full h-full">
             <path
               d="M400,0 Q400,200 200,200 Q400,200 400,400 L400,0 Z"
-              fill="hsl(var(--kadig-navy))"
-              opacity="0.3"
+              fill="hsl(var(--muted))"
+              opacity="0.6"
             />
           </svg>
         </div>
@@ -46,14 +45,14 @@ const Auth = () => {
           <svg viewBox="0 0 400 500" className="w-full h-full">
             <path
               d="M400,0 Q200,150 250,300 Q300,450 400,500 L400,0 Z"
-              fill="hsl(var(--kadig-navy))"
-              opacity="0.2"
+              fill="hsl(var(--muted))"
+              opacity="0.4"
             />
           </svg>
         </div>
 
-        {/* Subtle glow */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+        {/* Subtle gradient accent */}
+        <div className="absolute top-1/3 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       {/* Content */}
@@ -65,7 +64,10 @@ const Auth = () => {
           transition={{ duration: 0.5 }}
           className="pt-8 sm:pt-12"
         >
-          <img src={kadigLogo} alt="Kadig" className="h-12 sm:h-14" />
+          {/* Kadig icon for light mode */}
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+            <img src={kadigLogo} alt="Kadig" className="h-8 sm:h-10 brightness-0 invert" />
+          </div>
         </motion.header>
 
         {/* Main content */}
@@ -73,7 +75,7 @@ const Auth = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1 flex flex-col pt-8 sm:pt-12"
+          className="flex-1 flex flex-col pt-6 sm:pt-8"
         >
           {/* Title section */}
           <div className="space-y-2 mb-8 sm:mb-10">
@@ -94,7 +96,7 @@ const Auth = () => {
                 placeholder="E-mail:"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-14 sm:h-16 px-5 bg-card/80 border-border rounded-2xl text-base placeholder:text-muted-foreground focus:border-primary"
+                className="h-14 sm:h-16 px-5 bg-card border-border rounded-2xl text-base text-foreground placeholder:text-muted-foreground focus:border-primary shadow-sm"
               />
             </div>
 
@@ -105,7 +107,7 @@ const Auth = () => {
                 placeholder="Senha:"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-14 sm:h-16 px-5 pr-14 bg-card/80 border-border rounded-2xl text-base placeholder:text-muted-foreground focus:border-primary"
+                className="h-14 sm:h-16 px-5 pr-14 bg-card border-border rounded-2xl text-base text-foreground placeholder:text-muted-foreground focus:border-primary shadow-sm"
               />
               <button
                 type="button"
@@ -134,9 +136,9 @@ const Auth = () => {
             {/* Signup button */}
             <button
               onClick={handleSignup}
-              className="flex-1 h-14 sm:h-16 px-4 bg-secondary/50 backdrop-blur-sm border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-secondary/70 active:scale-[0.98] transition-all"
+              className="flex-1 h-14 sm:h-16 px-4 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-muted/50 active:scale-[0.98] transition-all shadow-sm"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center">
                 <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <span className="text-foreground font-medium text-sm sm:text-base">Criar conta</span>
@@ -146,9 +148,9 @@ const Auth = () => {
             <button
               onClick={handleLogin}
               disabled={isLoading || !email.trim() || !password.trim()}
-              className="flex-1 h-14 sm:h-16 px-4 bg-secondary/50 backdrop-blur-sm border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-secondary/70 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-14 sm:h-16 px-4 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-muted/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-kadig-cyan flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <span className="text-foreground font-medium text-sm sm:text-base">
@@ -158,7 +160,7 @@ const Auth = () => {
           </div>
 
           {/* Forgot password */}
-          <button className="w-full py-3 text-muted-foreground hover:text-foreground transition-colors text-sm sm:text-base">
+          <button className="w-full py-3 text-foreground hover:text-primary transition-colors text-sm sm:text-base font-medium">
             Esqueceu a senha?
           </button>
         </motion.footer>

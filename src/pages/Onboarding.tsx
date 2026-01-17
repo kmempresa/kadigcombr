@@ -39,21 +39,21 @@ const riskOptions = [
     label: "Conservador",
     description: "Prefiro segurança, mesmo com retornos menores",
     icon: Shield,
-    color: "from-primary to-kadig-light"
+    color: "from-primary to-primary/70"
   },
   {
     value: "moderate",
     label: "Moderado",
     description: "Busco equilíbrio entre risco e retorno",
     icon: TrendingUp,
-    color: "from-primary to-kadig-cyan"
+    color: "from-primary to-accent"
   },
   {
     value: "aggressive",
     label: "Arrojado",
     description: "Aceito mais risco por retornos maiores",
     icon: Zap,
-    color: "from-kadig-cyan to-accent"
+    color: "from-accent to-emerald-500"
   }
 ];
 
@@ -81,7 +81,7 @@ const Onboarding = () => {
     if (step > 0) {
       setStep(step - 1);
     } else {
-      navigate("/welcome");
+      navigate("/auth");
     }
   };
 
@@ -99,17 +99,19 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col fixed inset-0">
+    <div className="light-theme min-h-screen bg-background flex flex-col fixed inset-0">
       {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-kadig-cyan/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
       <header className="relative z-10 p-4 sm:p-6 safe-area-inset-top">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <img src={kadigLogo} alt="Kadig" className="h-8 sm:h-10" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
+            <img src={kadigLogo} alt="Kadig" className="h-5 sm:h-6 brightness-0 invert" />
+          </div>
           <div className="flex gap-1.5 sm:gap-2">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
@@ -142,7 +144,7 @@ const Onboarding = () => {
                 className="space-y-6 sm:space-y-8"
               >
                 <div className="text-center space-y-3 sm:space-y-4">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-primary/20 rounded-full flex items-center justify-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
                     <User className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                   </div>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
@@ -161,7 +163,7 @@ const Onboarding = () => {
                     onChange={(e) =>
                       setProfile({ ...profile, name: e.target.value })
                     }
-                    className="text-center text-lg sm:text-xl h-12 sm:h-14 bg-card/50 border-primary/30 focus:border-primary"
+                    className="text-center text-lg sm:text-xl h-12 sm:h-14 bg-card border-border text-foreground focus:border-primary shadow-sm"
                     autoFocus
                   />
                 </div>
@@ -198,10 +200,10 @@ const Onboarding = () => {
                           experience: option.value as UserProfile["experience"]
                         })
                       }
-                      className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all ${
+                      className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all shadow-sm ${
                         profile.experience === option.value
-                          ? "border-primary bg-primary/10"
-                          : "border-border bg-card/50 active:border-primary/50"
+                          ? "border-primary bg-primary/5"
+                          : "border-border bg-card active:border-primary/50"
                       }`}
                     >
                       <div className="flex items-center gap-3 sm:gap-4">
@@ -253,15 +255,15 @@ const Onboarding = () => {
                             riskTolerance: option.value as UserProfile["riskTolerance"]
                           })
                         }
-                        className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all ${
+                        className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all shadow-sm ${
                           profile.riskTolerance === option.value
-                            ? "border-primary bg-primary/10"
-                            : "border-border bg-card/50 active:border-primary/50"
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-card active:border-primary/50"
                         }`}
                       >
                         <div className="flex items-center gap-3 sm:gap-4">
                           <div
-                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${option.color} flex items-center justify-center flex-shrink-0`}
+                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${option.color} flex items-center justify-center flex-shrink-0 shadow-md`}
                           >
                             <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                           </div>
@@ -290,7 +292,7 @@ const Onboarding = () => {
           <Button
             variant="ghost"
             onClick={handleBack}
-            className="text-muted-foreground px-3 sm:px-4"
+            className="text-muted-foreground hover:text-foreground px-3 sm:px-4"
           >
             <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" />
             Voltar
@@ -299,7 +301,7 @@ const Onboarding = () => {
           <Button
             onClick={handleNext}
             disabled={!canProceed()}
-            className="bg-gradient-to-r from-primary to-kadig-cyan hover:opacity-90 text-white px-6 sm:px-8 flex-1 max-w-[200px]"
+            className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-6 sm:px-8 flex-1 max-w-[200px] shadow-md"
           >
             {step === totalSteps - 1 ? "Começar" : "Continuar"}
             <ArrowRight className="w-4 h-4 ml-2" />
