@@ -52,6 +52,54 @@
     --sidebar-border: 220 40% 20%;
     --sidebar-ring: 210 100% 60%;
   }
+
+  /* Light theme for app screens */
+  .light-theme {
+    --background: 0 0% 98%;
+    --foreground: 220 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
+
+    --primary: 185 80% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 220 30% 25%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 15% 45%;
+
+    --accent: 185 80% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 185 80% 45%;
+
+    --kadig-deep: 220 30% 95%;
+    --kadig-navy: 220 20% 90%;
+    --kadig-blue: 185 80% 45%;
+    --kadig-light: 185 70% 60%;
+    --kadig-cyan: 185 80% 45%;
+    --kadig-white: 220 30% 15%;
+    --kadig-glass: 220 20% 96%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 30% 15%;
+    --sidebar-primary: 185 80% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 94%;
+    --sidebar-accent-foreground: 220 30% 25%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 185 80% 45%;
+  }
 }
 
 @layer base {
