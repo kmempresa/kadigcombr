@@ -793,7 +793,7 @@ const AppDashboard = () => {
                   </div>
                 </div>
 
-                <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200">
+                <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-sm">
                   <TrendingUp className="w-4 h-4 text-muted-foreground" />
                 </button>
               </div>
@@ -846,25 +846,25 @@ const AppDashboard = () => {
               {/* Kadig AI Card */}
               <button
                 onClick={() => navigate("/consultor-ia")}
-                className="w-full bg-gradient-to-r from-primary/10 via-primary/5 to-violet-500/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-4 hover:from-primary/20 hover:via-primary/10 hover:to-violet-500/20 transition-all duration-300 active:scale-[0.98] shadow-sm hover:shadow-lg hover:shadow-primary/10 group"
+                className="w-full bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-4 hover:from-primary/20 hover:to-violet-500/20 transition-all active:scale-[0.98]"
               >
-                <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+                <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg">
                   <img 
                     src={biancaConsultora} 
                     alt="Bianca Consultora" 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     Bianca Consultora
-                    <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full animate-pulse">NOVO</span>
+                    <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full">NOVO</span>
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Análises personalizadas e recomendações!
                   </p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 transition-transform duration-200" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
 
               {/* Metas da carteira - Always show carousel */}
@@ -879,7 +879,7 @@ const AppDashboard = () => {
                   <div className="flex gap-3" style={{ minWidth: 'max-content' }}>
                     {/* Renda Passiva Card */}
                     <div 
-                      className="bg-card border border-border rounded-2xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300"
+                      className="bg-card border border-border rounded-2xl p-4 flex flex-col"
                       style={{ minWidth: '200px', height: '280px' }}
                     >
                       <div className="flex items-center justify-between mb-1">
