@@ -47,6 +47,7 @@ import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
+import { SecurityDrawer } from "@/components/SecurityDrawer";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -170,6 +171,7 @@ const AppDashboard = () => {
   const [movements, setMovements] = useState<any[]>([]);
   const [extratoSearch, setExtratoSearch] = useState("");
   const [supportDrawerOpen, setSupportDrawerOpen] = useState(false);
+  const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
 
   // Embla Carousel for swipeable monthly chart
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -1960,7 +1962,7 @@ const AppDashboard = () => {
 
           <div className="px-4">
             {[
-              { icon: Shield, label: "Segurança", action: () => {} },
+              { icon: Shield, label: "Segurança", action: () => setSecurityDrawerOpen(true) },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
               { icon: MessageSquare, label: "Suporte", action: () => setSupportDrawerOpen(true) },
               { icon: Info, label: "Sobre", action: () => {} },
@@ -2171,6 +2173,11 @@ const AppDashboard = () => {
         open={supportDrawerOpen}
         onOpenChange={setSupportDrawerOpen}
         userEmail={userData?.email || ""}
+      />
+
+      <SecurityDrawer
+        open={securityDrawerOpen}
+        onOpenChange={setSecurityDrawerOpen}
       />
     </div>
   );
