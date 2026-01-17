@@ -1023,217 +1023,309 @@ const AppDashboard = () => {
 
           {/* Análises Tab */}
           {carteiraTab === "analises" && (
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-3">
               {/* Distribuição da Carteira */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-orange-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-orange-500/10 hover:border-orange-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Distribuição da Carteira</span>
+                    <span className="font-bold text-foreground text-base">Distribuição da Carteira</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-orange-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Entenda como está distribuída a sua carteira e como cada ativo rende.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Entenda como está distribuída a sua carteira e como cada ativo rende.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Evolução da Carteira */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-rose-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-rose-500/10 hover:border-rose-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Evolução da Carteira</span>
+                    <span className="font-bold text-foreground text-base">Evolução da Carteira</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-rose-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Veja a evolução da sua carteira frente ao seu primeiro valor aplicado.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Veja a evolução da sua carteira frente ao seu primeiro valor aplicado.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Section Header - Recursos Premium */}
-              <div className="flex items-center gap-2 pt-2">
-                <div className="w-1 h-5 bg-primary rounded-full" />
-                <h2 className="font-semibold text-foreground">Recursos Premium</h2>
+              <div className="flex items-center gap-3 pt-4 pb-1">
+                <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-violet-500 rounded-full" />
+                <h2 className="font-bold text-foreground text-lg">Recursos Premium</h2>
+                <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" />
               </div>
 
               {/* Proventos */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-violet-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-violet-500/10 hover:border-violet-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Proventos</span>
+                    <span className="font-bold text-foreground text-base">Proventos</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-violet-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Tenha acesso aos proventos recebidos e a receber de todos os seus ativos.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Tenha acesso aos proventos recebidos e a receber de todos os seus ativos.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Ganho de Capital */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-emerald-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Ganho de Capital</span>
+                    <span className="font-bold text-foreground text-base">Ganho de Capital</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Acompanhe todo valor em dinheiro que ganhou num determinado período de tempo.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Acompanhe todo valor em dinheiro que ganhou num determinado período de tempo.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Rentabilidade */}
-              <button 
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
                 onClick={() => navigate("/consultor-ia")}
-                className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all"
+                className="w-full bg-gradient-to-br from-card to-pink-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-pink-500/10 hover:border-pink-200 transition-all duration-300 group"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-pink-500" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center shadow-lg">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Rentabilidade</span>
+                    <span className="font-bold text-foreground text-base">Rentabilidade</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-pink-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-pink-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Acompanhe a rentabilidade histórica da sua carteira e dos seus ativos.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Acompanhe a rentabilidade histórica da sua carteira e dos seus ativos.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Rentabilidade Real */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-indigo-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-indigo-500/10 hover:border-indigo-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Rentabilidade Real</span>
+                    <span className="font-bold text-foreground text-base">Rentabilidade Real</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-indigo-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Conheça a rentabilidade das suas aplicações abatida da inflação.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Conheça a rentabilidade das suas aplicações abatida da inflação.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Risco x Retorno */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-purple-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-purple-500/10 hover:border-purple-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-fuchsia-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-fuchsia-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Risco x Retorno</span>
+                    <span className="font-bold text-foreground text-base">Risco x Retorno</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-purple-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Acompanhe o custo-benefício da sua carteira e de cada ativo.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Acompanhe o custo-benefício da sua carteira e de cada ativo.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Sensibilidade dos Ativos */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-cyan-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-cyan-500/10 hover:border-cyan-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-sky-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500 to-sky-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Sensibilidade dos Ativos</span>
+                    <span className="font-bold text-foreground text-base">Sensibilidade dos Ativos</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-cyan-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Entenda como cada ativo contribui para o resultado da carteira.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Entenda como cada ativo contribui para o resultado da carteira.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Comparador de Ativos */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-blue-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Comparador de Ativos</span>
+                    <span className="font-bold text-foreground text-base">Comparador de Ativos</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Compare um ativo da sua carteira com os índices do mercado.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Compare um ativo da sua carteira com os índices do mercado.</p>
                 </div>
-              </button>
+              </motion.button>
 
               {/* Cobertura do FGC */}
-              <button className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/30 transition-all">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-br from-card to-teal-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-teal-500/10 hover:border-teal-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      </div>
                     </div>
-                    <span className="font-semibold text-foreground">Cobertura do FGC</span>
+                    <span className="font-bold text-foreground text-base">Cobertura do FGC</span>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-teal-500 transition-colors" />
+                  </div>
                 </div>
-                <div className="border-t border-border pt-3">
-                  <p className="text-sm text-muted-foreground">Acompanhe quanto do seu dinheiro está protegido pelo FGC.</p>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Acompanhe quanto do seu dinheiro está protegido pelo FGC.</p>
                 </div>
-              </button>
+              </motion.button>
 
-              {/* Kadig AI Card */}
-              <div className="bg-gradient-to-br from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary" />
+              {/* Kadig AI Card - Featured */}
+              <motion.div 
+                whileTap={{ scale: 0.98 }}
+                className="relative overflow-hidden rounded-3xl p-5 mt-4"
+              >
+                {/* Animated gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
+                
+                {/* Floating orbs */}
+                <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
+                
+                <div className="relative">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20">
+                      <Sparkles className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white text-lg">Kadig AI</h3>
+                      <p className="text-sm text-white/70">Análise inteligente com IA</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">Kadig AI</h3>
-                    <p className="text-xs text-muted-foreground">Análise inteligente</p>
-                  </div>
+                  <p className="text-sm text-white/80 mb-4 leading-relaxed">
+                    Use a inteligência artificial para análises personalizadas e recomendações para sua carteira.
+                  </p>
+                  <button 
+                    onClick={() => navigate("/consultor-ia")}
+                    className="w-full bg-white text-primary py-3 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    Falar com Kadig AI
+                  </button>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Use a inteligência artificial para análises personalizadas da sua carteira.
-                </p>
-                <button 
-                  onClick={() => navigate("/consultor-ia")}
-                  className="w-full bg-primary text-primary-foreground py-2 rounded-full font-medium text-sm"
-                >
-                  Falar com Kadig AI
-                </button>
-              </div>
+              </motion.div>
             </div>
           )}
 
