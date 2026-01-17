@@ -242,20 +242,20 @@ const AppDashboard = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Goal Card 1 */}
+                  {/* Goal Card 1 - Renda Passiva */}
                   <div className="bg-card border border-border rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-1 h-4 bg-muted-foreground rounded-full" />
+                        <div className="w-1 h-4 bg-emerald-500 rounded-full" />
                         <span className="font-medium text-foreground text-sm">Renda Passiva</span>
                       </div>
                       <button className="text-muted-foreground">•••</button>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
                     <div className="flex justify-center mb-4">
-                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                        <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Plus className="w-6 h-6 text-primary" />
+                      <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <Plus className="w-6 h-6 text-emerald-500" />
                         </div>
                       </div>
                     </div>
@@ -266,20 +266,21 @@ const AppDashboard = () => {
                       </div>
                       <p className="font-semibold text-foreground pl-3">R$ -</p>
                       <div className="flex items-center gap-2">
-                        <div className="w-1 h-3 bg-primary rounded-full" />
+                        <div className="w-1 h-3 bg-emerald-500 rounded-full" />
                         <span className="text-muted-foreground">Meta</span>
                       </div>
                       <p className="font-semibold text-foreground pl-3">R$ -</p>
                     </div>
                   </div>
 
-                  {/* Goal Card 2 */}
+                  {/* Goal Card 2 - Patrimônio */}
                   <div className="bg-card border border-border rounded-2xl p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-1 h-4 bg-muted-foreground rounded-full" />
+                        <div className="w-1 h-4 bg-primary rounded-full" />
                         <span className="font-medium text-foreground text-sm">Patrimônio</span>
                       </div>
+                      <button className="text-muted-foreground">•••</button>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
                     <div className="flex justify-center mb-4">
@@ -300,6 +301,138 @@ const AppDashboard = () => {
                         <span className="text-muted-foreground">Meta</span>
                       </div>
                       <p className="font-semibold text-foreground pl-3">R$ -</p>
+                    </div>
+                  </div>
+
+                  {/* Goal Card 3 - Reserva de Emergência */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-amber-500 rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Reserva Emergência</span>
+                      </div>
+                      <button className="text-muted-foreground">•••</button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">6 meses de custos</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(38 92% 50%)" strokeWidth="6" strokeDasharray="120.64 201.06" strokeLinecap="round" />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">60%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Atual</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(18000)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-amber-500 rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(30000)}</p>
+                    </div>
+                  </div>
+
+                  {/* Goal Card 4 - Aposentadoria */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-violet-500 rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Aposentadoria</span>
+                      </div>
+                      <button className="text-muted-foreground">•••</button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Previdência + Inv.</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(258 90% 66%)" strokeWidth="6" strokeDasharray="24.13 201.06" strokeLinecap="round" />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">12%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Atual</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(45000)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-violet-500 rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(500000)}</p>
+                    </div>
+                  </div>
+
+                  {/* Goal Card 5 - Aporte Mensal */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-sky-500 rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Aporte Mensal</span>
+                      </div>
+                      <button className="text-muted-foreground">•••</button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Investir todo mês</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(199 89% 48%)" strokeWidth="6" strokeDasharray="160.85 201.06" strokeLinecap="round" />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">80%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Aportado</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(2400)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-sky-500 rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(3000)}</p>
+                    </div>
+                  </div>
+
+                  {/* Goal Card 6 - Rentabilidade */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-rose-500 rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Rentabilidade</span>
+                      </div>
+                      <button className="text-muted-foreground">•••</button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Superar o CDI</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(var(--muted))" strokeWidth="6" />
+                          <circle cx="40" cy="40" r="32" fill="none" stroke="hsl(350 89% 60%)" strokeWidth="6" strokeDasharray="176.93 201.06" strokeLinecap="round" />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-foreground">88%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Rentabilidade</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">88% do CDI</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-rose-500 rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">100% do CDI</p>
                     </div>
                   </div>
                 </div>
