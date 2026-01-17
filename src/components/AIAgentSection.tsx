@@ -42,11 +42,11 @@ export const AIAgentSection = () => {
         >
           <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 rounded-full px-4 py-2 mb-6">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-primary text-sm font-medium">Agente IA Ativo 24/7</span>
+            <span className="text-primary text-sm font-medium">Consultor Kadig Ativo 24/7</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            Seu Agente de IA{" "}
+            Seu Consultor Kadig{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-400 to-primary">
               em Tempo Real
             </span>
