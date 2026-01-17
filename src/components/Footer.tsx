@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import kadigLogo from "@/assets/kadig-logo.png";
 import { ArrowUpRight } from "lucide-react";
 
@@ -41,15 +42,24 @@ export const Footer = () => {
           <img src={kadigLogo} alt="Kadig" className="h-6 opacity-60" />
 
           <div className="flex gap-8">
-            {["Privacidade", "Termos", "Contato"].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item}
-              </a>
-            ))}
+            <Link
+              to="/privacidade"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Política de Privacidade
+            </Link>
+            <a
+              href="#"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Termos de Uso
+            </a>
+            <a
+              href="#"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Contato
+            </a>
           </div>
 
           <p className="text-xs text-muted-foreground">

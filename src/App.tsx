@@ -20,6 +20,7 @@ import TransferirAtivo from "./pages/TransferirAtivo";
 import ExcluirAtivos from "./pages/ExcluirAtivos";
 import Preferencias from "./pages/Preferencias";
 import Suporte from "./pages/Suporte";
+import Privacidade from "./pages/Privacidade";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/excluir-ativos" element={<ExcluirAtivos />} />
               <Route path="/preferencias" element={<Preferencias />} />
               <Route path="/suporte" element={<Suporte />} />
+              <Route path="/privacidade" element={<Privacidade />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
