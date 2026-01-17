@@ -105,6 +105,8 @@ const TransferirAtivo = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      const sourcePortfolioName = getSourcePortfolioName();
+
       if (transferType === "mover") {
         // Update the portfolio_id of the investment
         const { error } = await supabase
@@ -116,10 +118,47 @@ const TransferirAtivo = () => {
           .eq("id", selectedInvestment.id);
 
         if (error) throw error;
+
+        // Register exit movement
+        await supabase.from("movements").insert({
+          user_id: session.user.id,
+          portfolio_id: selectedInvestment.portfolio_id,
+          investment_id: selectedInvestment.id,
+          type: "transferencia_saida",
+          asset_name: selectedInvestment.asset_name,
+          ticker: selectedInvestment.ticker,
+          asset_type: selectedInvestment.asset_type,
+          quantity: selectedInvestment.quantity || 0,
+          unit_price: selectedInvestment.purchase_price || 0,
+          total_value: selectedInvestment.current_value,
+          portfolio_name: sourcePortfolioName,
+          target_portfolio_name: targetPortfolio.name,
+          notes: `Transferido para ${targetPortfolio.name}`,
+          movement_date: new Date().toISOString().split("T")[0],
+        });
+
+        // Register entry movement
+        await supabase.from("movements").insert({
+          user_id: session.user.id,
+          portfolio_id: targetPortfolio.id,
+          investment_id: selectedInvestment.id,
+          type: "transferencia_entrada",
+          asset_name: selectedInvestment.asset_name,
+          ticker: selectedInvestment.ticker,
+          asset_type: selectedInvestment.asset_type,
+          quantity: selectedInvestment.quantity || 0,
+          unit_price: selectedInvestment.purchase_price || 0,
+          total_value: selectedInvestment.current_value,
+          portfolio_name: targetPortfolio.name,
+          target_portfolio_name: sourcePortfolioName,
+          notes: `Recebido de ${sourcePortfolioName}`,
+          movement_date: new Date().toISOString().split("T")[0],
+        });
+
         toast.success(`Ativo movido para ${targetPortfolio.name}!`);
       } else {
         // Create a copy in the target portfolio
-        const { error } = await supabase
+        const { data: newInvestment, error } = await supabase
           .from("investments")
           .insert({
             user_id: session.user.id,
@@ -134,9 +173,29 @@ const TransferirAtivo = () => {
             current_value: selectedInvestment.current_value,
             gain_percent: selectedInvestment.gain_percent,
             maturity_date: selectedInvestment.maturity_date,
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // Register movement for copy
+        await supabase.from("movements").insert({
+          user_id: session.user.id,
+          portfolio_id: targetPortfolio.id,
+          investment_id: newInvestment?.id,
+          type: "aplicacao",
+          asset_name: selectedInvestment.asset_name,
+          ticker: selectedInvestment.ticker,
+          asset_type: selectedInvestment.asset_type,
+          quantity: selectedInvestment.quantity || 0,
+          unit_price: selectedInvestment.purchase_price || 0,
+          total_value: selectedInvestment.current_value,
+          portfolio_name: targetPortfolio.name,
+          notes: `Copiado de ${sourcePortfolioName}`,
+          movement_date: new Date().toISOString().split("T")[0],
+        });
+
         toast.success(`Ativo copiado para ${targetPortfolio.name}!`);
       }
 

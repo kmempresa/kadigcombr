@@ -179,6 +179,78 @@ export type Database = {
           },
         ]
       }
+      movements: {
+        Row: {
+          asset_name: string
+          asset_type: string | null
+          created_at: string
+          id: string
+          investment_id: string | null
+          movement_date: string
+          notes: string | null
+          portfolio_id: string | null
+          portfolio_name: string | null
+          quantity: number | null
+          target_portfolio_name: string | null
+          ticker: string | null
+          total_value: number
+          type: string
+          unit_price: number | null
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type?: string | null
+          created_at?: string
+          id?: string
+          investment_id?: string | null
+          movement_date?: string
+          notes?: string | null
+          portfolio_id?: string | null
+          portfolio_name?: string | null
+          quantity?: number | null
+          target_portfolio_name?: string | null
+          ticker?: string | null
+          total_value?: number
+          type: string
+          unit_price?: number | null
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string | null
+          created_at?: string
+          id?: string
+          investment_id?: string | null
+          movement_date?: string
+          notes?: string | null
+          portfolio_id?: string | null
+          portfolio_name?: string | null
+          quantity?: number | null
+          target_portfolio_name?: string | null
+          ticker?: string | null
+          total_value?: number
+          type?: string
+          unit_price?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movements_investment_id_fkey"
+            columns: ["investment_id"]
+            isOneToOne: false
+            referencedRelation: "investments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movements_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portfolios: {
         Row: {
           cdi_percent: number | null
