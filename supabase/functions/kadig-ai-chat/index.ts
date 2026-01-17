@@ -11,12 +11,12 @@ interface Message {
   content: string;
 }
 
-// Function to search for real-time market information
+// Search for real-time market information
 async function searchMarketInfo(query: string): Promise<{ content: string; citations: string[] }> {
   const PERPLEXITY_API_KEY = Deno.env.get("PERPLEXITY_API_KEY");
   
   if (!PERPLEXITY_API_KEY) {
-    console.log("Perplexity API key not configured, skipping market search");
+    console.log("Perplexity API key not configured");
     return { content: "", citations: [] };
   }
 
@@ -30,16 +30,28 @@ async function searchMarketInfo(query: string): Promise<{ content: string; citat
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "sonar",
+        model: "sonar-pro",
         messages: [
           { 
             role: "system", 
-            content: "Você é um especialista em mercado financeiro brasileiro. Forneça informações atualizadas, precisas e concisas sobre investimentos, ações, fundos, taxas de juros, CDI, IPCA, Tesouro Direto e mercado financeiro em geral. Responda em português brasileiro." 
+            content: `Você é um analista financeiro especializado no mercado brasileiro. 
+Forneça informações ATUALIZADAS e PRECISAS sobre:
+- Taxas: Selic, CDI, IPCA, TR, câmbio
+- Ações brasileiras e americanas
+- Fundos imobiliários (FIIs)
+- Tesouro Direto (taxas atuais)
+- CDBs, LCIs, LCAs
+- Criptomoedas
+- ETFs e fundos de investimento
+- Análises de mercado e tendências
+- Notícias econômicas relevantes
+
+Seja objetivo e forneça números concretos. Responda em português brasileiro.` 
           },
           { role: "user", content: query }
         ],
-        search_recency_filter: "week",
-        temperature: 0.2,
+        search_recency_filter: "day",
+        temperature: 0.1,
       }),
     });
 
@@ -49,75 +61,69 @@ async function searchMarketInfo(query: string): Promise<{ content: string; citat
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || "";
-    const citations = data.citations || [];
-    
-    console.log("Market search completed, got", citations.length, "citations");
-    
-    return { content, citations };
+    return { 
+      content: data.choices?.[0]?.message?.content || "", 
+      citations: data.citations || [] 
+    };
   } catch (error) {
     console.error("Error searching market info:", error);
     return { content: "", citations: [] };
   }
 }
 
-// Function to determine if a query needs real-time market data
+// Determine if query needs market data
 function needsMarketData(message: string): boolean {
-  const marketKeywords = [
-    // General market terms
-    "mercado", "bolsa", "b3", "ibovespa", "índice", "indice",
-    // Rates and indicators
-    "selic", "cdi", "ipca", "inflação", "inflacao", "juros", "taxa",
-    // Assets
-    "ação", "acao", "ações", "acoes", "fii", "fiis", "fundo", "fundos",
-    "etf", "etfs", "bdr", "bdrs", "crypto", "bitcoin", "criptomoeda",
-    "tesouro", "cdb", "lci", "lca", "debênture", "debenture",
-    // Actions
-    "cotação", "cotacao", "preço", "preco", "valor", "rendimento",
-    "dividendo", "provento", "yield", "rentabilidade",
-    // Questions about market
-    "como está", "como esta", "quanto", "qual o valor", "subiu", "caiu",
-    "alta", "baixa", "tendência", "tendencia", "previsão", "previsao",
-    "investir agora", "melhor momento", "oportunidade",
-    // Specific assets (common tickers)
-    "petr", "vale", "itub", "bbdc", "bbas", "mglu", "wege", "rent", "abev",
-    // News
-    "notícia", "noticia", "news", "novidade", "acontecendo", "atual",
+  const keywords = [
+    "mercado", "bolsa", "b3", "ibovespa", "selic", "cdi", "ipca", "juros", "taxa",
+    "ação", "acao", "ações", "acoes", "fii", "fiis", "fundo", "etf", "tesouro",
+    "cdb", "lci", "lca", "crypto", "bitcoin", "cotação", "cotacao", "preço", "preco",
+    "dividendo", "yield", "investir", "melhor", "recomenda", "vale a pena", 
+    "devo", "qual", "como", "onde", "quando", "quanto", "renda fixa", "renda variável",
+    "carteira", "alocar", "diversificar", "risco", "retorno", "rentabilidade",
+    "comparar", "análise", "analise", "oportunidade", "tendência", "previsão",
+    "dólar", "dolar", "euro", "inflação", "economia", "copom", "banco central"
   ];
   
-  const lowerMessage = message.toLowerCase();
-  return marketKeywords.some(keyword => lowerMessage.includes(keyword));
+  const lower = message.toLowerCase();
+  return keywords.some(k => lower.includes(k));
 }
 
-// Function to extract search query from user message
-function extractSearchQuery(message: string): string {
-  // Clean and optimize the query for market search
-  const queries = [
-    message,
-    `Informações atuais sobre ${message} no mercado brasileiro`,
-  ];
+// Build search query
+function buildSearchQuery(message: string): string {
+  const lower = message.toLowerCase();
   
-  // If asking about specific topics, make the query more specific
-  if (message.toLowerCase().includes("selic") || message.toLowerCase().includes("juros")) {
-    return "Taxa Selic atual hoje Brasil Banco Central decisão Copom";
+  if (lower.includes("selic") || lower.includes("juros")) {
+    return "Taxa Selic atual hoje Brasil Copom próxima reunião expectativas";
   }
-  if (message.toLowerCase().includes("cdi")) {
-    return "Taxa CDI hoje rendimento Brasil";
+  if (lower.includes("cdi")) {
+    return "Taxa CDI hoje rendimento anual mensal Brasil";
   }
-  if (message.toLowerCase().includes("ipca") || message.toLowerCase().includes("inflação")) {
-    return "IPCA inflação Brasil atual acumulado 12 meses";
+  if (lower.includes("ipca") || lower.includes("inflação")) {
+    return "IPCA inflação Brasil atual acumulado 12 meses expectativa";
   }
-  if (message.toLowerCase().includes("ibovespa") || message.toLowerCase().includes("bolsa")) {
-    return "Ibovespa hoje cotação B3 bolsa brasileira";
+  if (lower.includes("tesouro")) {
+    return "Tesouro Direto taxas hoje IPCA+ Selic Prefixado rentabilidade";
   }
-  if (message.toLowerCase().includes("tesouro")) {
-    return "Tesouro Direto taxas hoje Tesouro IPCA Selic Prefixado rendimento";
+  if (lower.includes("fii") || lower.includes("fundo imobiliário")) {
+    return "Melhores FIIs fundos imobiliários 2024 2025 dividendos yield";
   }
-  if (message.toLowerCase().includes("bitcoin") || message.toLowerCase().includes("crypto")) {
-    return "Bitcoin preço hoje criptomoedas mercado";
+  if (lower.includes("ação") || lower.includes("acao") || lower.includes("bolsa")) {
+    return "Melhores ações brasileiras 2024 2025 B3 Ibovespa recomendações análise";
+  }
+  if (lower.includes("cdb") || lower.includes("renda fixa")) {
+    return "Melhores CDBs renda fixa hoje rentabilidade CDI bancos";
+  }
+  if (lower.includes("crypto") || lower.includes("bitcoin")) {
+    return "Bitcoin criptomoedas preço hoje tendência análise";
+  }
+  if (lower.includes("dólar") || lower.includes("dolar") || lower.includes("câmbio")) {
+    return "Dólar hoje cotação real tendência previsão";
+  }
+  if (lower.includes("onde investir") || lower.includes("melhor investimento")) {
+    return "Melhores investimentos 2024 2025 Brasil renda fixa variável recomendações especialistas";
   }
   
-  return message;
+  return `${message} investimentos Brasil mercado financeiro atual`;
 }
 
 serve(async (req) => {
@@ -144,339 +150,248 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
     if (userError || !user) {
-      console.error("User auth error:", userError);
       return new Response(JSON.stringify({ error: "Usuário não autenticado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("User authenticated:", user.id, user.email);
+    console.log("User:", user.id);
 
-    // Get the last user message
     const lastUserMessage = messages[messages.length - 1]?.content || "";
     
-    // ========== SEARCH REAL-TIME MARKET DATA IF NEEDED ==========
-    
+    // Search market data if needed
     let marketContext = "";
-    let citations: string[] = [];
-    
     if (needsMarketData(lastUserMessage)) {
-      console.log("Message needs market data, searching...");
-      const searchQuery = extractSearchQuery(lastUserMessage);
-      const marketData = await searchMarketInfo(searchQuery);
+      console.log("Searching market data...");
+      const query = buildSearchQuery(lastUserMessage);
+      const { content, citations } = await searchMarketInfo(query);
       
-      if (marketData.content) {
+      if (content) {
         marketContext = `
----
+## 🌐 DADOS DE MERCADO EM TEMPO REAL
 
-## 🌐 INFORMAÇÕES DE MERCADO EM TEMPO REAL
+${content}
 
-*Dados atualizados da web:*
-
-${marketData.content}
-
-${marketData.citations.length > 0 ? `
-**Fontes:**
-${marketData.citations.slice(0, 5).map((c, i) => `${i + 1}. ${c}`).join("\n")}
-` : ""}
-
----
-
+${citations.length > 0 ? `**Fontes:** ${citations.slice(0, 3).join(", ")}` : ""}
 `;
-        citations = marketData.citations;
       }
     }
 
-    // ========== FETCH ALL USER DATA ==========
+    // Fetch all user data
+    const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+    const { data: portfolios } = await supabase.from("portfolios").select("*").eq("user_id", user.id);
+    const { data: investments } = await supabase.from("investments").select("*").eq("user_id", user.id);
 
-    // 1. User auth data
-    const authData = {
-      id: user.id,
-      email: user.email,
-      phone: user.phone,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
-    };
+    // Calculate financial metrics
+    let totalPatrimonio = 0;
+    let totalInvestido = 0;
+    let totalGanhos = 0;
+    let rendaDisponivel = 0;
 
-    // 2. User profile
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    // 3. All portfolios
-    const { data: portfolios } = await supabase
-      .from("portfolios")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    // 4. All investments
-    const { data: investments } = await supabase
-      .from("investments")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    // 5. Recent chat history
-    const { data: recentConversations } = await supabase
-      .from("chat_conversations")
-      .select("id, title, created_at")
-      .eq("user_id", user.id)
-      .order("updated_at", { ascending: false })
-      .limit(5);
-
-    let chatHistory: any[] = [];
-    if (recentConversations && recentConversations.length > 0) {
-      const conversationIds = recentConversations.map(c => c.id);
-      const { data: recentMessages } = await supabase
-        .from("chat_messages")
-        .select("role, content, created_at, conversation_id")
-        .in("conversation_id", conversationIds)
-        .order("created_at", { ascending: false })
-        .limit(30);
-      chatHistory = recentMessages || [];
+    if (portfolios) {
+      portfolios.forEach((p: any) => {
+        totalPatrimonio += Number(p.total_value) || 0;
+        totalGanhos += Number(p.total_gain) || 0;
+      });
     }
 
-    // ========== BUILD COMPREHENSIVE CONTEXT ==========
+    if (investments) {
+      investments.forEach((inv: any) => {
+        totalInvestido += Number(inv.total_invested) || 0;
+      });
+    }
 
+    if (profile?.monthly_income) {
+      rendaDisponivel = Number(profile.monthly_income) * 0.3; // Assume 30% can be invested
+    }
+
+    const rentabilidade = totalInvestido > 0 ? ((totalPatrimonio - totalInvestido) / totalInvestido) * 100 : 0;
+
+    // Build user context
     const now = new Date();
-    const brazilTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
     const brazilDate = now.toLocaleDateString("pt-BR", { 
-      timeZone: "America/Sao_Paulo",
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric"
+      timeZone: "America/Sao_Paulo", weekday: "long", year: "numeric", month: "long", day: "numeric"
     });
 
     let userContext = `
-# 📊 DADOS COMPLETOS DO USUÁRIO
+# 📊 PERFIL FINANCEIRO DO USUÁRIO
 
-**Data atual:** ${brazilDate}
-**Hora (Brasília):** ${brazilTime}
+**Data:** ${brazilDate}
 
 ${marketContext}
 
 ---
 
-## 🔐 Dados da Conta
-
-- **ID:** ${authData.id}
-- **Email:** ${authData.email || "Não informado"}
-- **Telefone:** ${authData.phone || "Não informado"}
-- **Membro desde:** ${authData.created_at ? new Date(authData.created_at).toLocaleDateString("pt-BR") : "N/A"}
-- **Último acesso:** ${authData.last_sign_in_at ? new Date(authData.last_sign_in_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "N/A"}
+## 👤 Dados Pessoais
+- **Nome:** ${profile?.full_name || user.email || "Não informado"}
+- **Perfil de Investidor:** ${profile?.investor_profile || "NÃO DEFINIDO"}
+- **Tolerância ao Risco:** ${profile?.risk_tolerance || "NÃO DEFINIDA"}
+- **Objetivo:** ${profile?.investment_goal || "NÃO DEFINIDO"}
+- **Renda Mensal:** ${profile?.monthly_income ? `R$ ${Number(profile.monthly_income).toLocaleString("pt-BR")}` : "NÃO INFORMADA"}
+- **Capacidade de Aporte Mensal (estimada):** ${rendaDisponivel > 0 ? `R$ ${rendaDisponivel.toLocaleString("pt-BR")}` : "Não calculada"}
 
 ---
 
-## 👤 Perfil do Investidor
+## 💰 Situação Patrimonial
+- **Patrimônio Total:** R$ ${totalPatrimonio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Total Investido:** R$ ${totalInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Ganhos Acumulados:** R$ ${totalGanhos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Rentabilidade Total:** ${rentabilidade >= 0 ? "+" : ""}${rentabilidade.toFixed(2)}%
 
-`;
-
-    if (profile) {
-      userContext += `- **Nome:** ${profile.full_name || "Não informado"}
-- **Data de nascimento:** ${profile.birth_date ? new Date(profile.birth_date).toLocaleDateString("pt-BR") : "Não informada"}
-- **Perfil de investidor:** ${profile.investor_profile || "Não definido"}
-- **Renda mensal:** ${profile.monthly_income ? `R$ ${Number(profile.monthly_income).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "Não informada"}
-- **Objetivo:** ${profile.investment_goal || "Não definido"}
-- **Tolerância ao risco:** ${profile.risk_tolerance || "Não definida"}
-`;
-    } else {
-      userContext += `⚠️ **Perfil não preenchido** - Incentive o usuário a completar seu perfil!
-`;
-    }
-
-    // Portfolios
-    userContext += `
 ---
 
-## 💼 Carteiras
-
+## 📈 Carteiras (${portfolios?.length || 0})
 `;
 
     if (portfolios && portfolios.length > 0) {
-      let totalPatrimonio = 0;
-      let totalGanhos = 0;
-
-      portfolios.forEach((p: any, index: number) => {
-        const valor = Number(p.total_value) || 0;
-        const ganho = Number(p.total_gain) || 0;
-        totalPatrimonio += valor;
-        totalGanhos += ganho;
-
-        userContext += `### ${p.name}
-- Valor: R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-- Ganho: R$ ${ganho.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${ganho >= 0 ? "+" : ""}${valor > 0 ? ((ganho / (valor - ganho)) * 100).toFixed(2) : 0}%)
-- vs CDI: ${p.cdi_percent || 0}%
-`;
+      portfolios.forEach((p: any) => {
+        userContext += `- **${p.name}:** R$ ${Number(p.total_value).toLocaleString("pt-BR")} (${p.cdi_percent || 0}% do CDI)\n`;
       });
-
-      userContext += `
-### 📈 PATRIMÔNIO TOTAL: R$ ${totalPatrimonio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-**Ganhos totais:** R$ ${totalGanhos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-`;
     } else {
-      userContext += `⚠️ **Sem carteiras cadastradas**
-`;
+      userContext += `⚠️ Sem carteiras cadastradas\n`;
     }
 
-    // Investments
-    userContext += `
----
-
-## 📊 Investimentos
-
-`;
+    userContext += `\n## 📊 Investimentos (${investments?.length || 0})\n`;
 
     if (investments && investments.length > 0) {
-      const typeLabels: { [key: string]: string } = {
-        acao: "Ações", fii: "FIIs", renda_fixa: "Renda Fixa", tesouro: "Tesouro",
-        cdb: "CDB", lci: "LCI", lca: "LCA", crypto: "Crypto", etf: "ETFs", outro: "Outros",
-      };
-
+      // Group by type
       const byType: { [key: string]: any[] } = {};
-      let totalInvestido = 0;
-      let valorAtual = 0;
-
       investments.forEach((inv: any) => {
         const type = inv.asset_type || "outro";
         if (!byType[type]) byType[type] = [];
         byType[type].push(inv);
-        totalInvestido += Number(inv.total_invested) || 0;
-        valorAtual += Number(inv.current_value) || 0;
       });
 
-      const rentabilidade = totalInvestido > 0 ? ((valorAtual - totalInvestido) / totalInvestido) * 100 : 0;
+      const labels: { [key: string]: string } = {
+        acao: "Ações", fii: "FIIs", renda_fixa: "Renda Fixa", tesouro: "Tesouro",
+        cdb: "CDB", lci: "LCI", lca: "LCA", crypto: "Crypto", etf: "ETFs"
+      };
 
-      userContext += `### Resumo
-- **Total investido:** R$ ${totalInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-- **Valor atual:** R$ ${valorAtual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-- **Rentabilidade:** ${rentabilidade >= 0 ? "+" : ""}${rentabilidade.toFixed(2)}%
-- **Lucro/Prejuízo:** R$ ${(valorAtual - totalInvestido).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-
-### Alocação
-`;
+      // Show allocation percentages
+      userContext += `\n**Alocação atual:**\n`;
       Object.entries(byType).forEach(([type, invs]) => {
-        const typeValue = invs.reduce((sum: number, inv: any) => sum + (Number(inv.current_value) || 0), 0);
-        const percentage = valorAtual > 0 ? ((typeValue / valorAtual) * 100).toFixed(1) : 0;
-        userContext += `- **${typeLabels[type] || type}:** R$ ${typeValue.toLocaleString("pt-BR")} (${percentage}%)\n`;
+        const typeValue = invs.reduce((s: number, i: any) => s + (Number(i.current_value) || 0), 0);
+        const pct = totalPatrimonio > 0 ? (typeValue / totalPatrimonio * 100).toFixed(1) : 0;
+        userContext += `- ${labels[type] || type}: ${pct}% (R$ ${typeValue.toLocaleString("pt-BR")})\n`;
       });
 
-      userContext += `
-### Detalhes por Ativo
-`;
-      Object.entries(byType).forEach(([type, invs]) => {
-        userContext += `\n**${typeLabels[type] || type}:**\n`;
-        (invs as any[]).forEach((inv) => {
-          const invested = Number(inv.total_invested) || 0;
-          const current = Number(inv.current_value) || 0;
-          const rent = invested > 0 ? ((current - invested) / invested) * 100 : 0;
-          userContext += `- ${inv.asset_name}${inv.ticker ? ` (${inv.ticker})` : ""}: R$ ${current.toLocaleString("pt-BR")} (${rent >= 0 ? "+" : ""}${rent.toFixed(2)}%)\n`;
-        });
+      userContext += `\n**Detalhes:**\n`;
+      investments.slice(0, 15).forEach((inv: any) => {
+        const rent = Number(inv.gain_percent) || 0;
+        userContext += `- ${inv.asset_name}${inv.ticker ? ` (${inv.ticker})` : ""}: R$ ${Number(inv.current_value).toLocaleString("pt-BR")} (${rent >= 0 ? "+" : ""}${rent.toFixed(1)}%)\n`;
       });
-
-      // Upcoming maturities
-      const withMaturity = investments.filter((inv: any) => inv.maturity_date);
-      if (withMaturity.length > 0) {
-        userContext += `
-### 📅 Vencimentos
-`;
-        withMaturity
-          .sort((a: any, b: any) => new Date(a.maturity_date).getTime() - new Date(b.maturity_date).getTime())
-          .slice(0, 5)
-          .forEach((inv: any) => {
-            const maturityDate = new Date(inv.maturity_date);
-            const daysUntil = Math.ceil((maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            userContext += `- **${inv.asset_name}:** ${maturityDate.toLocaleDateString("pt-BR")} (${daysUntil > 0 ? `${daysUntil} dias` : "VENCIDO"})\n`;
-          });
+      if (investments.length > 15) {
+        userContext += `... e mais ${investments.length - 15} ativos\n`;
       }
     } else {
-      userContext += `⚠️ **Sem investimentos cadastrados**
-`;
+      userContext += `⚠️ Sem investimentos cadastrados\n`;
     }
 
-    // Chat history summary
-    if (chatHistory && chatHistory.length > 0) {
-      userContext += `
+    // System prompt - The actual advisor
+    const systemPrompt = `# 🧠 KADIG AI — SEU CONSULTOR FINANCEIRO PESSOAL
+
+Você é o **Kadig AI**, um consultor financeiro inteligente que combina conhecimento profundo do mercado com análise personalizada do perfil do usuário.
+
+## 🎯 SUA MISSÃO
+
+Ser um VERDADEIRO AUXILIAR de investimentos que:
+
+### 1. ORIENTA DECISÕES DE INVESTIMENTO
+- Analise se o usuário DEVE ou NÃO investir em algo
+- Avalie se é o MOMENTO CERTO para investir
+- Calcule RISCOS e PROBABILIDADES de sucesso
+- Sugira os MELHORES CAMINHOS baseado no perfil
+
+### 2. RECOMENDA INVESTIMENTOS ESPECÍFICOS
+- Indique os melhores investimentos para CADA PERFIL
+- Compare opções: "Investimento A vs B, qual melhor pra você?"
+- Sugira ALOCAÇÃO IDEAL baseada em objetivos
+- Alerte sobre ARMADILHAS e investimentos ruins
+
+### 3. ANALISA CENÁRIOS
+- "Se você investir R$ X em Y, em Z meses terá..."
+- "Com a Selic atual, seu dinheiro na poupança perde X% para inflação"
+- "Para atingir sua meta de R$ X, você precisa investir R$ Y por mês"
+
+### 4. EDUCA DE FORMA PRÁTICA
+- Explique conceitos de forma SIMPLES
+- Use EXEMPLOS com os números do próprio usuário
+- Mostre COMPARAÇÕES reais (poupança vs Tesouro vs CDB)
+
+## 📋 FRAMEWORK DE RECOMENDAÇÃO
+
+Sempre que recomendar algo, siga esta estrutura:
+
+### Para "Devo investir em X?"
+1. **Análise do perfil:** O investimento combina com seu perfil [conservador/moderado/arrojado]?
+2. **Análise do momento:** É um bom momento para esse investimento? Por quê?
+3. **Risco x Retorno:** Qual o risco? Qual o retorno esperado?
+4. **Quanto investir:** Considerando seu patrimônio, quanto faz sentido alocar?
+5. **Veredicto:** ✅ Recomendo / ⚠️ Com ressalvas / ❌ Não recomendo
+
+### Para "Qual o melhor investimento?"
+1. **Entenda o objetivo:** Curto prazo? Renda? Crescimento?
+2. **Considere o perfil:** Conservador? Moderado? Arrojado?
+3. **Compare 3 opções:** Apresente prós e contras
+4. **Recomendação final:** Qual é melhor PARA ESTE USUÁRIO e por quê
+
+### Para "Onde investir R$ X?"
+1. **Sugira alocação:** Divida em categorias (ex: 60% renda fixa, 40% variável)
+2. **Indique ativos específicos:** Nomes de investimentos reais
+3. **Explique a lógica:** Por que essa distribuição?
+4. **Próximos passos:** Como executar na prática
+
+## 🔢 USE NÚMEROS CONCRETOS
+
+- "Com a Selic a X%, um CDB de 100% CDI rende Y% ao ano"
+- "Seu patrimônio de R$ X, investido em Tesouro IPCA+, em 5 anos valeria R$ Y"
+- "Para sua renda de R$ X, sugiro aportes de R$ Y (30%) por mês"
+- "Sua carteira está X% em ações, ideal seria Y% para seu perfil"
+
+## ⚠️ ALERTAS PROATIVOS
+
+Sempre alerte quando identificar:
+- 🔴 Falta de reserva de emergência
+- 🔴 Concentração excessiva em um ativo
+- 🔴 Investimentos inadequados ao perfil
+- 🔴 Dinheiro parado perdendo para inflação
+- 🟡 Oportunidades de rebalanceamento
+- 🟡 Vencimentos próximos
+- 🟢 Boas oportunidades de mercado
+
+## 💡 ESTILO DE COMUNICAÇÃO
+
+- Seja DIRETO e OBJETIVO
+- Use EMOJIS com moderação para organizar
+- Formate com **negrito** e listas para clareza
+- Personalize SEMPRE com dados do usuário
+- Seja HONESTO sobre riscos
+- NUNCA prometa retornos garantidos
+- Sempre mencione que são sugestões, não ordens
+
+## ⚖️ DISCLAIMER
+
+Sempre lembre ao usuário que:
+- Investimentos têm riscos
+- Rentabilidade passada não garante futura
+- Consulte um profissional certificado para decisões importantes
+- Você é um assistente de IA, não um consultor registrado
+
 ---
 
-## 💬 Conversas Anteriores (${chatHistory.length} mensagens recentes)
-`;
-      chatHistory.slice(0, 5).reverse().forEach((msg: any) => {
-        userContext += `- **${msg.role === "user" ? "Usuário" : "Kadig"}:** ${msg.content.substring(0, 100)}${msg.content.length > 100 ? "..." : ""}\n`;
-      });
-    }
-
-    // ========== SYSTEM PROMPT ==========
-
-    const systemPrompt = `Você é o **Kadig AI** 🤖 — o consultor financeiro pessoal mais avançado do Brasil.
-
-# 🎯 SUA MISSÃO
-Proporcionar uma experiência ÚNICA e PERSONALIZADA para cada usuário, combinando:
-1. Conhecimento profundo dos dados pessoais do usuário
-2. Informações em tempo real do mercado financeiro
-3. Análises inteligentes e recomendações personalizadas
-
-# 🧠 SUAS CAPACIDADES
-
-## Conhecimento do Usuário
-- Você tem acesso COMPLETO a todos os dados da conta
-- Use SEMPRE os dados reais nas respostas
-- Cite valores, percentuais e ativos específicos do usuário
-- Lembre-se do histórico de conversas
-
-## Conhecimento de Mercado
-- Você tem acesso a informações ATUALIZADAS da web
-- Taxas: Selic, CDI, IPCA, câmbio
-- Cotações: Ações, FIIs, ETFs, criptomoedas
-- Notícias e análises do mercado
-- Tendências e oportunidades
-
-## Análises Personalizadas
-- Compare a carteira do usuário com benchmarks
-- Identifique riscos e oportunidades
-- Sugira rebalanceamento quando necessário
-- Alerte sobre vencimentos e dividendos
-
-# 💡 COMO SE COMPORTAR
-
-1. **Seja proativo** - Não espere perguntas, ofereça insights relevantes
-2. **Seja específico** - Use números e dados concretos do usuário
-3. **Seja educativo** - Explique conceitos de forma simples
-4. **Seja amigável** - Use emojis com moderação, seja acolhedor
-5. **Seja honesto** - Se não souber algo, diga claramente
-
-# ⚠️ REGRAS IMPORTANTES
-
-- NUNCA invente dados do usuário
-- SEMPRE use formato brasileiro (R$, DD/MM/AAAA)
-- Cite fontes quando usar dados de mercado
-- Se o perfil estiver incompleto, incentive o preenchimento
-- Mantenha respostas concisas mas completas
-
-# 📊 DADOS DO USUÁRIO ATUAL
+# DADOS DO USUÁRIO ATUAL
 
 ${userContext}
 
 ---
 
-Use TODOS esses dados para personalizar suas respostas. O usuário deve sentir que você realmente o conhece!`;
+Use TODOS os dados acima para personalizar suas recomendações. Seja o consultor que todo investidor gostaria de ter!`;
 
-    console.log("System prompt built with user data and market context");
+    console.log("Prompt built, calling AI...");
 
-    // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY não configurado");
-    }
-
-    const aiMessages: Message[] = [
-      { role: "system", content: systemPrompt },
-      ...messages,
-    ];
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -486,53 +401,26 @@ Use TODOS esses dados para personalizar suas respostas. O usuário deve sentir q
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: aiMessages,
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
         stream: true,
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Muitas requisições. Aguarde um momento." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Limite de uso atingido." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      
-      return new Response(JSON.stringify({ error: "Erro ao processar mensagem" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const status = response.status;
+      if (status === 429) return new Response(JSON.stringify({ error: "Aguarde um momento" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (status === 402) return new Response(JSON.stringify({ error: "Limite atingido" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Erro ao processar" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    console.log("AI response streaming...");
-
     return new Response(response.body, {
-      headers: { 
-        ...corsHeaders, 
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
     });
 
   } catch (error) {
-    console.error("Chat error:", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
-    );
+    console.error("Error:", error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Erro" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
