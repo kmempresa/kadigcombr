@@ -19,7 +19,7 @@ import {
   Calendar,
   ExternalLink,
   Sun,
-  Moon
+  Moon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
