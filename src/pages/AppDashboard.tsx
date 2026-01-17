@@ -1820,22 +1820,6 @@ const AppDashboard = () => {
             </div>
           </header>
 
-          <div className="p-4">
-            <div className="bg-gradient-to-br from-violet-400 to-violet-500 rounded-2xl p-5 text-white">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1">Assine Kadig Premium</h3>
-                  <p className="text-white/80 text-sm mb-4">
-                    Análises avançadas e recomendações exclusivas
-                  </p>
-                  <button className="bg-white text-violet-600 font-semibold px-4 py-2 rounded-full text-sm">
-                    R$ 29,90/mês
-                  </button>
-                </div>
-                <Sparkles className="w-8 h-8 text-white/80" />
-              </div>
-            </div>
-          </div>
 
           <div className="px-4">
             {[
