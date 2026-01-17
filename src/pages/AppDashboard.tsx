@@ -1,32 +1,27 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  Send, 
+  Bell, 
+  Eye,
+  EyeOff,
+  HelpCircle,
+  Plus,
+  ChevronRight,
+  ChevronDown,
   User,
   Wallet,
-  PieChart,
-  Bell,
+  TrendingUp,
+  Link2,
+  Store,
+  Shield,
   Settings,
+  MessageSquare,
+  Info,
   LogOut,
-  Menu,
-  X,
-  Sparkles,
-  Home
+  Sparkles
 } from "lucide-react";
 import kadigLogo from "@/assets/kadig-logo.png";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
 
 interface UserProfile {
   name: string;
@@ -34,28 +29,12 @@ interface UserProfile {
   riskTolerance: string;
 }
 
-const portfolioData = [
-  { name: "Ações", value: 45, change: 2.3, color: "from-primary to-accent" },
-  { name: "Renda Fixa", value: 30, change: 0.8, color: "from-emerald-500 to-teal-400" },
-  { name: "Cripto", value: 15, change: -1.2, color: "from-amber-500 to-orange-400" },
-  { name: "FIIs", value: 10, change: 1.5, color: "from-violet-500 to-purple-400" },
-];
-
-const recentAlerts = [
-  { message: "PETR4 subiu 3.2% hoje", type: "positive", time: "há 5 min" },
-  { message: "Oportunidade: VALE3 em suporte", type: "opportunity", time: "há 15 min" },
-  { message: "Bitcoin corrigiu 2%", type: "warning", time: "há 30 min" },
-];
-
 const AppDashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"home" | "chat">("home");
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
+  const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
+  const [showValues, setShowValues] = useState(true);
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("kadig-user-profile");
@@ -63,57 +42,8 @@ const AppDashboard = () => {
       navigate("/onboarding");
       return;
     }
-    const parsedProfile = JSON.parse(savedProfile);
-    setProfile(parsedProfile);
-    
-    setMessages([
-      {
-        id: "1",
-        role: "assistant",
-        content: `Olá ${parsedProfile.name}! 👋 Sou seu Consultor Kadig. Com base no seu perfil ${parsedProfile.riskTolerance === "conservative" ? "conservador" : parsedProfile.riskTolerance === "moderate" ? "moderado" : "arrojado"}, estou monitorando oportunidades ideais para você. Como posso te ajudar hoje?`,
-        timestamp: new Date()
-      }
-    ]);
+    setProfile(JSON.parse(savedProfile));
   }, [navigate]);
-
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-
-    setTimeout(() => {
-      const responses = [
-        `Excelente pergunta, ${profile?.name}! Baseado na sua análise de risco ${profile?.riskTolerance}, eu recomendaria diversificar sua carteira com foco em ativos de menor volatilidade. Quer que eu detalhe algumas opções?`,
-        `Analisando os dados em tempo real, vejo uma oportunidade interessante para seu perfil. Posso explicar mais sobre isso?`,
-        `Com base no seu nível de experiência ${profile?.experience === "beginner" ? "iniciante" : profile?.experience === "intermediate" ? "intermediário" : "avançado"}, sugiro começarmos por entender melhor seus objetivos de curto prazo.`,
-      ];
-      
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-      setIsTyping(false);
-    }, 1500);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem("kadig-user-profile");
@@ -122,420 +52,400 @@ const AppDashboard = () => {
 
   if (!profile) return null;
 
+  const formatCurrency = (value: number) => {
+    if (!showValues) return "R$ ••••••";
+    return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  };
+
   return (
-    <div className="light-theme min-h-screen bg-background flex flex-col lg:flex-row">
-      {/* Sidebar - Desktop */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex flex-col h-full p-4 safe-area-inset-top safe-area-inset-left">
-        <div className="flex items-center justify-between mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-md">
-              <img src={kadigLogo} alt="Kadig" className="h-5" />
+    <div className="light-theme min-h-screen bg-background flex flex-col">
+      {/* Carteira Tab Content */}
+      {activeTab === "carteira" && (
+        <div className="flex-1 pb-20">
+          {/* Header */}
+          <header className="flex items-center justify-between p-4 safe-area-inset-top">
+            <button className="flex items-center gap-2">
+              <ChevronDown className="w-5 h-5 text-foreground" />
+              <span className="font-semibold text-foreground">Patrimônio {profile.name}</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <button className="p-2 text-muted-foreground">
+                <Bell className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-muted-foreground" onClick={() => setShowValues(!showValues)}>
+                {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </button>
+              <button className="p-2 text-muted-foreground">
+                <HelpCircle className="w-5 h-5" />
+              </button>
+              <button className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md">
+                <Plus className="w-5 h-5 text-white" />
+              </button>
             </div>
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-              <X className="w-5 h-5" />
-            </Button>
+          </header>
+
+          {/* Sub Tabs */}
+          <div className="flex border-b border-border px-4 overflow-x-auto">
+            {[
+              { id: "resumo", label: "Resumo" },
+              { id: "ativos", label: "Ativos" },
+              { id: "analises", label: "Análises" },
+              { id: "extrato", label: "Extrato" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setCarteiraTab(tab.id as any)}
+                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
+                  carteiraTab === tab.id
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {tab.label}
+                {carteiraTab === tab.id && (
+                  <motion.div
+                    layoutId="carteiraTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
+                  />
+                )}
+              </button>
+            ))}
           </div>
 
-          <nav className="space-y-2 flex-1">
-            <Button variant="ghost" className="w-full justify-start gap-3 bg-primary/10 text-primary">
-              <Wallet className="w-5 h-5" />
-              Dashboard
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
-              <PieChart className="w-5 h-5" />
-              Portfólio
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
-              <Bell className="w-5 h-5" />
-              Alertas
-            </Button>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground">
-              <Settings className="w-5 h-5" />
-              Configurações
-            </Button>
-          </nav>
-
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center gap-3 mb-4 px-2">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground text-sm truncate">{profile.name}</p>
-                <p className="text-xs text-muted-foreground capitalize">{profile.riskTolerance}</p>
-              </div>
-            </div>
-            <Button variant="ghost" className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleLogout}>
-              <LogOut className="w-5 h-5" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <main className="flex-1 lg:ml-64 pb-20 lg:pb-0">
-        {/* Mobile header */}
-        <header className="lg:hidden flex items-center justify-between p-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur-sm z-40 safe-area-inset-top">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
-            <Menu className="w-5 h-5" />
-          </Button>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-md">
-            <img src={kadigLogo} alt="Kadig" className="h-4" />
-          </div>
-          <div className="w-10" />
-        </header>
-
-        {/* Mobile Tab Content */}
-        <div className="lg:hidden">
-          {activeTab === "home" && (
-            <div className="p-4 space-y-4">
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Olá, {profile.name}! 👋</h1>
-                <p className="text-muted-foreground text-sm">Seu portfólio está performando bem</p>
-              </div>
-
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="bg-card border-border shadow-sm">
-                  <CardContent className="p-3">
-                    <p className="text-muted-foreground text-xs">Patrimônio</p>
-                    <p className="text-lg font-bold text-foreground">R$ 127.450</p>
-                    <div className="flex items-center gap-1 text-emerald-600">
-                      <TrendingUp className="w-3 h-3" />
-                      <span className="text-xs font-medium">+2.4%</span>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card border-border shadow-sm">
-                  <CardContent className="p-3">
-                    <p className="text-muted-foreground text-xs">Lucro do Mês</p>
-                    <p className="text-lg font-bold text-foreground">R$ 3.280</p>
-                    <div className="flex items-center gap-1 text-emerald-600">
-                      <TrendingUp className="w-3 h-3" />
-                      <span className="text-xs font-medium">+5.1%</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Portfolio Distribution */}
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader className="pb-2 px-4 pt-4">
-                  <CardTitle className="text-base text-foreground">Distribuição</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <div className="space-y-3">
-                    {portfolioData.map((item) => (
-                      <div key={item.name} className="space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-foreground">{item.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">{item.value}%</span>
-                            <span className={`text-xs flex items-center ${item.change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                              {item.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                              {Math.abs(item.change)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${item.value}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                            className={`h-full bg-gradient-to-r ${item.color} rounded-full`}
-                          />
-                        </div>
+          {/* Resumo Content */}
+          {carteiraTab === "resumo" && (
+            <div className="p-4 space-y-6">
+              {/* Chart Section */}
+              <div className="relative flex items-center justify-center py-8">
+                {/* Ring Chart */}
+                <div className="relative w-64 h-64">
+                  <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+                    {/* Background ring */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="80"
+                      fill="none"
+                      stroke="hsl(var(--muted))"
+                      strokeWidth="16"
+                    />
+                    {/* Cyan segment - 50% */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="80"
+                      fill="none"
+                      stroke="hsl(185 80% 50%)"
+                      strokeWidth="16"
+                      strokeDasharray="251.2 502.4"
+                      strokeDashoffset="0"
+                      strokeLinecap="round"
+                    />
+                    {/* Purple segment - 30% */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="80"
+                      fill="none"
+                      stroke="hsl(270 60% 65%)"
+                      strokeWidth="16"
+                      strokeDasharray="150.72 502.4"
+                      strokeDashoffset="-251.2"
+                      strokeLinecap="round"
+                    />
+                    {/* Orange segment - 20% */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="80"
+                      fill="none"
+                      stroke="hsl(30 90% 55%)"
+                      strokeWidth="16"
+                      strokeDasharray="100.48 502.4"
+                      strokeDashoffset="-401.92"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  
+                  {/* Center content */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2">
+                      JANEIRO 2026
+                    </span>
+                    <span className="text-2xl font-bold text-foreground flex items-center gap-1">
+                      {formatCurrency(127450.53)}
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    </span>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      CARTEIRA <span className="text-primary font-semibold">88%</span> DO CDI
+                    </span>
+                    <div className="mt-3">
+                      <span className="text-xs text-muted-foreground">GANHO DE CAPITAL</span>
+                      <div className="mt-1">
+                        <span className="text-sm font-semibold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full">
+                          {formatCurrency(3280.26)}
+                        </span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              {/* Recent Alerts */}
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader className="pb-2 px-4 pt-4">
-                  <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                    <Bell className="w-4 h-4 text-primary" />
-                    Alertas
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <div className="space-y-2">
-                    {recentAlerts.map((alert, index) => (
-                      <div key={index} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg">
-                        <span className="text-sm text-foreground flex-1 mr-2">{alert.message}</span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">{alert.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                {/* Chart icon button */}
+                <button className="absolute left-4 bottom-8 w-10 h-10 rounded-full border border-border flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
 
-          {activeTab === "chat" && (
-            <div className="flex flex-col h-[calc(100vh-8rem)]">
-              {/* Chat Header */}
-              <div className="p-4 border-b border-border flex items-center gap-3 bg-card">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-                  <Sparkles className="w-5 h-5 text-white" />
+              {/* Pagination dots */}
+              <div className="flex justify-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
+                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+              </div>
+
+              {/* Stats Row */}
+              <div className="flex items-center justify-around py-4 border-y border-border">
+                <div className="text-center">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Carteira</span>
+                  <p className="text-lg font-bold text-emerald-500">0,49%</p>
+                </div>
+                <div className="w-px h-10 bg-border" />
+                <div className="text-center">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">CDI</span>
+                  <p className="text-lg font-bold text-primary">0,55%</p>
+                </div>
+                <div className="w-px h-10 bg-border" />
+                <div className="text-center flex flex-col items-center">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">IPCA</span>
+                  <button className="flex items-center gap-1">
+                    <span className="text-lg font-bold text-orange-500">0,17%</span>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Promo Card */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
+                  <span className="text-2xl text-muted-foreground">$</span>
                 </div>
                 <div className="flex-1">
-                  <h2 className="font-semibold text-foreground">Consultor Kadig</h2>
-                  <p className="text-xs text-emerald-600 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    Online
+                  <h3 className="font-semibold text-foreground">Consultor Kadig IA</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tire dúvidas e receba recomendações personalizadas!
                   </p>
                 </div>
               </div>
 
-              {/* Messages */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/30">
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    <div className={`max-w-[85%] p-3 rounded-2xl shadow-sm ${
-                      message.role === "user"
-                        ? "bg-gradient-to-r from-primary to-accent text-white rounded-br-md"
-                        : "bg-card text-foreground rounded-bl-md border border-border"
-                    }`}>
-                      <p className="text-sm">{message.content}</p>
+              {/* Goals Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 bg-foreground rounded-full" />
+                  <h2 className="font-semibold text-foreground">Metas da carteira</h2>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Goal Card 1 */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-muted-foreground rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Renda Passiva</span>
+                      </div>
+                      <button className="text-muted-foreground">•••</button>
                     </div>
-                  </motion.div>
-                ))}
-                {isTyping && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                    <div className="bg-card p-3 rounded-2xl rounded-bl-md border border-border shadow-sm">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                    <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Plus className="w-6 h-6 text-primary" />
+                        </div>
                       </div>
                     </div>
-                  </motion.div>
-                )}
-              </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Média últ. 12 meses</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">R$ -</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-primary rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">R$ -</p>
+                    </div>
+                  </div>
 
-              {/* Input */}
-              <div className="p-4 border-t border-border bg-card safe-area-inset-bottom">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Pergunte ao Consultor..."
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                    className="bg-muted/50 border-border text-foreground"
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim()}
-                    className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-md"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  {/* Goal Card 2 */}
+                  <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-4 bg-muted-foreground rounded-full" />
+                        <span className="font-medium text-foreground text-sm">Patrimônio</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Plus className="w-6 h-6 text-primary" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-muted rounded-full" />
+                        <span className="text-muted-foreground">Saldo Bruto Atual</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">{formatCurrency(127450.53)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-primary rounded-full" />
+                        <span className="text-muted-foreground">Meta</span>
+                      </div>
+                      <p className="font-semibold text-foreground pl-3">R$ -</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
+      )}
 
-        {/* Desktop Layout */}
-        <div className="hidden lg:block p-6">
-          <div className="grid lg:grid-cols-3 gap-6">
-            {/* Portfolio Overview */}
-            <div className="lg:col-span-2 space-y-6">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Olá, {profile.name}! 👋</h1>
-                <p className="text-muted-foreground">Seu portfólio está performando bem hoje</p>
+      {/* Conta Tab Content */}
+      {activeTab === "conta" && (
+        <div className="flex-1 pb-20">
+          {/* Header */}
+          <header className="bg-muted/30 p-4 safe-area-inset-top">
+            <h1 className="text-xl font-semibold text-foreground mb-4">Conta</h1>
+            
+            {/* Profile Section */}
+            <button className="w-full flex items-center gap-3 mb-4">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <User className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background" />
               </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Card className="bg-card border-border shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-muted-foreground text-sm">Patrimônio Total</p>
-                        <p className="text-2xl font-bold text-foreground">R$ 127.450,00</p>
-                      </div>
-                      <div className="flex items-center gap-1 text-emerald-600">
-                        <TrendingUp className="w-4 h-4" />
-                        <span className="text-sm font-medium">+2.4%</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card border-border shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-muted-foreground text-sm">Lucro do Mês</p>
-                        <p className="text-2xl font-bold text-foreground">R$ 3.280,00</p>
-                      </div>
-                      <div className="flex items-center gap-1 text-emerald-600">
-                        <TrendingUp className="w-4 h-4" />
-                        <span className="text-sm font-medium">+5.1%</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-foreground">{profile.name}</p>
+                <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                  Dados pendentes
+                </span>
               </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
 
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg text-foreground">Distribuição do Portfólio</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {portfolioData.map((item) => (
-                      <div key={item.name} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-foreground">{item.name}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">{item.value}%</span>
-                            <span className={`text-xs flex items-center ${item.change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-                              {item.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                              {Math.abs(item.change)}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${item.value}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                            className={`h-full bg-gradient-to-r ${item.color} rounded-full`}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                    <Bell className="w-5 h-5 text-primary" />
-                    Alertas Recentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {recentAlerts.map((alert, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <span className="text-sm text-foreground">{alert.message}</span>
-                        <span className="text-xs text-muted-foreground">{alert.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            <div>
+              <span className="text-xs text-muted-foreground">Tipo de plano</span>
+              <p className="font-medium text-foreground">Gratuito</p>
             </div>
+          </header>
 
-            {/* Chat with Consultant - Desktop */}
-            <div className="lg:col-span-1">
-              <Card className="bg-card border-border shadow-sm h-[calc(100vh-6rem)] flex flex-col">
-                <CardHeader className="pb-2 border-b border-border">
-                  <CardTitle className="text-lg flex items-center gap-2 text-foreground">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-                      <Sparkles className="w-4 h-4 text-white" />
-                    </div>
-                    Consultor Kadig
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse ml-auto" />
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-                  <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
-                    {messages.map((message) => (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                      >
-                        <div className={`max-w-[85%] p-3 rounded-2xl shadow-sm ${
-                          message.role === "user"
-                            ? "bg-gradient-to-r from-primary to-accent text-white rounded-br-md"
-                            : "bg-card text-foreground rounded-bl-md border border-border"
-                        }`}>
-                          <p className="text-sm">{message.content}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                    {isTyping && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-                        <div className="bg-card p-3 rounded-2xl rounded-bl-md border border-border shadow-sm">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  <div className="p-4 border-t border-border">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Pergunte ao Consultor Kadig..."
-                        value={inputMessage}
-                        onChange={(e) => setInputMessage(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                        className="bg-muted/50 border-border text-foreground"
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!inputMessage.trim()}
-                        className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-md"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Premium Card */}
+          <div className="p-4">
+            <div className="bg-gradient-to-br from-violet-400 to-violet-500 rounded-2xl p-5 text-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1">Assine Kadig Premium por R$ 29,90</h3>
+                  <p className="text-white/80 text-sm mb-4">
+                    Acompanhe com mais clareza o desempenho dos seus investimentos.
+                  </p>
+                  <button className="bg-white text-violet-600 font-semibold px-4 py-2 rounded-full text-sm">
+                    Assinar
+                  </button>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50 safe-area-inset-bottom">
+          {/* Menu Items */}
+          <div className="px-4">
+            {[
+              { icon: Shield, label: "Central de segurança", badge: "Novidade" },
+              { icon: Link2, label: "Kadig Open Finance", badge: "Novidade" },
+              { icon: Settings, label: "Preferências" },
+              { icon: MessageSquare, label: "Abrir chamado" },
+              { icon: Info, label: "Sobre o Kadig" },
+            ].map((item, index) => (
+              <button
+                key={index}
+                className="w-full flex items-center justify-between py-4 border-b border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-foreground">{item.label}</span>
+                  {item.badge && (
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            ))}
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-between py-4 border-b border-border"
+            >
+              <span className="font-medium text-red-500">Sair da conta</span>
+              <LogOut className="w-5 h-5 text-red-500" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Other tabs placeholder */}
+      {(activeTab === "trade" || activeTab === "conexoes" || activeTab === "mercado") && (
+        <div className="flex-1 pb-20 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              {activeTab === "trade" && <TrendingUp className="w-8 h-8 text-primary" />}
+              {activeTab === "conexoes" && <Link2 className="w-8 h-8 text-primary" />}
+              {activeTab === "mercado" && <Store className="w-8 h-8 text-primary" />}
+            </div>
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              {activeTab === "trade" && "Trade"}
+              {activeTab === "conexoes" && "Conexões"}
+              {activeTab === "mercado" && "Mercado"}
+            </h2>
+            <p className="text-muted-foreground text-sm">Em breve</p>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-inset-bottom">
         <div className="flex justify-around py-2">
-          <button
-            onClick={() => setActiveTab("home")}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-lg transition-colors ${
-              activeTab === "home" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Home className="w-5 h-5" />
-            <span className="text-xs font-medium">Início</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("chat")}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-lg transition-colors ${
-              activeTab === "chat" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Sparkles className="w-5 h-5" />
-            <span className="text-xs font-medium">Consultor</span>
-          </button>
+          {[
+            { id: "carteira", icon: Wallet, label: "Carteira" },
+            { id: "trade", icon: TrendingUp, label: "Trade" },
+            { id: "conexoes", icon: Link2, label: "Conexões" },
+            { id: "mercado", icon: Store, label: "Mercado" },
+            { id: "conta", icon: User, label: "Conta" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex flex-col items-center gap-1 px-4 py-2 relative transition-colors ${
+                activeTab === tab.id ? "text-foreground" : "text-muted-foreground"
+              }`}
+            >
+              <tab.icon className="w-5 h-5" />
+              <span className="text-xs font-medium">{tab.label}</span>
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="bottomNav"
+                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
+                />
+              )}
+            </button>
+          ))}
         </div>
       </nav>
-
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };
