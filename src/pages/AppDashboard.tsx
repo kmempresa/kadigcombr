@@ -43,6 +43,7 @@ import GanhoCapitalDrawer from "@/components/analysis/GanhoCapitalDrawer";
 import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
+import GoalDrawer from "@/components/GoalDrawer";
 
 interface UserData {
   id: string;
@@ -158,6 +159,14 @@ const AppDashboard = () => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
+  const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
+  const [goalType, setGoalType] = useState<"patrimonio" | "renda_passiva">("patrimonio");
+  const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
+
+  const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
+    setGoalType(type);
+    setGoalDrawerOpen(true);
+  };
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
@@ -515,6 +524,36 @@ const AppDashboard = () => {
   // Get selected portfolio (default to first one if none selected)
   const activePortfolioId = selectedPortfolioId || userData?.portfolios[0]?.id || null;
   const selectedPortfolio = userData?.portfolios.find(p => p.id === activePortfolioId);
+
+  // Fetch user goals
+  const fetchGoals = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !activePortfolioId) return;
+
+      const { data, error } = await supabase
+        .from("goals")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("portfolio_id", activePortfolioId);
+
+      if (error) throw error;
+
+      const goalsMap: { patrimonio?: any; renda_passiva?: any } = {};
+      data?.forEach((goal: any) => {
+        goalsMap[goal.type as "patrimonio" | "renda_passiva"] = goal;
+      });
+      setGoals(goalsMap);
+    } catch (error) {
+      console.error("Error fetching goals:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (activePortfolioId) {
+      fetchGoals();
+    }
+  }, [activePortfolioId]);
   
   // Filter investments by selected portfolio
   const filteredInvestments = activePortfolioId 
@@ -819,19 +858,56 @@ const AppDashboard = () => {
                           <span className="text-lg">•••</span>
                         </button>
                       </div>
-                      <p className="text-xs text-primary mb-4">Definir Meta</p>
+                      <button 
+                        onClick={() => openGoalDrawer("renda_passiva")}
+                        className="text-xs text-primary mb-4 text-left"
+                      >
+                        {goals.renda_passiva ? "Editar Meta" : "Definir Meta"}
+                      </button>
                       
                       {/* Circular Button */}
                       <div className="flex-1 flex items-center justify-center">
                         <motion.button
+                          onClick={() => openGoalDrawer("renda_passiva")}
                           whileTap={{ scale: 0.95 }}
                           className="relative w-24 h-24"
                         >
-                          <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
-                          <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
-                          <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
-                            <Plus className="w-8 h-8 text-primary-foreground" />
-                          </div>
+                          {goals.renda_passiva ? (
+                            <>
+                              {/* Progress ring when goal exists */}
+                              <svg className="absolute inset-0 w-full h-full -rotate-90">
+                                <circle
+                                  cx="48"
+                                  cy="48"
+                                  r="42"
+                                  fill="none"
+                                  stroke="hsl(var(--muted))"
+                                  strokeWidth="8"
+                                />
+                                <circle
+                                  cx="48"
+                                  cy="48"
+                                  r="42"
+                                  fill="none"
+                                  stroke="hsl(var(--primary))"
+                                  strokeWidth="8"
+                                  strokeDasharray={`${Math.min((0 / goals.renda_passiva.target_value) * 264, 264)} 264`}
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-4 flex flex-col items-center justify-center">
+                                <span className="text-lg font-bold text-foreground">0%</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
+                              <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
+                              <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
+                                <Plus className="w-8 h-8 text-primary-foreground" />
+                              </div>
+                            </>
+                          )}
                         </motion.button>
                       </div>
                       
@@ -848,7 +924,11 @@ const AppDashboard = () => {
                           <div className="w-1 h-3 bg-primary rounded-full" />
                           <div>
                             <p className="text-[10px] text-muted-foreground">Meta</p>
-                            <p className="text-sm font-semibold text-foreground">R$ -</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {goals.renda_passiva 
+                                ? `R$ ${goals.renda_passiva.target_value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` 
+                                : "R$ -"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -863,19 +943,58 @@ const AppDashboard = () => {
                         <div className="w-1 h-4 bg-primary rounded-full" />
                         <h3 className="font-semibold text-foreground text-sm">Patrimônio</h3>
                       </div>
-                      <p className="text-xs text-primary mb-4">Definir Meta</p>
+                      <button 
+                        onClick={() => openGoalDrawer("patrimonio")}
+                        className="text-xs text-primary mb-4 text-left"
+                      >
+                        {goals.patrimonio ? "Editar Meta" : "Definir Meta"}
+                      </button>
                       
                       {/* Circular Button */}
                       <div className="flex-1 flex items-center justify-center">
                         <motion.button
+                          onClick={() => openGoalDrawer("patrimonio")}
                           whileTap={{ scale: 0.95 }}
                           className="relative w-24 h-24"
                         >
-                          <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
-                          <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
-                          <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
-                            <Plus className="w-8 h-8 text-primary-foreground" />
-                          </div>
+                          {goals.patrimonio ? (
+                            <>
+                              {/* Progress ring when goal exists */}
+                              <svg className="absolute inset-0 w-full h-full -rotate-90">
+                                <circle
+                                  cx="48"
+                                  cy="48"
+                                  r="42"
+                                  fill="none"
+                                  stroke="hsl(var(--muted))"
+                                  strokeWidth="8"
+                                />
+                                <circle
+                                  cx="48"
+                                  cy="48"
+                                  r="42"
+                                  fill="none"
+                                  stroke="hsl(var(--primary))"
+                                  strokeWidth="8"
+                                  strokeDasharray={`${Math.min((totalPatrimonio / goals.patrimonio.target_value) * 264, 264)} 264`}
+                                  strokeLinecap="round"
+                                />
+                              </svg>
+                              <div className="absolute inset-4 flex flex-col items-center justify-center">
+                                <span className="text-lg font-bold text-foreground">
+                                  {Math.min(Math.round((totalPatrimonio / goals.patrimonio.target_value) * 100), 100)}%
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 bg-primary/10 rounded-full opacity-40" />
+                              <div className="absolute inset-2 bg-primary/20 rounded-full opacity-60" />
+                              <div className="absolute inset-4 bg-primary/40 rounded-full flex items-center justify-center">
+                                <Plus className="w-8 h-8 text-primary-foreground" />
+                              </div>
+                            </>
+                          )}
                         </motion.button>
                       </div>
                       
@@ -892,7 +1011,11 @@ const AppDashboard = () => {
                           <div className="w-1 h-3 bg-primary rounded-full" />
                           <div>
                             <p className="text-[10px] text-muted-foreground">Meta</p>
-                            <p className="text-sm font-semibold text-foreground">R$ -</p>
+                            <p className="text-sm font-semibold text-foreground">
+                              {goals.patrimonio 
+                                ? `R$ ${goals.patrimonio.target_value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` 
+                                : "R$ -"}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1746,6 +1869,17 @@ const AppDashboard = () => {
         investments={filteredInvestments}
         formatCurrency={formatCurrency}
       />
+
+      {activePortfolioId && (
+        <GoalDrawer
+          open={goalDrawerOpen}
+          onClose={() => setGoalDrawerOpen(false)}
+          type={goalType}
+          portfolioId={activePortfolioId}
+          currentValue={goalType === "patrimonio" ? totalPatrimonio : 0}
+          onGoalSaved={fetchGoals}
+        />
+      )}
     </div>
   );
 };
