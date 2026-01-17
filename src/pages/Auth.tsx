@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, ArrowRight, UserPlus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
 
 const Auth = () => {
@@ -11,18 +13,93 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
     setIsLoading(true);
-    setTimeout(() => {
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("E-mail ou senha incorretos");
+        } else if (error.message.includes("Email not confirmed")) {
+          toast.error("Por favor, confirme seu e-mail antes de entrar");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        // Check if user has completed onboarding (has a profile)
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, investor_profile")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (profile?.full_name && profile?.investor_profile) {
+          // User has completed onboarding, go to dashboard
+          navigate("/app");
+        } else {
+          // User needs to complete onboarding
+          navigate("/onboarding");
+        }
+      }
+    } catch (error) {
+      toast.error("Erro ao fazer login. Tente novamente.");
+    } finally {
       setIsLoading(false);
-      navigate("/onboarding");
-    }, 1000);
+    }
   };
 
-  const handleSignup = () => {
-    navigate("/onboarding");
+  const handleSignup = async () => {
+    if (!email.trim() || !password.trim()) {
+      toast.error("Preencha e-mail e senha para criar sua conta");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres");
+      return;
+    }
+
+    setIsSigningUp(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password.trim(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/onboarding`,
+        },
+      });
+
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          toast.error("Este e-mail já está cadastrado. Tente fazer login.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Conta criada com sucesso!");
+        // Go to onboarding to complete profile
+        navigate("/onboarding");
+      }
+    } catch (error) {
+      toast.error("Erro ao criar conta. Tente novamente.");
+    } finally {
+      setIsSigningUp(false);
+    }
   };
 
   return (
@@ -136,12 +213,15 @@ const Auth = () => {
             {/* Signup button */}
             <button
               onClick={handleSignup}
-              className="flex-1 h-14 sm:h-16 px-4 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-muted/50 active:scale-[0.98] transition-all shadow-sm"
+              disabled={isSigningUp}
+              className="flex-1 h-14 sm:h-16 px-4 bg-card border border-border rounded-2xl flex items-center justify-center gap-3 hover:bg-muted/50 active:scale-[0.98] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center">
                 <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <span className="text-foreground font-medium text-sm sm:text-base">Criar conta</span>
+              <span className="text-foreground font-medium text-sm sm:text-base">
+                {isSigningUp ? "Criando..." : "Criar conta"}
+              </span>
             </button>
 
             {/* Login button */}

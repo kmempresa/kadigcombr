@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowRight, User, TrendingUp, Shield, Zap, ChevronLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
 
 interface UserProfile {
@@ -57,9 +59,25 @@ const riskOptions = [
   }
 ];
 
+// Map experience to investor profile
+const experienceToProfile: Record<string, string> = {
+  beginner: "Iniciante",
+  intermediate: "Intermediário",
+  advanced: "Avançado"
+};
+
+// Map risk tolerance
+const riskToleranceMap: Record<string, string> = {
+  conservative: "Conservador",
+  moderate: "Moderado",
+  aggressive: "Arrojado"
+};
+
 const Onboarding = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     experience: "",
@@ -68,12 +86,91 @@ const Onboarding = () => {
 
   const totalSteps = 3;
 
-  const handleNext = () => {
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate("/auth");
+        return;
+      }
+      setUserId(session.user.id);
+    };
+    checkUser();
+  }, [navigate]);
+
+  const handleNext = async () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
-      localStorage.setItem("kadig-user-profile", JSON.stringify(profile));
-      navigate("/app");
+      // Save profile to Supabase
+      if (!userId) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        navigate("/auth");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Check if profile exists
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("user_id", userId)
+          .single();
+
+        const profileData = {
+          user_id: userId,
+          full_name: profile.name.trim(),
+          investor_profile: experienceToProfile[profile.experience],
+          risk_tolerance: riskToleranceMap[profile.riskTolerance],
+          updated_at: new Date().toISOString()
+        };
+
+        if (existingProfile) {
+          // Update existing profile
+          const { error } = await supabase
+            .from("profiles")
+            .update(profileData)
+            .eq("user_id", userId);
+
+          if (error) throw error;
+        } else {
+          // Insert new profile
+          const { error } = await supabase
+            .from("profiles")
+            .insert(profileData);
+
+          if (error) throw error;
+        }
+
+        // Also create a default portfolio for the user
+        const { data: existingPortfolio } = await supabase
+          .from("portfolios")
+          .select("id")
+          .eq("user_id", userId)
+          .single();
+
+        if (!existingPortfolio) {
+          await supabase
+            .from("portfolios")
+            .insert({
+              user_id: userId,
+              name: "Principal",
+              total_value: 0,
+              total_gain: 0,
+              cdi_percent: 0
+            });
+        }
+
+        toast.success("Perfil criado com sucesso!");
+        navigate("/app");
+      } catch (error: any) {
+        console.error("Error saving profile:", error);
+        toast.error("Erro ao salvar perfil. Tente novamente.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -300,10 +397,10 @@ const Onboarding = () => {
 
           <Button
             onClick={handleNext}
-            disabled={!canProceed()}
+            disabled={!canProceed() || isLoading}
             className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-6 sm:px-8 flex-1 max-w-[200px] shadow-md"
           >
-            {step === totalSteps - 1 ? "Começar" : "Continuar"}
+            {isLoading ? "Salvando..." : step === totalSteps - 1 ? "Começar" : "Continuar"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
