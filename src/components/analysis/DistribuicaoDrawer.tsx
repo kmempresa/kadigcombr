@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { X, HelpCircle, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -72,6 +73,8 @@ export default function DistribuicaoDrawer({
   totalPatrimonio,
   formatCurrency 
 }: DistribuicaoDrawerProps) {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'classes' | 'estrategias' | 'instituicoes'>('classes');
 
   // Group by asset type (Classes)
@@ -169,7 +172,7 @@ export default function DistribuicaoDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-background light-theme">
+      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
