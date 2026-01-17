@@ -112,7 +112,7 @@ const Seguranca = () => {
   return (
     <div className={`${themeClass} min-h-screen bg-background`}>
       {/* Header with gradient */}
-      <div className="bg-gradient-to-br from-primary via-primary to-accent">
+      <div className="bg-gradient-to-br from-kadig-navy via-kadig-deep to-kadig-navy">
         <header className="flex items-center gap-4 p-4 pt-6 safe-area-inset-top">
           <button 
             onClick={() => navigate(-1)}
