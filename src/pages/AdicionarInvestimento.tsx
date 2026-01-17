@@ -502,6 +502,7 @@ const AdicionarInvestimento = () => {
         toast.error("Erro ao salvar investimento");
       }
     }
+  };
 
   const handleCancel = () => {
     navigate("/app");
