@@ -85,30 +85,55 @@ const AppDashboard = () => {
           </header>
 
           {/* Sub Tabs */}
-          <div className="flex border-b border-border px-4 overflow-x-auto">
+          <div className="flex border-b border-border px-4 overflow-x-auto bg-card/50">
             {[
               { id: "resumo", label: "Resumo" },
               { id: "ativos", label: "Ativos" },
               { id: "analises", label: "Análises" },
               { id: "extrato", label: "Extrato" },
-            ].map((tab) => (
-              <button
+            ].map((tab, index) => (
+              <motion.button
                 key={tab.id}
                 onClick={() => setCarteiraTab(tab.id as any)}
-                className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative ${
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`px-5 py-3 text-sm font-medium whitespace-nowrap transition-all duration-300 relative rounded-t-lg ${
                   carteiraTab === tab.id
                     ? "text-foreground"
-                    : "text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground/80"
                 }`}
               >
-                {tab.label}
+                {/* Background glow effect for active tab */}
+                {carteiraTab === tab.id && (
+                  <motion.div
+                    layoutId="tabBg"
+                    className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent rounded-t-lg"
+                    initial={false}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                
+                {/* Tab label */}
+                <span className="relative z-10">{tab.label}</span>
+                
+                {/* Underline indicator */}
                 {carteiraTab === tab.id && (
                   <motion.div
                     layoutId="carteiraTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground"
+                    className="absolute bottom-0 left-2 right-2 h-[3px] bg-gradient-to-r from-primary via-primary to-primary/60 rounded-full"
+                    initial={false}
+                    transition={{ type: "spring", bounce: 0.25, duration: 0.5 }}
                   />
                 )}
-              </button>
+                
+                {/* Hover dot indicator */}
+                {carteiraTab !== tab.id && (
+                  <motion.div
+                    className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-muted-foreground/0 group-hover:bg-muted-foreground/50"
+                    whileHover={{ scale: 1.5, opacity: 0.5 }}
+                  />
+                )}
+              </motion.button>
             ))}
           </div>
 
