@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
 import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 import AdicionarDrawer from "@/components/AdicionarDrawer";
+import TradeTab from "@/components/TradeTab";
 
 interface UserData {
   id: string;
@@ -859,8 +860,13 @@ const AppDashboard = () => {
         </div>
       )}
 
+      {/* Trade Tab */}
+      {activeTab === "trade" && (
+        <TradeTab showValues={showValues} />
+      )}
+
       {/* Other tabs */}
-      {(activeTab === "trade" || activeTab === "conexoes" || activeTab === "mercado") && (
+      {(activeTab === "conexoes" || activeTab === "mercado") && (
         <div className="flex-1 flex items-center justify-center pb-20">
           <div className="text-center">
             <p className="text-muted-foreground">Em breve...</p>
