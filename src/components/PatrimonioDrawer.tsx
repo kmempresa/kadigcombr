@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, ChevronRight, ChevronDown, Check, Edit, Trash2, ArrowRightLeft } from "lucide-react";
+import { X, Plus, ChevronRight, ChevronDown, Check, Edit, Trash2, ArrowRightLeft, Loader2 } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -8,7 +8,19 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import kadigLogo from "@/assets/kadig-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Portfolio {
   id: string;
@@ -33,6 +45,7 @@ interface PatrimonioDrawerProps {
   selectedPortfolioId?: string | null;
   onAddPortfolio: () => void;
   onSelectPortfolio: (id: string) => void;
+  onRefreshPortfolios?: () => Promise<void>;
 }
 
 const PatrimonioDrawer = ({
@@ -47,10 +60,20 @@ const PatrimonioDrawer = ({
   selectedPortfolioId,
   onAddPortfolio,
   onSelectPortfolio,
+  onRefreshPortfolios,
 }: PatrimonioDrawerProps) => {
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const [selectedPortfolioForAction, setSelectedPortfolioForAction] = useState<Portfolio | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Edit state
+  const [editMode, setEditMode] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Delete state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handlePortfolioClick = (portfolio: Portfolio) => {
     setSelectedPortfolioForAction(portfolio);
@@ -70,6 +93,89 @@ const PatrimonioDrawer = ({
     setIsLoading(false);
     onOpenChange(false);
     setSelectedPortfolioForAction(null);
+  };
+
+  const handleEditClick = () => {
+    if (!selectedPortfolioForAction) return;
+    setEditName(selectedPortfolioForAction.name);
+    setEditMode(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedPortfolioForAction || !editName.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("portfolios")
+        .update({ name: editName.trim() })
+        .eq("id", selectedPortfolioForAction.id);
+
+      if (error) throw error;
+
+      toast.success("Carteira atualizada!");
+      setEditMode(false);
+      setPreferencesOpen(false);
+      setSelectedPortfolioForAction(null);
+      
+      if (onRefreshPortfolios) {
+        await onRefreshPortfolios();
+      }
+    } catch (error) {
+      console.error("Error updating portfolio:", error);
+      toast.error("Erro ao atualizar carteira");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedPortfolioForAction) return;
+    
+    setIsDeleting(true);
+    try {
+      // First delete all investments in this portfolio
+      const { error: investmentsError } = await supabase
+        .from("investments")
+        .delete()
+        .eq("portfolio_id", selectedPortfolioForAction.id);
+
+      if (investmentsError) throw investmentsError;
+
+      // Then delete the portfolio
+      const { error: portfolioError } = await supabase
+        .from("portfolios")
+        .delete()
+        .eq("id", selectedPortfolioForAction.id);
+
+      if (portfolioError) throw portfolioError;
+
+      toast.success("Carteira excluída!");
+      setDeleteDialogOpen(false);
+      setPreferencesOpen(false);
+      setSelectedPortfolioForAction(null);
+      
+      if (onRefreshPortfolios) {
+        await onRefreshPortfolios();
+      }
+      
+      // If deleted portfolio was selected, select first available
+      if (selectedPortfolioId === selectedPortfolioForAction.id && portfolios.length > 1) {
+        const remaining = portfolios.filter(p => p.id !== selectedPortfolioForAction.id);
+        if (remaining.length > 0) {
+          onSelectPortfolio(remaining[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting portfolio:", error);
+      toast.error("Erro ao excluir carteira");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const formatCurrency = (value: number) => {
@@ -273,7 +379,7 @@ const PatrimonioDrawer = ({
 
         {/* Preferences Bottom Sheet */}
         <AnimatePresence>
-          {preferencesOpen && (
+          {preferencesOpen && !editMode && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -295,7 +401,10 @@ const PatrimonioDrawer = ({
                   </h3>
 
                   <div className="space-y-3 mb-4">
-                    <button className="w-full bg-muted rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+                    <button 
+                      onClick={handleEditClick}
+                      className="w-full bg-muted rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+                    >
                       <div className="w-12 h-12 rounded-full bg-muted-foreground/20 flex items-center justify-center">
                         <Edit className="w-5 h-5 text-muted-foreground" />
                       </div>
@@ -305,9 +414,12 @@ const PatrimonioDrawer = ({
                       <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </button>
 
-                    <button className="w-full bg-muted rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
-                      <div className="w-12 h-12 rounded-full bg-muted-foreground/20 flex items-center justify-center">
-                        <Trash2 className="w-5 h-5 text-muted-foreground" />
+                    <button 
+                      onClick={handleDeleteClick}
+                      className="w-full bg-muted rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                        <Trash2 className="w-5 h-5 text-red-500" />
                       </div>
                       <span className="flex-1 text-left font-medium text-foreground">
                         Excluir carteira
@@ -342,6 +454,120 @@ const PatrimonioDrawer = ({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Edit Portfolio Bottom Sheet */}
+        <AnimatePresence>
+          {editMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/30 z-50"
+              onClick={() => {
+                setEditMode(false);
+                setPreferencesOpen(false);
+              }}
+            >
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-0 left-0 right-0 bg-card rounded-t-3xl"
+              >
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-center text-foreground mb-6">
+                    Editar carteira
+                  </h3>
+
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="text-sm text-muted-foreground mb-2 block">
+                        Nome da carteira
+                      </label>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Digite o nome da carteira"
+                        className="w-full bg-muted rounded-2xl p-4 text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setEditMode(false);
+                        setPreferencesOpen(false);
+                      }}
+                      className="flex-1 bg-muted rounded-2xl p-4 font-medium text-muted-foreground active:scale-[0.98] transition-transform"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={isSaving || !editName.trim()}
+                      className="flex-1 bg-primary rounded-2xl p-4 font-medium text-primary-foreground active:scale-[0.98] transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        "Salvar"
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-4 flex justify-center">
+                  <button 
+                    onClick={() => {
+                      setEditMode(false);
+                      setPreferencesOpen(false);
+                    }}
+                    className="w-12 h-12 rounded-full bg-muted-foreground/30 flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="light-theme">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir carteira?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir a carteira "{selectedPortfolioForAction?.name}"? 
+                Esta ação não pode ser desfeita e todos os investimentos desta carteira serão removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="bg-red-500 hover:bg-red-600"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Excluindo...
+                  </>
+                ) : (
+                  "Excluir"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Loading Overlay */}
         <AnimatePresence>
