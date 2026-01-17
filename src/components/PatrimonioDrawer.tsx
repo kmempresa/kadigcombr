@@ -200,7 +200,7 @@ const PatrimonioDrawer = ({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="light-theme bg-muted max-h-[90vh]">
+      <DrawerContent className="bg-muted max-h-[90vh]">
         <DrawerHeader className="border-b border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2">
             <ChevronDown className="w-5 h-5 text-foreground" />

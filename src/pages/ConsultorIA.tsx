@@ -207,7 +207,7 @@ const ConsultorIA = () => {
   ];
 
   return (
-    <div className="light-theme min-h-screen bg-gradient-to-b from-slate-50 to-white flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Minimal Header */}
       <header className="flex items-center justify-between px-5 py-4 safe-area-inset-top">
         <button
