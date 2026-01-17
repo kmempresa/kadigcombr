@@ -29,12 +29,62 @@ interface UserProfile {
   riskTolerance: string;
 }
 
-// Monthly data for the last 3 months
+// Monthly data for the last 3 months with chart stats
 const monthlyData = [
-  { month: "NOVEMBRO 2025", value: "R$ 121.850,20", gain: "R$ 2.150,00", cdiPercent: "82%" },
-  { month: "DEZEMBRO 2025", value: "R$ 124.320,80", gain: "R$ 2.470,60", cdiPercent: "85%" },
-  { month: "JANEIRO 2026", value: "R$ 127.450,53", gain: "R$ 3.280,00", cdiPercent: "88%" },
+  { 
+    month: "NOVEMBRO 2025", 
+    value: "R$ 121.850,20", 
+    gain: "R$ 2.150,00", 
+    cdiPercent: "82%",
+    stats: { carteira: 0.38, cdi: 0.52, ipca: 0.21 }
+  },
+  { 
+    month: "DEZEMBRO 2025", 
+    value: "R$ 124.320,80", 
+    gain: "R$ 2.470,60", 
+    cdiPercent: "85%",
+    stats: { carteira: 0.45, cdi: 0.54, ipca: 0.19 }
+  },
+  { 
+    month: "JANEIRO 2026", 
+    value: "R$ 127.450,53", 
+    gain: "R$ 3.280,00", 
+    cdiPercent: "88%",
+    stats: { carteira: 0.49, cdi: 0.55, ipca: 0.17 }
+  },
 ];
+
+// Calculate chart segments based on stats
+const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: number }) => {
+  const total = stats.carteira + stats.cdi + stats.ipca;
+  const circumference = 2 * Math.PI * 85; // r = 85
+  
+  const carteiraPercent = stats.carteira / total;
+  const cdiPercent = stats.cdi / total;
+  const ipcaPercent = stats.ipca / total;
+  
+  const carteiraLength = circumference * carteiraPercent;
+  const cdiLength = circumference * cdiPercent;
+  const ipcaLength = circumference * ipcaPercent;
+  
+  // Gap between segments (in pixels)
+  const gap = 8;
+  
+  return {
+    carteira: {
+      dasharray: `${carteiraLength - gap} ${circumference}`,
+      offset: circumference * 0.25, // Start from top
+    },
+    cdi: {
+      dasharray: `${cdiLength - gap} ${circumference}`,
+      offset: circumference * 0.25 - carteiraLength,
+    },
+    ipca: {
+      dasharray: `${ipcaLength - gap} ${circumference}`,
+      offset: circumference * 0.25 - carteiraLength - cdiLength,
+    },
+  };
+};
 
 const AppDashboard = () => {
   const navigate = useNavigate();
@@ -152,63 +202,73 @@ const AppDashboard = () => {
               <div className="relative flex items-center justify-center py-8">
                 {/* Ring Chart */}
                 <div className="relative w-72 h-72">
-                  <svg viewBox="0 0 200 200" className="w-full h-full">
-                    {/* Background ring - thin gray */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="85"
-                      fill="none"
-                      stroke="hsl(var(--muted))"
-                      strokeWidth="3"
-                    />
-                    
-                    {/* Colored segments - starting from top */}
-                    {/* Dark Blue segment - 45% */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="85"
-                      fill="none"
-                      stroke="hsl(210 90% 35%)"
-                      strokeWidth="18"
-                      strokeDasharray="240.33 534.07"
-                      strokeDashoffset="133.52"
-                      strokeLinecap="round"
-                      className="-rotate-90 origin-center"
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                    />
-                    
-                    {/* Medium Blue segment - 30% */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="85"
-                      fill="none"
-                      stroke="hsl(210 80% 50%)"
-                      strokeWidth="18"
-                      strokeDasharray="160.22 534.07"
-                      strokeDashoffset="-106.81"
-                      strokeLinecap="round"
-                      className="-rotate-90 origin-center"
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                    />
-                    
-                    {/* Light Blue segment - 15% */}
-                    <circle
-                      cx="100"
-                      cy="100"
-                      r="85"
-                      fill="none"
-                      stroke="hsl(210 70% 65%)"
-                      strokeWidth="18"
-                      strokeDasharray="80.11 534.07"
-                      strokeDashoffset="-267.04"
-                      strokeLinecap="round"
-                      className="-rotate-90 origin-center"
-                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                    />
-                  </svg>
+                  {(() => {
+                    const segments = calculateChartSegments(monthlyData[currentMonthIndex].stats);
+                    return (
+                      <svg viewBox="0 0 200 200" className="w-full h-full">
+                        {/* Background ring - thin gray */}
+                        <circle
+                          cx="100"
+                          cy="100"
+                          r="85"
+                          fill="none"
+                          stroke="hsl(var(--muted))"
+                          strokeWidth="3"
+                        />
+                        
+                        {/* Carteira segment - Green */}
+                        <motion.circle
+                          cx="100"
+                          cy="100"
+                          r="85"
+                          fill="none"
+                          stroke="#10b981"
+                          strokeWidth="18"
+                          strokeDasharray={segments.carteira.dasharray}
+                          strokeDashoffset={segments.carteira.offset}
+                          strokeLinecap="round"
+                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                          initial={{ strokeDasharray: "0 534.07" }}
+                          animate={{ strokeDasharray: segments.carteira.dasharray }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                        />
+                        
+                        {/* CDI segment - Blue */}
+                        <motion.circle
+                          cx="100"
+                          cy="100"
+                          r="85"
+                          fill="none"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth="18"
+                          strokeDasharray={segments.cdi.dasharray}
+                          strokeDashoffset={segments.cdi.offset}
+                          strokeLinecap="round"
+                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                          initial={{ strokeDasharray: "0 534.07" }}
+                          animate={{ strokeDasharray: segments.cdi.dasharray }}
+                          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                        />
+                        
+                        {/* IPCA segment - Orange */}
+                        <motion.circle
+                          cx="100"
+                          cy="100"
+                          r="85"
+                          fill="none"
+                          stroke="#f97316"
+                          strokeWidth="18"
+                          strokeDasharray={segments.ipca.dasharray}
+                          strokeDashoffset={segments.ipca.offset}
+                          strokeLinecap="round"
+                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                          initial={{ strokeDasharray: "0 534.07" }}
+                          animate={{ strokeDasharray: segments.ipca.dasharray }}
+                          transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                        />
+                      </svg>
+                    );
+                  })()}
                   
                   {/* Center content - Swipeable */}
                   <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -284,19 +344,49 @@ const AppDashboard = () => {
               {/* Stats Row */}
               <div className="flex items-center justify-around py-4 border-y border-border">
                 <div className="text-center">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Carteira</span>
-                  <p className="text-lg font-bold text-emerald-500">0,49%</p>
+                  <div className="flex items-center gap-1 justify-center">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Carteira</span>
+                  </div>
+                  <motion.p 
+                    key={`carteira-${currentMonthIndex}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-lg font-bold text-emerald-500"
+                  >
+                    {monthlyData[currentMonthIndex].stats.carteira.toFixed(2).replace('.', ',')}%
+                  </motion.p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">CDI</span>
-                  <p className="text-lg font-bold text-primary">0,55%</p>
+                  <div className="flex items-center gap-1 justify-center">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">CDI</span>
+                  </div>
+                  <motion.p 
+                    key={`cdi-${currentMonthIndex}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-lg font-bold text-primary"
+                  >
+                    {monthlyData[currentMonthIndex].stats.cdi.toFixed(2).replace('.', ',')}%
+                  </motion.p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center flex flex-col items-center">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">IPCA</span>
+                  <div className="flex items-center gap-1 justify-center">
+                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">IPCA</span>
+                  </div>
                   <button className="flex items-center gap-1">
-                    <span className="text-lg font-bold text-orange-500">0,17%</span>
+                    <motion.span 
+                      key={`ipca-${currentMonthIndex}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-lg font-bold text-orange-500"
+                    >
+                      {monthlyData[currentMonthIndex].stats.ipca.toFixed(2).replace('.', ',')}%
+                    </motion.span>
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </button>
                 </div>
