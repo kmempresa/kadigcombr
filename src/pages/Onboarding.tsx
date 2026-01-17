@@ -39,21 +39,21 @@ const riskOptions = [
     label: "Conservador",
     description: "Prefiro segurança, mesmo com retornos menores",
     icon: Shield,
-    color: "from-blue-500 to-cyan-500"
+    color: "from-primary to-kadig-light"
   },
   {
     value: "moderate",
     label: "Moderado",
     description: "Busco equilíbrio entre risco e retorno",
     icon: TrendingUp,
-    color: "from-primary to-cyan-400"
+    color: "from-primary to-kadig-cyan"
   },
   {
     value: "aggressive",
     label: "Arrojado",
     description: "Aceito mais risco por retornos maiores",
     icon: Zap,
-    color: "from-orange-500 to-red-500"
+    color: "from-kadig-cyan to-accent"
   }
 ];
 
@@ -72,7 +72,6 @@ const Onboarding = () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
-      // Save profile to localStorage and navigate to app
       localStorage.setItem("kadig-user-profile", JSON.stringify(profile));
       navigate("/app");
     }
@@ -81,6 +80,8 @@ const Onboarding = () => {
   const handleBack = () => {
     if (step > 0) {
       setStep(step - 1);
+    } else {
+      navigate("/welcome");
     }
   };
 
@@ -98,27 +99,27 @@ const Onboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col fixed inset-0">
       {/* Background effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-kadig-cyan/10 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
-      <header className="relative z-10 p-6">
+      <header className="relative z-10 p-4 sm:p-6 safe-area-inset-top">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <img src={kadigLogo} alt="Kadig" className="h-10" />
-          <div className="flex gap-2">
+          <img src={kadigLogo} alt="Kadig" className="h-8 sm:h-10" />
+          <div className="flex gap-1.5 sm:gap-2">
             {Array.from({ length: totalSteps }).map((_, i) => (
               <div
                 key={i}
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                   i === step
-                    ? "w-8 bg-primary"
+                    ? "w-6 sm:w-8 bg-primary"
                     : i < step
-                    ? "w-2 bg-primary/60"
-                    : "w-2 bg-muted"
+                    ? "w-1.5 sm:w-2 bg-primary/60"
+                    : "w-1.5 sm:w-2 bg-muted"
                 }`}
               />
             ))}
@@ -127,8 +128,8 @@ const Onboarding = () => {
       </header>
 
       {/* Content */}
-      <main className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-2xl">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 relative z-10 overflow-y-auto">
+        <div className="w-full max-w-md sm:max-w-2xl">
           <AnimatePresence mode="wait">
             {/* Step 0: Name */}
             {step === 0 && (
@@ -138,21 +139,21 @@ const Onboarding = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-8"
+                className="space-y-6 sm:space-y-8"
               >
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 mx-auto bg-primary/20 rounded-full flex items-center justify-center">
-                    <User className="w-10 h-10 text-primary" />
+                <div className="text-center space-y-3 sm:space-y-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-primary/20 rounded-full flex items-center justify-center">
+                    <User className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                   </div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     Olá! Como podemos te chamar?
                   </h1>
-                  <p className="text-muted-foreground text-lg">
+                  <p className="text-muted-foreground text-base sm:text-lg px-4">
                     Queremos personalizar sua experiência ao máximo
                   </p>
                 </div>
 
-                <div className="max-w-md mx-auto">
+                <div className="max-w-sm mx-auto px-4">
                   <Input
                     type="text"
                     placeholder="Digite seu nome..."
@@ -160,7 +161,7 @@ const Onboarding = () => {
                     onChange={(e) =>
                       setProfile({ ...profile, name: e.target.value })
                     }
-                    className="text-center text-xl h-14 bg-card/50 border-primary/30 focus:border-primary"
+                    className="text-center text-lg sm:text-xl h-12 sm:h-14 bg-card/50 border-primary/30 focus:border-primary"
                     autoFocus
                   />
                 </div>
@@ -175,22 +176,21 @@ const Onboarding = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-8"
+                className="space-y-6 sm:space-y-8"
               >
-                <div className="text-center space-y-4">
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                <div className="text-center space-y-3 sm:space-y-4 px-4">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     Prazer, {profile.name}! 👋
                   </h1>
-                  <p className="text-muted-foreground text-lg">
+                  <p className="text-muted-foreground text-base sm:text-lg">
                     Qual é sua experiência com investimentos?
                   </p>
                 </div>
 
-                <div className="grid gap-4 max-w-lg mx-auto">
+                <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
                   {experienceOptions.map((option) => (
                     <motion.button
                       key={option.value}
-                      whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() =>
                         setProfile({
@@ -198,19 +198,19 @@ const Onboarding = () => {
                           experience: option.value as UserProfile["experience"]
                         })
                       }
-                      className={`p-5 rounded-xl border-2 text-left transition-all ${
+                      className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all ${
                         profile.experience === option.value
                           ? "border-primary bg-primary/10"
-                          : "border-border bg-card/50 hover:border-primary/50"
+                          : "border-border bg-card/50 active:border-primary/50"
                       }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <span className="text-3xl">{option.icon}</span>
-                        <div>
-                          <h3 className="font-semibold text-foreground text-lg">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <span className="text-2xl sm:text-3xl">{option.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-foreground text-base sm:text-lg">
                             {option.label}
                           </h3>
-                          <p className="text-muted-foreground text-sm">
+                          <p className="text-muted-foreground text-sm line-clamp-2">
                             {option.description}
                           </p>
                         </div>
@@ -229,24 +229,23 @@ const Onboarding = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
-                className="space-y-8"
+                className="space-y-6 sm:space-y-8"
               >
-                <div className="text-center space-y-4">
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                <div className="text-center space-y-3 sm:space-y-4 px-4">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                     Qual seu perfil de risco?
                   </h1>
-                  <p className="text-muted-foreground text-lg">
-                    Isso nos ajuda a personalizar as recomendações do Consultor Kadig
+                  <p className="text-muted-foreground text-base sm:text-lg">
+                    Isso nos ajuda a personalizar as recomendações
                   </p>
                 </div>
 
-                <div className="grid gap-4 max-w-lg mx-auto">
+                <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
                   {riskOptions.map((option) => {
                     const Icon = option.icon;
                     return (
                       <motion.button
                         key={option.value}
-                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() =>
                           setProfile({
@@ -254,23 +253,23 @@ const Onboarding = () => {
                             riskTolerance: option.value as UserProfile["riskTolerance"]
                           })
                         }
-                        className={`p-5 rounded-xl border-2 text-left transition-all ${
+                        className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all ${
                           profile.riskTolerance === option.value
                             ? "border-primary bg-primary/10"
-                            : "border-border bg-card/50 hover:border-primary/50"
+                            : "border-border bg-card/50 active:border-primary/50"
                         }`}
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
                           <div
-                            className={`w-12 h-12 rounded-full bg-gradient-to-br ${option.color} flex items-center justify-center`}
+                            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${option.color} flex items-center justify-center flex-shrink-0`}
                           >
-                            <Icon className="w-6 h-6 text-white" />
+                            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground text-lg">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground text-base sm:text-lg">
                               {option.label}
                             </h3>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-muted-foreground text-sm line-clamp-2">
                               {option.description}
                             </p>
                           </div>
@@ -286,22 +285,21 @@ const Onboarding = () => {
       </main>
 
       {/* Footer with navigation */}
-      <footer className="relative z-10 p-6">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
+      <footer className="relative z-10 p-4 sm:p-6 safe-area-inset-bottom">
+        <div className="max-w-2xl mx-auto flex justify-between items-center gap-4">
           <Button
             variant="ghost"
             onClick={handleBack}
-            disabled={step === 0}
-            className="text-muted-foreground"
+            className="text-muted-foreground px-3 sm:px-4"
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
+            <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" />
             Voltar
           </Button>
 
           <Button
             onClick={handleNext}
             disabled={!canProceed()}
-            className="bg-gradient-to-r from-primary to-cyan-500 hover:opacity-90 text-white px-8"
+            className="bg-gradient-to-r from-primary to-kadig-cyan hover:opacity-90 text-white px-6 sm:px-8 flex-1 max-w-[200px]"
           >
             {step === totalSteps - 1 ? "Começar" : "Continuar"}
             <ArrowRight className="w-4 h-4 ml-2" />
