@@ -73,6 +73,50 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          id: string
+          portfolio_id: string | null
+          target_date: string | null
+          target_value: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          portfolio_id?: string | null
+          target_date?: string | null
+          target_value?: number
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          id?: string
+          portfolio_id?: string | null
+          target_date?: string | null
+          target_value?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goals_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investments: {
         Row: {
           asset_name: string
