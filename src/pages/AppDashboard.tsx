@@ -31,6 +31,14 @@ import AdicionarDrawer from "@/components/AdicionarDrawer";
 import TradeTab from "@/components/TradeTab";
 import MercadoTab from "@/components/MercadoTab";
 import InvestmentEditDrawer from "@/components/InvestmentEditDrawer";
+import DistribuicaoDrawer from "@/components/analysis/DistribuicaoDrawer";
+import EvolucaoDrawer from "@/components/analysis/EvolucaoDrawer";
+import RentabilidadeDrawer from "@/components/analysis/RentabilidadeDrawer";
+import RentabilidadeRealDrawer from "@/components/analysis/RentabilidadeRealDrawer";
+import RiscoRetornoDrawer from "@/components/analysis/RiscoRetornoDrawer";
+import GanhoCapitalDrawer from "@/components/analysis/GanhoCapitalDrawer";
+import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
+import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 
 interface UserData {
   id: string;
@@ -135,6 +143,14 @@ const AppDashboard = () => {
   const [editingInvestment, setEditingInvestment] = useState<any>(null);
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [distribuicaoOpen, setDistribuicaoOpen] = useState(false);
+  const [evolucaoOpen, setEvolucaoOpen] = useState(false);
+  const [rentabilidadeOpen, setRentabilidadeOpen] = useState(false);
+  const [rentabilidadeRealOpen, setRentabilidadeRealOpen] = useState(false);
+  const [riscoRetornoOpen, setRiscoRetornoOpen] = useState(false);
+  const [ganhoCapitalOpen, setGanhoCapitalOpen] = useState(false);
+  const [comparadorOpen, setComparadorOpen] = useState(false);
+  const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
