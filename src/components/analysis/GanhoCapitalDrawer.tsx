@@ -21,21 +21,37 @@ interface GanhoCapitalDrawerProps {
   formatCurrency: (value: number) => string;
 }
 
-const typeLabels: { [key: string]: string } = {
-  acoes: 'Ações',
-  bdrs: 'BDRs',
-  conta_corrente: 'Conta Corrente',
-  criptoativos: 'Criptoativos',
-  debentures: 'Debêntures',
-  fundos: 'Fundos',
-  fiis: 'FIIs',
-  moedas: 'Moedas',
-  personalizados: 'Personalizados',
-  poupanca: 'Poupança',
-  previdencia: 'Previdência',
-  renda_fixa_pre: 'Renda Fixa Prefixada',
-  renda_fixa_pos: 'Renda Fixa Pós',
-  tesouro: 'Tesouro Direto',
+// Normalize asset types from database to display labels
+const normalizeType = (type: string): string => {
+  const normalized = type.toLowerCase().trim();
+  const typeMap: { [key: string]: string } = {
+    'ação': 'Ações',
+    'ações': 'Ações',
+    'acoes': 'Ações',
+    'ações, stocks e etf': 'Ações',
+    'bdrs': 'BDRs',
+    'conta corrente': 'Conta Corrente',
+    'conta_corrente': 'Conta Corrente',
+    'criptoativos': 'Criptoativos',
+    'debêntures': 'Debêntures',
+    'debentures': 'Debêntures',
+    'fundos': 'Fundos',
+    'fiis': 'FIIs',
+    'fiis e reits': 'FIIs',
+    'moedas': 'Moedas',
+    'personalizados': 'Personalizados',
+    'poupança': 'Poupança',
+    'poupanca': 'Poupança',
+    'previdência': 'Previdência',
+    'previdencia': 'Previdência',
+    'renda fixa pré': 'Renda Fixa Pré',
+    'renda_fixa_pre': 'Renda Fixa Pré',
+    'renda fixa pós': 'Renda Fixa Pós',
+    'renda_fixa_pos': 'Renda Fixa Pós',
+    'tesouro direto': 'Tesouro Direto',
+    'tesouro': 'Tesouro Direto',
+  };
+  return typeMap[normalized] || type;
 };
 
 export default function GanhoCapitalDrawer({
@@ -252,7 +268,7 @@ export default function GanhoCapitalDrawer({
 
                 {/* Grouped by type */}
                 {Object.entries(investmentsByType).map(([type, assets]) => {
-                  const typeLabel = typeLabels[type] || type;
+                  const typeLabel = normalizeType(type);
                   const isExpanded = expandedSections.includes(type);
                   
                   return (
