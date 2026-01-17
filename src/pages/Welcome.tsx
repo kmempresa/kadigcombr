@@ -114,13 +114,13 @@ const Welcome = () => {
           transition={{ duration: 0.6, delay: 1.1 }}
         >
           <button
-            onClick={() => navigate("/onboarding")}
+            onClick={() => navigate("/auth")}
             className="flex-1 py-3.5 sm:py-4 px-4 sm:px-6 bg-secondary/50 backdrop-blur-sm border border-border text-foreground font-semibold rounded-xl hover:bg-secondary/70 active:scale-[0.98] transition-all duration-200"
           >
             Fazer login
           </button>
           <button
-            onClick={() => navigate("/onboarding")}
+            onClick={() => navigate("/auth")}
             className="flex-1 py-3.5 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary to-kadig-cyan text-primary-foreground font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-primary/30"
           >
             Criar conta

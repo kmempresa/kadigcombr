@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Splash from "./pages/Splash";
 import Welcome from "./pages/Welcome";
+import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import AppDashboard from "./pages/AppDashboard";
 import NotFound from "./pages/NotFound";
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/splash" element={<Splash />} />
           <Route path="/welcome" element={<Welcome />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/app" element={<AppDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
