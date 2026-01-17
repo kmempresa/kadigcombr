@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import StockDetailDrawer from "@/components/StockDetailDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -48,6 +49,8 @@ const TradeTab = ({
   onAddAsset,
   onAddConnection
 }: TradeTabProps) => {
+  const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
+  const [stockDetailOpen, setStockDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -598,11 +601,15 @@ const TradeTab = ({
                         {filteredAltas.map((stock) => (
                           <div 
                             key={stock.symbol}
-                            className="bg-card border border-border rounded-xl p-4"
+                            onClick={() => {
+                              setSelectedStock(stock);
+                              setStockDetailOpen(true);
+                            }}
+                            className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
                           >
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-semibold text-foreground">{stock.symbol}</p>
-                              <button onClick={() => toggleFavorite(stock.symbol)}>
+                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
                                 <Star className={`w-4 h-4 ${
                                   favorites.includes(stock.symbol) 
                                     ? "fill-yellow-400 text-yellow-400" 
@@ -650,11 +657,15 @@ const TradeTab = ({
                         {filteredBaixas.map((stock) => (
                           <div 
                             key={stock.symbol}
-                            className="bg-card border border-border rounded-xl p-4"
+                            onClick={() => {
+                              setSelectedStock(stock);
+                              setStockDetailOpen(true);
+                            }}
+                            className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
                           >
                             <div className="flex items-center justify-between mb-1">
                               <p className="font-semibold text-foreground">{stock.symbol}</p>
-                              <button onClick={() => toggleFavorite(stock.symbol)}>
+                              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
                                 <Star className={`w-4 h-4 ${
                                   favorites.includes(stock.symbol) 
                                     ? "fill-yellow-400 text-yellow-400" 
@@ -707,11 +718,15 @@ const TradeTab = ({
                 {marketStocks.filter(s => favorites.includes(s.symbol)).map((stock) => (
                   <div 
                     key={stock.symbol}
-                    className="bg-card border border-border rounded-xl p-4"
+                    onClick={() => {
+                      setSelectedStock(stock);
+                      setStockDetailOpen(true);
+                    }}
+                    className="bg-card border border-border rounded-xl p-4 cursor-pointer active:scale-95 transition-transform"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-semibold text-foreground">{stock.symbol}</p>
-                      <button onClick={() => toggleFavorite(stock.symbol)}>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFavorite(stock.symbol); }}>
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       </button>
                     </div>
@@ -739,6 +754,16 @@ const TradeTab = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Stock Detail Drawer */}
+      <StockDetailDrawer
+        isOpen={stockDetailOpen}
+        onClose={() => setStockDetailOpen(false)}
+        stock={selectedStock}
+        showValues={showValues}
+        onToggleFavorite={toggleFavorite}
+        isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
+      />
     </div>
   );
 };
