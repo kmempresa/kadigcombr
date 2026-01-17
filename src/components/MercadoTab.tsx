@@ -80,7 +80,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [marketNews, setMarketNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
   const [newsPage, setNewsPage] = useState(1);
-  
+  const [totalNewsPages, setTotalNewsPages] = useState(89);
+  const newsPerPage = 5;
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -109,6 +110,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       
       if (data?.news) {
         setMarketNews(data.news);
+      }
+      if (data?.totalPages) {
+        setTotalNewsPages(data.totalPages);
       }
     } catch (error) {
       console.error("Error fetching market news:", error);
@@ -372,35 +376,73 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             </div>
             
             {/* Pagination */}
-            <div className="flex items-center gap-2 mb-4">
-              <button className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button 
+                onClick={() => setNewsPage(Math.max(1, newsPage - 1))}
+                disabled={newsPage === 1}
+                className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
+              >
                 <ChevronLeft className="w-5 h-5" />
               </button>
+              
+              {/* First pages */}
               {[1, 2, 3].map((page) => (
                 <button 
                   key={page}
                   onClick={() => setNewsPage(page)}
                   className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                    newsPage === page ? 'bg-[#3a4259] text-white' : 'bg-[#252b3d] text-gray-400'
+                    newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400'
                   }`}
                 >
                   {page}
                 </button>
               ))}
-              <button className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">
-                ...
-              </button>
-              <button className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 text-sm">
-                89
-              </button>
-              <button className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">
+              
+              {/* Current page indicator if not in first 3 or last 3 */}
+              {newsPage > 3 && newsPage < totalNewsPages - 2 && (
+                <>
+                  <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
+                  <button 
+                    className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center text-sm font-medium"
+                  >
+                    {newsPage}
+                  </button>
+                </>
+              )}
+              
+              {newsPage <= 3 && (
+                <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
+              )}
+              
+              {newsPage > 3 && newsPage < totalNewsPages - 2 && (
+                <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
+              )}
+              
+              {/* Last pages */}
+              {[totalNewsPages - 1, totalNewsPages].map((page) => (
+                <button 
+                  key={page}
+                  onClick={() => setNewsPage(page)}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
+                    newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button 
+                onClick={() => setNewsPage(Math.min(totalNewsPages, newsPage + 1))}
+                disabled={newsPage === totalNewsPages}
+                className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
+              >
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
             
-            {/* Timeline items */}
+            {/* Timeline items - show 5 news per page */}
             <div className="space-y-4">
-              {marketNews.slice(0, 3).map((news, index) => (
+              {marketNews.slice((newsPage - 1) * newsPerPage, newsPage * newsPerPage).map((news, index) => (
                 <a
                   key={index}
                   href={news.news_url}
@@ -411,7 +453,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   <div className="flex gap-3">
                     <div className="flex flex-col items-center">
                       <div className="w-3 h-3 rounded-full bg-gray-500" />
-                      {index < 2 && <div className="w-0.5 flex-1 bg-gray-600 mt-1" />}
+                      {index < newsPerPage - 1 && <div className="w-0.5 flex-1 bg-gray-600 mt-1" />}
                     </div>
                     <div className="flex-1 pb-4">
                       <p className="text-gray-400 text-xs mb-2">
