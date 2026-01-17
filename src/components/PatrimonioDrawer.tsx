@@ -16,6 +16,7 @@ interface Portfolio {
   cdi_percent: number;
   updated_at?: string;
   is_primary?: boolean;
+  is_selected?: boolean;
 }
 
 interface PatrimonioDrawerProps {
@@ -27,6 +28,7 @@ interface PatrimonioDrawerProps {
   totalInvestido: number;
   totalGanhos: number;
   showValues: boolean;
+  selectedPortfolioId?: string | null;
   onAddPortfolio: () => void;
   onSelectPortfolio: (id: string) => void;
 }
@@ -40,6 +42,7 @@ const PatrimonioDrawer = ({
   totalInvestido,
   totalGanhos,
   showValues,
+  selectedPortfolioId,
   onAddPortfolio,
   onSelectPortfolio,
 }: PatrimonioDrawerProps) => {
@@ -141,26 +144,36 @@ const PatrimonioDrawer = ({
                   ? (portfolio.total_gain / (portfolio.total_value - portfolio.total_gain)) * 100
                   : 0;
                 const isPrimary = index === 0 || portfolio.is_primary;
+                const isSelected = portfolio.id === selectedPortfolioId || portfolio.is_selected;
 
                 return (
                   <button
                     key={portfolio.id}
                     onClick={() => onSelectPortfolio(portfolio.id)}
-                    className="w-full bg-white rounded-2xl p-4 border border-border shadow-sm text-left active:scale-[0.98] transition-transform"
+                    className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-[0.98] transition-transform ${
+                      isSelected ? 'border-cyan-400 ring-2 ring-cyan-400/30' : 'border-border'
+                    }`}
                   >
                     {/* Header */}
                     <div className="flex items-start gap-3 mb-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        isPrimary 
+                        isSelected 
                           ? "bg-gradient-to-br from-cyan-400 to-cyan-500" 
-                          : "bg-slate-200"
+                          : isPrimary 
+                            ? "bg-gradient-to-br from-cyan-400 to-cyan-500" 
+                            : "bg-slate-200"
                       }`}>
-                        <Check className={`w-5 h-5 ${isPrimary ? "text-white" : "text-slate-400"}`} />
+                        <Check className={`w-5 h-5 ${isSelected || isPrimary ? "text-white" : "text-slate-400"}`} />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground">{portfolio.name}</span>
-                          {isPrimary && (
+                          {isSelected && (
+                            <span className="text-[10px] bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded font-medium">
+                              ATIVA
+                            </span>
+                          )}
+                          {isPrimary && !isSelected && (
                             <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium">
                               PRINCIPAL
                             </span>
@@ -170,11 +183,7 @@ const PatrimonioDrawer = ({
                           Atualizada: {formatDate(portfolio.updated_at)}
                         </span>
                       </div>
-                      {isPrimary ? (
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                      ) : (
-                        <Lock className="w-5 h-5 text-muted-foreground" />
-                      )}
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </div>
 
                     {/* Progress Bar */}

@@ -63,6 +63,7 @@ interface UserData {
     asset_name: string;
     asset_type: string;
     ticker: string | null;
+    portfolio_id: string;
     current_value: number;
     total_invested: number;
     gain_percent: number;
@@ -153,6 +154,7 @@ const AppDashboard = () => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
 
   // Fetch economic indicators (CDI, IPCA, SELIC) from BCB
   useEffect(() => {
@@ -399,6 +401,7 @@ const AppDashboard = () => {
             asset_name: inv.asset_name,
             asset_type: inv.asset_type,
             ticker: inv.ticker,
+            portfolio_id: inv.portfolio_id,
             current_value: Number(inv.current_value) || 0,
             total_invested: Number(inv.total_invested) || 0,
             gain_percent: Number(inv.gain_percent) || 0,
@@ -506,19 +509,31 @@ const AppDashboard = () => {
     return `${value.toFixed(0)}%`;
   };
 
-  // Calculate totals
-  const totalPatrimonio = userData?.portfolios.reduce((sum, p) => sum + p.total_value, 0) || 0;
-  const totalGanhos = userData?.portfolios.reduce((sum, p) => sum + p.total_gain, 0) || 0;
-  const totalInvestido = userData?.investments.reduce((sum, inv) => sum + inv.total_invested, 0) || 0;
-  const avgCdiPercent = userData?.portfolios.length 
-    ? userData.portfolios.reduce((sum, p) => sum + p.cdi_percent, 0) / userData.portfolios.length 
-    : 0;
+  // Get selected portfolio (default to first one if none selected)
+  const activePortfolioId = selectedPortfolioId || userData?.portfolios[0]?.id || null;
+  const selectedPortfolio = userData?.portfolios.find(p => p.id === activePortfolioId);
+  
+  // Filter investments by selected portfolio
+  const filteredInvestments = activePortfolioId 
+    ? userData?.investments.filter(inv => inv.portfolio_id === activePortfolioId) || []
+    : userData?.investments || [];
+
+  // Calculate totals based on selected portfolio
+  const totalPatrimonio = selectedPortfolio?.total_value || 0;
+  const totalGanhos = selectedPortfolio?.total_gain || 0;
+  const totalInvestido = filteredInvestments.reduce((sum, inv) => sum + inv.total_invested, 0);
+  const avgCdiPercent = selectedPortfolio?.cdi_percent || 0;
+  
+  // Total patrimonio across all portfolios (for percentage calculation)
+  const totalPatrimonioGeral = userData?.portfolios.reduce((sum, p) => sum + p.total_value, 0) || 0;
+  const totalGanhosGeral = userData?.portfolios.reduce((sum, p) => sum + p.total_gain, 0) || 0;
+  const totalInvestidoGeral = userData?.investments.reduce((sum, inv) => sum + inv.total_invested, 0) || 0;
   
   const userName = userData?.profile?.full_name?.split(" ")[0] || userData?.email?.split("@")[0] || "";
 
-  // Group investments by type
-  const investmentsByType: { [key: string]: typeof userData.investments } = {};
-  userData?.investments.forEach(inv => {
+  // Group investments by type (filtered)
+  const investmentsByType: { [key: string]: typeof filteredInvestments } = {};
+  filteredInvestments.forEach(inv => {
     const type = inv.asset_type || "outro";
     if (!investmentsByType[type]) investmentsByType[type] = [];
     investmentsByType[type].push(inv);
@@ -1480,18 +1495,20 @@ const AppDashboard = () => {
         portfolios={userData?.portfolios.map(p => ({
           ...p,
           updated_at: new Date().toISOString(),
+          is_selected: p.id === activePortfolioId,
         })) || []}
-        totalPatrimonio={totalPatrimonio}
-        totalInvestido={totalInvestido}
-        totalGanhos={totalGanhos}
+        totalPatrimonio={totalPatrimonioGeral}
+        totalInvestido={totalInvestidoGeral}
+        totalGanhos={totalGanhosGeral}
         showValues={showValues}
+        selectedPortfolioId={activePortfolioId}
         onAddPortfolio={() => {
           setPatrimonioDrawerOpen(false);
           navigate("/adicionar-carteira");
         }}
         onSelectPortfolio={(id) => {
+          setSelectedPortfolioId(id);
           setPatrimonioDrawerOpen(false);
-          // Could navigate to portfolio detail page
         }}
       />
 
@@ -1538,7 +1555,7 @@ const AppDashboard = () => {
       <DistribuicaoDrawer
         open={distribuicaoOpen}
         onOpenChange={setDistribuicaoOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         formatCurrency={formatCurrency}
       />
@@ -1546,7 +1563,7 @@ const AppDashboard = () => {
       <EvolucaoDrawer
         open={evolucaoOpen}
         onOpenChange={setEvolucaoOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         totalInvested={totalInvestido}
         formatCurrency={formatCurrency}
@@ -1565,7 +1582,7 @@ const AppDashboard = () => {
       <RentabilidadeRealDrawer
         open={rentabilidadeRealOpen}
         onOpenChange={setRentabilidadeRealOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         totalInvested={totalInvestido}
         formatCurrency={formatCurrency}
@@ -1575,7 +1592,7 @@ const AppDashboard = () => {
       <RiscoRetornoDrawer
         open={riscoRetornoOpen}
         onOpenChange={setRiscoRetornoOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         totalInvested={totalInvestido}
         economicIndicators={economicIndicators}
@@ -1584,7 +1601,7 @@ const AppDashboard = () => {
       <GanhoCapitalDrawer
         open={ganhoCapitalOpen}
         onOpenChange={setGanhoCapitalOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         totalInvested={totalInvestido}
         formatCurrency={formatCurrency}
@@ -1593,7 +1610,7 @@ const AppDashboard = () => {
       <ComparadorAtivosDrawer
         open={comparadorOpen}
         onOpenChange={setComparadorOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         formatCurrency={formatCurrency}
         economicIndicators={economicIndicators}
       />
@@ -1601,7 +1618,7 @@ const AppDashboard = () => {
       <CoberturaFGCDrawer
         open={coberturaFGCOpen}
         onOpenChange={setCoberturaFGCOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         totalPatrimonio={totalPatrimonio}
         formatCurrency={formatCurrency}
       />
@@ -1609,7 +1626,7 @@ const AppDashboard = () => {
       <ProventosDrawer
         open={proventosOpen}
         onOpenChange={setProventosOpen}
-        investments={userData?.investments || []}
+        investments={filteredInvestments}
         formatCurrency={formatCurrency}
       />
     </div>
