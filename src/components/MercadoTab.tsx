@@ -171,6 +171,21 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     return num.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // Placeholder images for news without images (finance themed from Unsplash)
+  const newsPlaceholders = [
+    "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=300&fit=crop", // Stock chart
+    "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=400&h=300&fit=crop", // Trading
+    "https://images.unsplash.com/photo-1642790106117-e829e14a795f?w=400&h=300&fit=crop", // Bitcoin/crypto
+    "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=400&h=300&fit=crop", // Finance graph
+    "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=400&h=300&fit=crop", // Money
+    "https://images.unsplash.com/photo-1518186285589-2f7649de83e0?w=400&h=300&fit=crop", // Data analytics
+  ];
+
+  const getNewsImage = (news: NewsItem, index: number) => {
+    if (news.image_url) return news.image_url;
+    return newsPlaceholders[index % newsPlaceholders.length];
+  };
+
   // Gauge component for performance indicators
   const GaugeChart = ({ value, colors }: { value: number; colors: string }) => {
     const rotation = (value / 100) * 180 - 90;
@@ -298,14 +313,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                     className="block mb-4"
                   >
                     <div className="relative rounded-2xl overflow-hidden h-64 bg-[#252b3d]">
-                      {marketNews[0].image_url && (
-                        <img 
-                          src={marketNews[0].image_url} 
-                          alt="" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      )}
+                      <img 
+                        src={getNewsImage(marketNews[0], 0)} 
+                        alt="" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = newsPlaceholders[0]; }}
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       <div className="absolute inset-0 p-4 flex flex-col justify-end">
                         <span className="inline-block bg-gray-600/80 text-white text-xs px-3 py-1 rounded-full mb-2 w-fit">
@@ -334,16 +347,14 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       rel="noopener noreferrer"
                       className="flex-shrink-0 w-64 bg-white rounded-xl overflow-hidden"
                     >
-                      {news.image_url && (
-                        <div className="h-32 bg-gray-200">
-                          <img 
-                            src={news.image_url} 
-                            alt="" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
+                      <div className="h-32 bg-gray-200">
+                        <img 
+                          src={getNewsImage(news, index + 1)} 
+                          alt="" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = newsPlaceholders[(index + 1) % newsPlaceholders.length]; }}
+                        />
+                      </div>
                       <div className="p-3">
                         <h3 className="text-gray-900 font-medium text-sm line-clamp-3 mb-2">
                           {news.title}
@@ -428,16 +439,14 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       <p className="text-gray-400 text-xs mb-2">
                         {new Date(news.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {new Date(news.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} • {news.source_name}
                       </p>
-                      {news.image_url && (
-                        <div className="w-48 h-32 rounded-lg overflow-hidden mb-2 bg-gray-700">
-                          <img 
-                            src={news.image_url} 
-                            alt="" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        </div>
-                      )}
+                      <div className="w-48 h-32 rounded-lg overflow-hidden mb-2 bg-gray-700">
+                        <img 
+                          src={getNewsImage(news, index)} 
+                          alt="" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = newsPlaceholders[index % newsPlaceholders.length]; }}
+                        />
+                      </div>
                       <h4 className="text-white font-medium text-sm line-clamp-2 mb-1">
                         {news.title}
                       </h4>
