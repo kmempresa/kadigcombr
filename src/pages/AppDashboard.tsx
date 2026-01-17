@@ -46,6 +46,7 @@ import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
+import { SupportDrawer } from "@/components/SupportDrawer";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -168,6 +169,7 @@ const AppDashboard = () => {
   const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
   const [movements, setMovements] = useState<any[]>([]);
   const [extratoSearch, setExtratoSearch] = useState("");
+  const [supportDrawerOpen, setSupportDrawerOpen] = useState(false);
 
   // Embla Carousel for swipeable monthly chart
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
@@ -1960,7 +1962,7 @@ const AppDashboard = () => {
             {[
               { icon: Shield, label: "Segurança", action: () => {} },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
-              { icon: MessageSquare, label: "Suporte", action: () => window.open("https://wa.me/5511999999999?text=Olá! Preciso de ajuda com o Kadig.", "_blank") },
+              { icon: MessageSquare, label: "Suporte", action: () => setSupportDrawerOpen(true) },
               { icon: Info, label: "Sobre", action: () => {} },
             ].map((item, index) => (
               <button 
@@ -2164,6 +2166,12 @@ const AppDashboard = () => {
           onGoalSaved={fetchGoals}
         />
       )}
+      
+      <SupportDrawer
+        open={supportDrawerOpen}
+        onOpenChange={setSupportDrawerOpen}
+        userEmail={userData?.email || ""}
+      />
     </div>
   );
 };
