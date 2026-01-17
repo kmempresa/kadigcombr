@@ -137,7 +137,7 @@ const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: nu
 
 const AppDashboard = () => {
   const navigate = useNavigate();
-  const { selectedPortfolioId, setSelectedPortfolioId } = usePortfolio();
+  const { selectedPortfolioId, setSelectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
@@ -342,93 +342,93 @@ const AppDashboard = () => {
   };
 
   // Fetch all user data from database
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          // Check localStorage for legacy users
-          const savedProfile = localStorage.getItem("kadig-user-profile");
-          if (!savedProfile) {
-            navigate("/welcome");
-            return;
-          }
-          // Redirect legacy users to auth
-          navigate("/auth");
+  const fetchUserData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Check localStorage for legacy users
+        const savedProfile = localStorage.getItem("kadig-user-profile");
+        if (!savedProfile) {
+          navigate("/welcome");
           return;
         }
-
-        const userId = session.user.id;
-
-        // Update investment prices in background (only on first load)
-        if (!userData) {
-          updateInvestmentPrices(userId);
-        }
-
-        // Fetch all data in parallel
-        const [profileResult, portfoliosResult, investmentsResult] = await Promise.all([
-          supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-          supabase.from("portfolios").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
-          supabase.from("investments").select("*").eq("user_id", userId).order("current_value", { ascending: false }),
-        ]);
-
-        const profile = profileResult.data;
-        const portfolios = portfoliosResult.data || [];
-        const investments = investmentsResult.data || [];
-
-        // Calculate totals from investments (more accurate)
-        let totalValue = 0;
-        let totalInvested = 0;
-
-        investments.forEach((inv: any) => {
-          totalValue += Number(inv.current_value) || 0;
-          totalInvested += Number(inv.total_invested) || 0;
-        });
-
-        const totalGain = totalValue - totalInvested;
-
-        // Generate monthly data based on real portfolio data and economic indicators
-        const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, totalInvested, economicIndicators);
-        setMonthlyData(monthlyPerformance);
-
-        setUserData({
-          id: userId,
-          email: session.user.email || "",
-          profile: profile ? {
-            full_name: profile.full_name,
-            investor_profile: profile.investor_profile,
-            risk_tolerance: profile.risk_tolerance,
-            monthly_income: profile.monthly_income,
-            investment_goal: profile.investment_goal,
-          } : null,
-          portfolios: portfolios.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            total_value: Number(p.total_value) || 0,
-            total_gain: Number(p.total_gain) || 0,
-            cdi_percent: Number(p.cdi_percent) || 0,
-          })),
-          investments: investments.map((inv: any) => ({
-            id: inv.id,
-            asset_name: inv.asset_name,
-            asset_type: inv.asset_type,
-            ticker: inv.ticker,
-            portfolio_id: inv.portfolio_id,
-            current_value: Number(inv.current_value) || 0,
-            total_invested: Number(inv.total_invested) || 0,
-            gain_percent: Number(inv.gain_percent) || 0,
-          })),
-        });
-
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        toast.error("Erro ao carregar dados");
-      } finally {
-        setLoading(false);
+        // Redirect legacy users to auth
+        navigate("/auth");
+        return;
       }
-    };
 
+      const userId = session.user.id;
+
+      // Update investment prices in background (only on first load)
+      if (!userData) {
+        updateInvestmentPrices(userId);
+      }
+
+      // Fetch all data in parallel
+      const [profileResult, portfoliosResult, investmentsResult] = await Promise.all([
+        supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+        supabase.from("portfolios").select("*").eq("user_id", userId).order("created_at", { ascending: false }),
+        supabase.from("investments").select("*").eq("user_id", userId).order("current_value", { ascending: false }),
+      ]);
+
+      const profile = profileResult.data;
+      const portfolios = portfoliosResult.data || [];
+      const investments = investmentsResult.data || [];
+
+      // Calculate totals from investments (more accurate)
+      let totalValue = 0;
+      let totalInvested = 0;
+
+      investments.forEach((inv: any) => {
+        totalValue += Number(inv.current_value) || 0;
+        totalInvested += Number(inv.total_invested) || 0;
+      });
+
+      const totalGain = totalValue - totalInvested;
+
+      // Generate monthly data based on real portfolio data and economic indicators
+      const monthlyPerformance = generateMonthlyPerformance(totalValue, totalGain, totalInvested, economicIndicators);
+      setMonthlyData(monthlyPerformance);
+
+      setUserData({
+        id: userId,
+        email: session.user.email || "",
+        profile: profile ? {
+          full_name: profile.full_name,
+          investor_profile: profile.investor_profile,
+          risk_tolerance: profile.risk_tolerance,
+          monthly_income: profile.monthly_income,
+          investment_goal: profile.investment_goal,
+        } : null,
+        portfolios: portfolios.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          total_value: Number(p.total_value) || 0,
+          total_gain: Number(p.total_gain) || 0,
+          cdi_percent: Number(p.cdi_percent) || 0,
+        })),
+        investments: investments.map((inv: any) => ({
+          id: inv.id,
+          asset_name: inv.asset_name,
+          asset_type: inv.asset_type,
+          ticker: inv.ticker,
+          portfolio_id: inv.portfolio_id,
+          current_value: Number(inv.current_value) || 0,
+          total_invested: Number(inv.total_invested) || 0,
+          gain_percent: Number(inv.gain_percent) || 0,
+        })),
+      });
+
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      toast.error("Erro ao carregar dados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUserData();
 
     // Subscribe to auth changes
@@ -1754,6 +1754,10 @@ const AppDashboard = () => {
         onSelectPortfolio={(id) => {
           setSelectedPortfolioId(id);
           setPatrimonioDrawerOpen(false);
+        }}
+        onRefreshPortfolios={async () => {
+          await refreshPortfolios();
+          await fetchUserData();
         }}
       />
 
