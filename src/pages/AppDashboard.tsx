@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -819,12 +820,16 @@ const AppDashboard = () => {
                 onClick={() => navigate("/consultor-ia")}
                 className="w-full bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/20 rounded-2xl p-4 flex items-center gap-4 hover:from-primary/20 hover:to-violet-500/20 transition-all active:scale-[0.98]"
               >
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center shadow-lg">
-                  <Sparkles className="w-7 h-7 text-white" />
+                <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg">
+                  <img 
+                    src={biancaConsultora} 
+                    alt="Bianca Consultora" 
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="flex-1 text-left">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    Consultor Kadig IA
+                    Bianca Consultora
                     <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full">NOVO</span>
                   </h3>
                   <p className="text-sm text-muted-foreground">
