@@ -153,7 +153,7 @@ const ExcluirAtivos = () => {
   return (
     <div className={`${themeClass} min-h-screen bg-background pb-24`}>
       {/* Header */}
-      <header className="flex items-center gap-4 px-4 py-4 border-b border-border">
+      <header className="flex items-center gap-4 px-4 py-4 border-b border-border safe-area-inset-top">
         <button
           onClick={() => navigate("/app")}
           className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
@@ -241,7 +241,7 @@ const ExcluirAtivos = () => {
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border"
+          className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-inset-bottom"
         >
           <div className="flex items-center justify-between mb-3">
             <div>

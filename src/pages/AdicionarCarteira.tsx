@@ -70,7 +70,7 @@ const AdicionarCarteira = () => {
   return (
     <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-center px-4 py-4 border-b border-gray-200 relative bg-white">
+      <div className="flex items-center justify-center px-4 py-4 border-b border-gray-200 relative bg-white pt-safe safe-area-inset-top">
         <button
           onClick={handleCancel}
           className="absolute left-4 w-8 h-8 flex items-center justify-center"
@@ -109,7 +109,7 @@ const AdicionarCarteira = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white pb-safe safe-area-inset-bottom">
         <div className="flex gap-3">
           <button
             onClick={handleCancel}
