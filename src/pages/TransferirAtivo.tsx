@@ -234,7 +234,7 @@ const TransferirAtivo = () => {
   return (
     <div className={`${themeClass} min-h-screen bg-background`}>
       {/* Header */}
-      <header className="flex items-center gap-4 px-4 py-4 border-b border-border">
+      <header className="flex items-center gap-4 px-4 py-4 border-b border-border safe-area-inset-top">
         <button
           onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
           className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
