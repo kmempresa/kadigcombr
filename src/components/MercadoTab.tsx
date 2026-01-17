@@ -110,9 +110,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       
       if (data?.news) {
         setMarketNews(data.news);
-      }
-      if (data?.totalPages) {
-        setTotalNewsPages(data.totalPages);
+        // Calculate pages based on actual news count
+        const pages = Math.ceil(data.news.length / newsPerPage);
+        setTotalNewsPages(pages > 0 ? pages : 1);
       }
     } catch (error) {
       console.error("Error fetching market news:", error);
@@ -375,70 +375,39 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               <h2 className="text-lg font-semibold text-white">Timeline de notícias</h2>
             </div>
             
-            {/* Pagination */}
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <button 
-                onClick={() => setNewsPage(Math.max(1, newsPage - 1))}
-                disabled={newsPage === 1}
-                className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              
-              {/* First pages */}
-              {[1, 2, 3].map((page) => (
+            {/* Pagination - only show if we have news */}
+            {marketNews.length > newsPerPage && (
+              <div className="flex items-center gap-2 mb-4 flex-wrap">
                 <button 
-                  key={page}
-                  onClick={() => setNewsPage(page)}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                    newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400'
-                  }`}
+                  onClick={() => setNewsPage(Math.max(1, newsPage - 1))}
+                  disabled={newsPage === 1}
+                  className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
                 >
-                  {page}
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
-              ))}
-              
-              {/* Current page indicator if not in first 3 or last 3 */}
-              {newsPage > 3 && newsPage < totalNewsPages - 2 && (
-                <>
-                  <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
+                
+                {/* Show all pages dynamically */}
+                {Array.from({ length: totalNewsPages }, (_, i) => i + 1).map((page) => (
                   <button 
-                    className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center text-sm font-medium"
+                    key={page}
+                    onClick={() => setNewsPage(page)}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
+                      newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400 hover:bg-[#3a4259]'
+                    }`}
                   >
-                    {newsPage}
+                    {page}
                   </button>
-                </>
-              )}
-              
-              {newsPage <= 3 && (
-                <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
-              )}
-              
-              {newsPage > 3 && newsPage < totalNewsPages - 2 && (
-                <span className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400">...</span>
-              )}
-              
-              {/* Last pages */}
-              {[totalNewsPages - 1, totalNewsPages].map((page) => (
+                ))}
+                
                 <button 
-                  key={page}
-                  onClick={() => setNewsPage(page)}
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                    newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400'
-                  }`}
+                  onClick={() => setNewsPage(Math.min(totalNewsPages, newsPage + 1))}
+                  disabled={newsPage === totalNewsPages}
+                  className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
                 >
-                  {page}
+                  <ChevronRight className="w-5 h-5" />
                 </button>
-              ))}
-              
-              <button 
-                onClick={() => setNewsPage(Math.min(totalNewsPages, newsPage + 1))}
-                disabled={newsPage === totalNewsPages}
-                className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
+              </div>
+            )}
             
             {/* Timeline items - show 5 news per page */}
             <div className="space-y-4">
