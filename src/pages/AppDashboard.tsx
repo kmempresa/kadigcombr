@@ -236,20 +236,19 @@ const AppDashboard = () => {
 
               {/* Goals Section */}
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-0">
                   <div className="w-1 h-5 bg-foreground rounded-full" />
                   <h2 className="font-semibold text-foreground">Metas da carteira</h2>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-hide">
                   {/* Goal Card 1 - Renda Passiva */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-emerald-500 rounded-full" />
                         <span className="font-medium text-foreground text-sm">Renda Passiva</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
                     <div className="flex justify-center mb-4">
@@ -262,7 +261,7 @@ const AppDashboard = () => {
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-3 bg-muted rounded-full" />
-                        <span className="text-muted-foreground">Média últ. 12 meses</span>
+                        <span className="text-muted-foreground">Média 12 meses</span>
                       </div>
                       <p className="font-semibold text-foreground pl-3">R$ -</p>
                       <div className="flex items-center gap-2">
@@ -274,13 +273,12 @@ const AppDashboard = () => {
                   </div>
 
                   {/* Goal Card 2 - Patrimônio */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-primary rounded-full" />
                         <span className="font-medium text-foreground text-sm">Patrimônio</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
                     <p className="text-xs text-muted-foreground mb-4">Definir Meta</p>
                     <div className="flex justify-center mb-4">
@@ -293,7 +291,7 @@ const AppDashboard = () => {
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-3 bg-muted rounded-full" />
-                        <span className="text-muted-foreground">Saldo Bruto Atual</span>
+                        <span className="text-muted-foreground">Saldo Atual</span>
                       </div>
                       <p className="font-semibold text-foreground pl-3">{formatCurrency(127450.53)}</p>
                       <div className="flex items-center gap-2">
@@ -305,15 +303,14 @@ const AppDashboard = () => {
                   </div>
 
                   {/* Goal Card 3 - Reserva de Emergência */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-amber-500 rounded-full" />
-                        <span className="font-medium text-foreground text-sm">Reserva Emergência</span>
+                        <span className="font-medium text-foreground text-sm">Reserva</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-4">6 meses de custos</p>
+                    <p className="text-xs text-muted-foreground mb-4">6 meses custos</p>
                     <div className="flex justify-center mb-4">
                       <div className="relative w-20 h-20">
                         <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
@@ -338,15 +335,14 @@ const AppDashboard = () => {
                   </div>
 
                   {/* Goal Card 4 - Aposentadoria */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-violet-500 rounded-full" />
                         <span className="font-medium text-foreground text-sm">Aposentadoria</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-4">Previdência + Inv.</p>
+                    <p className="text-xs text-muted-foreground mb-4">Previdência</p>
                     <div className="flex justify-center mb-4">
                       <div className="relative w-20 h-20">
                         <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
@@ -371,15 +367,14 @@ const AppDashboard = () => {
                   </div>
 
                   {/* Goal Card 5 - Aporte Mensal */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-sky-500 rounded-full" />
                         <span className="font-medium text-foreground text-sm">Aporte Mensal</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-4">Investir todo mês</p>
+                    <p className="text-xs text-muted-foreground mb-4">Investir mês</p>
                     <div className="flex justify-center mb-4">
                       <div className="relative w-20 h-20">
                         <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
@@ -404,15 +399,14 @@ const AppDashboard = () => {
                   </div>
 
                   {/* Goal Card 6 - Rentabilidade */}
-                  <div className="bg-card border border-border rounded-2xl p-4">
+                  <div className="bg-card border border-border rounded-2xl p-4 min-w-[160px] flex-shrink-0 snap-start">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-1 h-4 bg-rose-500 rounded-full" />
                         <span className="font-medium text-foreground text-sm">Rentabilidade</span>
                       </div>
-                      <button className="text-muted-foreground">•••</button>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-4">Superar o CDI</p>
+                    <p className="text-xs text-muted-foreground mb-4">Superar CDI</p>
                     <div className="flex justify-center mb-4">
                       <div className="relative w-20 h-20">
                         <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">

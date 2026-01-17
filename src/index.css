@@ -196,3 +196,13 @@
   border: 2px solid hsl(210 100% 60% / 0.5);
   animation: pulse-ring 2s ease-out infinite;
 }
+
+/* Hide scrollbar for horizontal scroll areas */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
