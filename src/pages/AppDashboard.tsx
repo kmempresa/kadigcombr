@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
@@ -46,6 +46,7 @@ import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
   id: string;
@@ -167,6 +168,28 @@ const AppDashboard = () => {
   const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
   const [movements, setMovements] = useState<any[]>([]);
   const [extratoSearch, setExtratoSearch] = useState("");
+
+  // Embla Carousel for swipeable monthly chart
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: false,
+    startIndex: 2, // Start at the most recent month
+    dragFree: false,
+  });
+  const [selectedIndex, setSelectedIndex] = useState(2);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
     setGoalType(type);
@@ -722,93 +745,100 @@ const AppDashboard = () => {
           {/* Resumo Content */}
           {carteiraTab === "resumo" && (
             <div className="p-4 space-y-6">
-              {/* Chart Section */}
-              <div className="relative flex items-center justify-center py-8">
-                <div className="relative w-72 h-72">
-                  {(() => {
-                    const segments = calculateChartSegments(currentData.stats);
-                    return (
-                      <svg viewBox="0 0 200 200" className="w-full h-full">
-                        <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
-                        
-                        <motion.circle
-                          cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
-                          strokeDasharray={segments.carteira.dasharray}
-                          strokeDashoffset={segments.carteira.offset}
-                          strokeLinecap="round"
-                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                          animate={{ strokeDasharray: segments.carteira.dasharray }}
-                          transition={{ duration: 0.6 }}
-                        />
-                        
-                        <motion.circle
-                          cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
-                          strokeDasharray={segments.cdi.dasharray}
-                          strokeDashoffset={segments.cdi.offset}
-                          strokeLinecap="round"
-                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                          animate={{ strokeDasharray: segments.cdi.dasharray }}
-                          transition={{ duration: 0.6, delay: 0.1 }}
-                        />
-                        
-                        <motion.circle
-                          cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
-                          strokeDasharray={segments.ipca.dasharray}
-                          strokeDashoffset={segments.ipca.offset}
-                          strokeLinecap="round"
-                          style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                          animate={{ strokeDasharray: segments.ipca.dasharray }}
-                          transition={{ duration: 0.6, delay: 0.2 }}
-                        />
-                      </svg>
-                    );
-                  })()}
-                  
-                  {/* Center content */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <motion.div
-                      key={currentMonthIndex}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex flex-col items-center text-center px-4"
-                    >
-                      <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
-                        {currentData.month}
-                      </span>
-                      <span className="text-2xl font-bold text-foreground">
-                        {formatCurrency(currentData.value)}
-                      </span>
-                      <span className="text-xs text-muted-foreground mt-1">
-                        CARTEIRA <span className="text-primary font-semibold">{formatPercent(currentData.cdiPercent)}</span> DO CDI
-                      </span>
-                      <div className="mt-3">
-                        <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>
-                        <div className="mt-1">
-                          <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                            currentData.gain >= 0 
-                              ? "text-success bg-success/10 border border-success/20" 
-                              : "text-destructive bg-destructive/10 border border-destructive/20"
-                          }`}>
-                            {currentData.gain >= 0 ? "+" : ""}{formatCurrency(currentData.gain)}
-                          </span>
+              {/* Swipeable Chart Section */}
+              <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex">
+                  {monthlyData.map((data, index) => (
+                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                      <div className="relative flex items-center justify-center py-8">
+                        <div className="relative w-72 h-72">
+                          {(() => {
+                            const segments = calculateChartSegments(data.stats);
+                            return (
+                              <svg viewBox="0 0 200 200" className="w-full h-full">
+                                <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                                
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
+                                  strokeDasharray={segments.carteira.dasharray}
+                                  strokeDashoffset={segments.carteira.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{ strokeDasharray: segments.carteira.dasharray }}
+                                  transition={{ duration: 0.6 }}
+                                />
+                                
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
+                                  strokeDasharray={segments.cdi.dasharray}
+                                  strokeDashoffset={segments.cdi.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{ strokeDasharray: segments.cdi.dasharray }}
+                                  transition={{ duration: 0.6, delay: 0.1 }}
+                                />
+                                
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
+                                  strokeDasharray={segments.ipca.dasharray}
+                                  strokeDashoffset={segments.ipca.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{ strokeDasharray: segments.ipca.dasharray }}
+                                  transition={{ duration: 0.6, delay: 0.2 }}
+                                />
+                              </svg>
+                            );
+                          })()}
+                          
+                          {/* Center content */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="flex flex-col items-center text-center px-4"
+                            >
+                              <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
+                                {data.month}
+                              </span>
+                              <span className="text-2xl font-bold text-foreground">
+                                {formatCurrency(data.value)}
+                              </span>
+                              <span className="text-xs text-muted-foreground mt-1">
+                                CARTEIRA <span className="text-primary font-semibold">{formatPercent(data.cdiPercent)}</span> DO CDI
+                              </span>
+                              <div className="mt-3">
+                                <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>
+                                <div className="mt-1">
+                                  <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                                    data.gain >= 0 
+                                      ? "text-success bg-success/10 border border-success/20" 
+                                      : "text-destructive bg-destructive/10 border border-destructive/20"
+                                  }`}>
+                                    {data.gain >= 0 ? "+" : ""}{formatCurrency(data.gain)}
+                                  </span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
 
-                <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-sm">
-                  <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                </button>
+                        <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-sm">
+                          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Pagination dots */}
               <div className="flex justify-center gap-2">
                 {monthlyData.map((_, index) => (
-                  <button key={index} onClick={() => setCurrentMonthIndex(index)} className="p-1">
+                  <button key={index} onClick={() => emblaApi?.scrollTo(index)} className="p-1">
                     <motion.div
-                      className={`w-2 h-2 rounded-full ${currentMonthIndex === index ? "bg-primary" : "bg-muted-foreground/30"}`}
-                      animate={{ scale: currentMonthIndex === index ? 1.2 : 1 }}
+                      className={`w-2 h-2 rounded-full ${selectedIndex === index ? "bg-primary" : "bg-muted-foreground/30"}`}
+                      animate={{ scale: selectedIndex === index ? 1.2 : 1 }}
                     />
                   </button>
                 ))}
