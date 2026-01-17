@@ -15,7 +15,7 @@ export const Header = () => {
             whileHover={{ scale: 1.05 }}
             className="flex items-center gap-3"
           >
-            <img src={kadigLogo} alt="Kadig" className="h-7 invert brightness-200" />
+            <img src={kadigLogo} alt="Kadig" className="h-7" />
           </motion.div>
 
           <nav className="hidden md:flex items-center gap-1">
