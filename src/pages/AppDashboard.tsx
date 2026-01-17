@@ -855,9 +855,15 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-success" />
                     <span className="text-xs text-muted-foreground uppercase">Carteira</span>
                   </div>
-                  <p className="text-lg font-bold text-success">
-                    {showValues ? `${currentData.stats.carteira.toFixed(2)}%` : "••%"}
-                  </p>
+                  <motion.p 
+                    key={`carteira-${selectedIndex}`}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-lg font-bold text-success"
+                  >
+                    {showValues ? `${monthlyData[selectedIndex]?.stats.carteira.toFixed(2)}%` : "••%"}
+                  </motion.p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
@@ -865,9 +871,15 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-primary" />
                     <span className="text-xs text-muted-foreground uppercase">CDI</span>
                   </div>
-                  <p className="text-lg font-bold text-primary">
-                    {showValues ? `${currentData.stats.cdi.toFixed(2)}%` : "••%"}
-                  </p>
+                  <motion.p 
+                    key={`cdi-${selectedIndex}`}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.05 }}
+                    className="text-lg font-bold text-primary"
+                  >
+                    {showValues ? `${monthlyData[selectedIndex]?.stats.cdi.toFixed(2)}%` : "••%"}
+                  </motion.p>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
@@ -875,9 +887,15 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-warning" />
                     <span className="text-xs text-muted-foreground uppercase">IPCA</span>
                   </div>
-                  <p className="text-lg font-bold text-warning">
-                    {showValues ? `${currentData.stats.ipca.toFixed(2)}%` : "••%"}
-                  </p>
+                  <motion.p 
+                    key={`ipca-${selectedIndex}`}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="text-lg font-bold text-warning"
+                  >
+                    {showValues ? `${monthlyData[selectedIndex]?.stats.ipca.toFixed(2)}%` : "••%"}
+                  </motion.p>
                 </div>
               </div>
 
