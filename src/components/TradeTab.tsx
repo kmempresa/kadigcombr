@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
+import { usePortfolio } from "@/contexts/PortfolioContext";
 
 interface StockQuote {
   symbol: string;
@@ -49,6 +50,7 @@ const TradeTab = ({
   onAddAsset,
   onAddConnection
 }: TradeTabProps) => {
+  const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
   const [stockDetailOpen, setStockDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
@@ -386,14 +388,94 @@ const TradeTab = ({
               </button>
             </div>
 
-            <div className="px-4">
-              <div className="flex flex-col items-center justify-center py-12">
-                <TrendingUp className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">Patrimônio</h3>
-                <p className="text-sm text-muted-foreground text-center">
-                  Visualize a evolução do seu patrimônio ao longo do tempo
-                </p>
+            {/* Real-time indicator */}
+            <div className="px-4 pb-4">
+              <div className="flex flex-col items-center gap-1 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-orange-400" />
+                  <span className="text-sm text-muted-foreground">
+                    Atualização <span className="text-foreground font-medium">em tempo real</span>
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Última atualização: {lastUpdate}
+                </span>
               </div>
+            </div>
+
+            {/* Section Title */}
+            <div className="px-4 pb-3">
+              <div className="bg-muted/30 rounded-lg py-2 px-4">
+                <span className="text-sm text-muted-foreground font-medium">Meu patrimônio na bolsa</span>
+              </div>
+            </div>
+
+            {/* Portfolio Cards */}
+            <div className="px-4 space-y-3">
+              {portfolios.length > 0 ? (
+                portfolios.map((portfolio, index) => {
+                  const isSelected = portfolio.id === selectedPortfolioId;
+                  const isPrimary = index === 0;
+                  const dailyVariation = portfolio.total_value > 0 
+                    ? ((portfolio.total_gain / portfolio.total_value) * 100) 
+                    : 0;
+
+                  return (
+                    <button
+                      key={portfolio.id}
+                      onClick={() => setSelectedPortfolioId(portfolio.id)}
+                      className={`w-full bg-card border rounded-2xl p-4 text-left transition-all ${
+                        isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-border'
+                      }`}
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-2">
+                          <div className="w-1 h-8 bg-muted-foreground rounded-full mt-0.5" />
+                          <div>
+                            <h3 className="font-semibold text-foreground">Patrimônio {userName}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              Atualização: <span className="text-foreground">Em tempo real</span>
+                            </p>
+                          </div>
+                        </div>
+                        {isPrimary && (
+                          <span className="text-[10px] bg-muted text-muted-foreground px-2 py-1 rounded font-medium border border-border">
+                            PRINCIPAL
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Stats */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Saldo bruto atual:</span>
+                          <span className="font-semibold text-foreground">
+                            {showValues ? formatPrice(portfolio.total_value) : "R$ ••••••"}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Variação do dia:</span>
+                          <span className={`font-semibold ${dailyVariation >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                            {showValues 
+                              ? `${dailyVariation >= 0 ? "+" : ""}${dailyVariation.toFixed(2)}%`
+                              : "••••%"
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="bg-card border border-dashed border-border rounded-2xl p-6 text-center">
+                  <TrendingUp className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma carteira</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Adicione uma carteira para visualizar seu patrimônio
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
