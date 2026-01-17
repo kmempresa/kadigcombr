@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, HelpCircle, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -43,8 +42,6 @@ export default function CoberturaFGCDrawer({
   totalPatrimonio,
   formatCurrency
 }: CoberturaFGCDrawerProps) {
-  const { theme } = useTheme();
-  const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'emissor'>('carteira');
 
   // Filter investments covered by FGC
@@ -104,7 +101,7 @@ export default function CoberturaFGCDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
+      <DrawerContent className="h-[95vh] bg-background light-theme">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">

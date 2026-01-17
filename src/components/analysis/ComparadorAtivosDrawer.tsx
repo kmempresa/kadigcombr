@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, Check, Search, ChevronLeft, ChevronRight, Hand } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -33,8 +32,6 @@ export default function ComparadorAtivosDrawer({
   formatCurrency,
   economicIndicators
 }: ComparadorAtivosDrawerProps) {
-  const { theme } = useTheme();
-  const themeClass = theme === "light" ? "light-theme" : "";
   const [currentStep, setCurrentStep] = useState<Step>('main');
   const [selectedIndices, setSelectedIndices] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
@@ -428,7 +425,7 @@ export default function ComparadorAtivosDrawer({
 
   return (
     <Drawer open={open} onOpenChange={(o) => !o && resetAndClose()}>
-      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
+      <DrawerContent className="h-[95vh] bg-background light-theme">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-center px-4 py-3 border-b border-border">

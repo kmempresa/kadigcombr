@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, HelpCircle, ChevronDown, Search, List } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
-import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -63,8 +62,6 @@ export default function GanhoCapitalDrawer({
   totalInvested,
   formatCurrency
 }: GanhoCapitalDrawerProps) {
-  const { theme } = useTheme();
-  const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativo'>('carteira');
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
 
@@ -124,7 +121,7 @@ export default function GanhoCapitalDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
+      <DrawerContent className="h-[95vh] bg-background light-theme">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">

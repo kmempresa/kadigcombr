@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, HelpCircle, ChevronLeft, ChevronRight, AlertCircle, Hand } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -30,8 +29,6 @@ export default function ProventosDrawer({
   investments,
   formatCurrency
 }: ProventosDrawerProps) {
-  const { theme } = useTheme();
-  const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'agenda' | 'extrato' | 'historico' | 'ativos'>('agenda');
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(0); // January = 0
@@ -104,7 +101,7 @@ export default function ProventosDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
+      <DrawerContent className="h-[95vh] bg-background light-theme">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">

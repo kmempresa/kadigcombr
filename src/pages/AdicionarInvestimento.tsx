@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
-import { useTheme } from "@/hooks/useTheme";
 
 // Tipos de ativos disponíveis com fluxos específicos
 // Fluxos:
@@ -255,7 +254,6 @@ const instituicoesFinanceiras = [
 
 const AdicionarInvestimento = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const { selectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState(1);
   
@@ -723,10 +721,8 @@ const AdicionarInvestimento = () => {
   };
 
 
-  const themeClass = theme === "light" ? "light-theme" : "";
-
   return (
-    <div className={`${themeClass} min-h-screen bg-background flex flex-col fixed inset-0`}>
+    <div className="light-theme min-h-screen bg-background flex flex-col fixed inset-0">
       {/* Header */}
       <header className="p-4 border-b border-border safe-area-inset-top">
         <div className="flex items-center justify-center relative">

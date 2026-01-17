@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // Lucide icons
 import { 
@@ -721,20 +721,7 @@ const AppDashboard = () => {
 
           {/* Resumo Content */}
           {carteiraTab === "resumo" && (
-            <motion.div 
-              className="p-4 space-y-6"
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.2}
-              onDragEnd={(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-                const threshold = 50;
-                if (info.offset.x < -threshold && currentMonthIndex < monthlyData.length - 1) {
-                  setCurrentMonthIndex(prev => prev + 1);
-                } else if (info.offset.x > threshold && currentMonthIndex > 0) {
-                  setCurrentMonthIndex(prev => prev - 1);
-                }
-              }}
-            >
+            <div className="p-4 space-y-6">
               {/* Chart Section */}
               <div className="relative flex items-center justify-center py-8">
                 <div className="relative w-72 h-72">
@@ -1073,7 +1060,7 @@ const AppDashboard = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Ativos Tab */}
@@ -1820,12 +1807,28 @@ const AppDashboard = () => {
             </div>
           </header>
 
+          <div className="p-4">
+            <div className="bg-gradient-to-br from-violet-400 to-violet-500 rounded-2xl p-5 text-white">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg mb-1">Assine Kadig Premium</h3>
+                  <p className="text-white/80 text-sm mb-4">
+                    Análises avançadas e recomendações exclusivas
+                  </p>
+                  <button className="bg-white text-violet-600 font-semibold px-4 py-2 rounded-full text-sm">
+                    R$ 29,90/mês
+                  </button>
+                </div>
+                <Sparkles className="w-8 h-8 text-white/80" />
+              </div>
+            </div>
+          </div>
 
           <div className="px-4">
             {[
-              { icon: Shield, label: "Segurança", action: () => navigate("/seguranca") },
+              { icon: Shield, label: "Segurança", action: () => {} },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
-              { icon: MessageSquare, label: "Suporte", action: () => navigate("/suporte") },
+              { icon: MessageSquare, label: "Suporte", action: () => {} },
               { icon: Info, label: "Sobre", action: () => {} },
             ].map((item, index) => (
               <button 

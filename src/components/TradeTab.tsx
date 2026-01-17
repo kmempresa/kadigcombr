@@ -61,10 +61,7 @@ const TradeTab = ({
   const [maioresAltas, setMaioresAltas] = useState<StockQuote[]>([]);
   const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem("kadig-trade-favorites");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [favorites, setFavorites] = useState<string[]>([]);
   const [marketSubTab, setMarketSubTab] = useState<"dados" | "carteiras">("dados");
   const [indicesExpanded, setIndicesExpanded] = useState(true);
   const [altasExpanded, setAltasExpanded] = useState(true);
@@ -115,13 +112,11 @@ const TradeTab = ({
   }, [activeTab]);
 
   const toggleFavorite = (symbol: string) => {
-    setFavorites(prev => {
-      const newFavorites = prev.includes(symbol) 
+    setFavorites(prev => 
+      prev.includes(symbol) 
         ? prev.filter(s => s !== symbol)
-        : [...prev, symbol];
-      localStorage.setItem("kadig-trade-favorites", JSON.stringify(newFavorites));
-      return newFavorites;
-    });
+        : [...prev, symbol]
+    );
   };
 
   const formatPrice = (price: number) => {
