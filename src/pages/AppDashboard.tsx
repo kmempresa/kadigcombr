@@ -29,30 +29,51 @@ interface UserProfile {
   riskTolerance: string;
 }
 
-// Monthly data for the last 3 months with chart stats
-const monthlyData = [
-  { 
-    month: "NOVEMBRO 2025", 
-    value: "R$ 121.850,20", 
-    gain: "R$ 2.150,00", 
-    cdiPercent: "82%",
-    stats: { carteira: 0.38, cdi: 0.52, ipca: 0.21 }
-  },
-  { 
-    month: "DEZEMBRO 2025", 
-    value: "R$ 124.320,80", 
-    gain: "R$ 2.470,60", 
-    cdiPercent: "85%",
-    stats: { carteira: 0.45, cdi: 0.54, ipca: 0.19 }
-  },
-  { 
-    month: "JANEIRO 2026", 
-    value: "R$ 127.450,53", 
-    gain: "R$ 3.280,00", 
-    cdiPercent: "88%",
-    stats: { carteira: 0.49, cdi: 0.55, ipca: 0.17 }
-  },
-];
+// Get current date in Brazil timezone (America/Sao_Paulo)
+const getBrazilDate = () => {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+};
+
+// Get month name in Portuguese
+const getMonthName = (monthIndex: number) => {
+  const months = [
+    "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
+    "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
+  ];
+  return months[monthIndex];
+};
+
+// Generate monthly data for the last 3 months based on current Brazil date
+const generateMonthlyData = () => {
+  const brazilDate = getBrazilDate();
+  const currentMonth = brazilDate.getMonth();
+  const currentYear = brazilDate.getFullYear();
+  
+  // Sample data for demonstration - in production this would come from a database
+  const sampleData = [
+    { value: "R$ 121.850,20", gain: "R$ 2.150,00", cdiPercent: "82%", stats: { carteira: 0.38, cdi: 0.52, ipca: 0.21 } },
+    { value: "R$ 124.320,80", gain: "R$ 2.470,60", cdiPercent: "85%", stats: { carteira: 0.45, cdi: 0.54, ipca: 0.19 } },
+    { value: "R$ 127.450,53", gain: "R$ 3.280,00", cdiPercent: "88%", stats: { carteira: 0.49, cdi: 0.55, ipca: 0.17 } },
+  ];
+  
+  return Array.from({ length: 3 }, (_, i) => {
+    const monthOffset = 2 - i; // 2 months ago, 1 month ago, current month
+    let month = currentMonth - monthOffset;
+    let year = currentYear;
+    
+    if (month < 0) {
+      month += 12;
+      year -= 1;
+    }
+    
+    return {
+      month: `${getMonthName(month)} ${year}`,
+      ...sampleData[i]
+    };
+  });
+};
+
+const monthlyData = generateMonthlyData();
 
 // Calculate chart segments based on stats
 const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: number }) => {
