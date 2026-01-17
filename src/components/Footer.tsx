@@ -38,7 +38,7 @@ export const Footer = () => {
       {/* Footer content */}
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 py-8 border-t border-border">
-          <img src={kadigLogo} alt="Kadig" className="h-6 invert brightness-200 opacity-60" />
+          <img src={kadigLogo} alt="Kadig" className="h-6 opacity-60" />
 
           <div className="flex gap-8">
             {["Privacidade", "Termos", "Contato"].map((item) => (
