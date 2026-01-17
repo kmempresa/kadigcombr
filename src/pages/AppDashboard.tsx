@@ -208,16 +208,38 @@ const AppDashboard = () => {
     const lowerIndex = Math.floor(scrollProgress);
     const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
     const t = scrollProgress - lowerIndex;
-    
+
     const lowerStats = monthlyData[lowerIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
     const upperStats = monthlyData[upperIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
-    
+
     return {
       carteira: lowerStats.carteira + (upperStats.carteira - lowerStats.carteira) * t,
       cdi: lowerStats.cdi + (upperStats.cdi - lowerStats.cdi) * t,
       ipca: lowerStats.ipca + (upperStats.ipca - lowerStats.ipca) * t,
     };
   }, [scrollProgress, monthlyData]);
+
+  const interpolatedCenter = useMemo(() => {
+    const lowerIndex = Math.floor(scrollProgress);
+    const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
+    const t = scrollProgress - lowerIndex;
+
+    const lower = monthlyData[lowerIndex] || monthlyData[0];
+    const upper = monthlyData[upperIndex] || lower;
+
+    const month = t < 0.5 ? lower?.month : upper?.month;
+
+    return {
+      month: month || "---",
+      value: (lower?.value ?? 0) + ((upper?.value ?? 0) - (lower?.value ?? 0)) * t,
+      gain: (lower?.gain ?? 0) + ((upper?.gain ?? 0) - (lower?.gain ?? 0)) * t,
+      cdiPercent: (lower?.cdiPercent ?? 0) + ((upper?.cdiPercent ?? 0) - (lower?.cdiPercent ?? 0)) * t,
+    };
+  }, [scrollProgress, monthlyData]);
+
+  const interpolatedSegments = useMemo(() => {
+    return calculateChartSegments(interpolatedStats);
+  }, [interpolatedStats]);
 
   const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
     setGoalType(type);
@@ -780,74 +802,80 @@ const AppDashboard = () => {
                     <div key={index} className="flex-[0_0_100%] min-w-0">
                       <div className="relative flex items-center justify-center py-8">
                         <div className="relative w-72 h-72">
-                          {(() => {
-                            const segments = calculateChartSegments(data.stats);
-                            return (
-                              <svg viewBox="0 0 200 200" className="w-full h-full">
-                                <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
-                                
-                                <motion.circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
-                                  strokeDasharray={segments.carteira.dasharray}
-                                  strokeDashoffset={segments.carteira.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{ strokeDasharray: segments.carteira.dasharray }}
-                                  transition={{ duration: 0.6 }}
-                                />
-                                
-                                <motion.circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
-                                  strokeDasharray={segments.cdi.dasharray}
-                                  strokeDashoffset={segments.cdi.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{ strokeDasharray: segments.cdi.dasharray }}
-                                  transition={{ duration: 0.6, delay: 0.1 }}
-                                />
-                                
-                                <motion.circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
-                                  strokeDasharray={segments.ipca.dasharray}
-                                  strokeDashoffset={segments.ipca.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{ strokeDasharray: segments.ipca.dasharray }}
-                                  transition={{ duration: 0.6, delay: 0.2 }}
-                                />
-                              </svg>
-                            );
-                          })()}
-                          
+                          {
+                            (() => {
+                              return (
+                                <svg viewBox="0 0 200 200" className="w-full h-full">
+                                  <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+
+                                  <motion.circle
+                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
+                                    strokeDasharray={interpolatedSegments.carteira.dasharray}
+                                    strokeDashoffset={interpolatedSegments.carteira.offset}
+                                    strokeLinecap="round"
+                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    animate={{
+                                      strokeDasharray: interpolatedSegments.carteira.dasharray,
+                                      strokeDashoffset: interpolatedSegments.carteira.offset,
+                                    }}
+                                    transition={{ type: 'tween', duration: 0.08 }}
+                                  />
+
+                                  <motion.circle
+                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
+                                    strokeDasharray={interpolatedSegments.cdi.dasharray}
+                                    strokeDashoffset={interpolatedSegments.cdi.offset}
+                                    strokeLinecap="round"
+                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    animate={{
+                                      strokeDasharray: interpolatedSegments.cdi.dasharray,
+                                      strokeDashoffset: interpolatedSegments.cdi.offset,
+                                    }}
+                                    transition={{ type: 'tween', duration: 0.08 }}
+                                  />
+
+                                  <motion.circle
+                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
+                                    strokeDasharray={interpolatedSegments.ipca.dasharray}
+                                    strokeDashoffset={interpolatedSegments.ipca.offset}
+                                    strokeLinecap="round"
+                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    animate={{
+                                      strokeDasharray: interpolatedSegments.ipca.dasharray,
+                                      strokeDashoffset: interpolatedSegments.ipca.offset,
+                                    }}
+                                    transition={{ type: 'tween', duration: 0.08 }}
+                                  />
+                                </svg>
+                              );
+                            })()
+                          }
+
                           {/* Center content */}
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <motion.div
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="flex flex-col items-center text-center px-4"
-                            >
+                            <div className="flex flex-col items-center text-center px-4">
                               <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
-                                {data.month}
+                                {interpolatedCenter.month}
                               </span>
-                              <span className="text-2xl font-bold text-foreground">
-                                {formatCurrency(data.value)}
+                              <span className="text-2xl font-bold text-foreground tabular-nums">
+                                {formatCurrency(interpolatedCenter.value)}
                               </span>
                               <span className="text-xs text-muted-foreground mt-1">
-                                CARTEIRA <span className="text-primary font-semibold">{formatPercent(data.cdiPercent)}</span> DO CDI
+                                CARTEIRA <span className="text-primary font-semibold">{formatPercent(interpolatedCenter.cdiPercent)}</span> DO CDI
                               </span>
                               <div className="mt-3">
                                 <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>
                                 <div className="mt-1">
                                   <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                                    data.gain >= 0 
-                                      ? "text-success bg-success/10 border border-success/20" 
+                                    interpolatedCenter.gain >= 0
+                                      ? "text-success bg-success/10 border border-success/20"
                                       : "text-destructive bg-destructive/10 border border-destructive/20"
                                   }`}>
-                                    {data.gain >= 0 ? "+" : ""}{formatCurrency(data.gain)}
+                                    {interpolatedCenter.gain >= 0 ? "+" : ""}{formatCurrency(interpolatedCenter.gain)}
                                   </span>
                                 </div>
                               </div>
-                            </motion.div>
+                            </div>
                           </div>
                         </div>
 
