@@ -1816,7 +1816,7 @@ const AppDashboard = () => {
                     Análises avançadas e recomendações exclusivas
                   </p>
                   <button className="bg-white text-violet-600 font-semibold px-4 py-2 rounded-full text-sm">
-                    R$ 29,90/mês
+                    Assinatura Única Grátis
                   </button>
                 </div>
                 <Sparkles className="w-8 h-8 text-white/80" />
