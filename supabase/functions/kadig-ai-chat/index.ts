@@ -11,41 +11,14 @@ interface Message {
   content: string;
 }
 
-interface UserProfile {
-  full_name: string | null;
-  investor_profile: string | null;
-  monthly_income: number | null;
-  investment_goal: string | null;
-  risk_tolerance: string | null;
-}
-
-interface Portfolio {
-  name: string;
-  total_value: number;
-  total_gain: number;
-  cdi_percent: number;
-}
-
-interface Investment {
-  asset_name: string;
-  asset_type: string;
-  ticker: string | null;
-  quantity: number;
-  total_invested: number;
-  current_value: number;
-  gain_percent: number;
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, conversationId } = await req.json();
+    const { messages } = await req.json();
     
-    // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -54,12 +27,10 @@ serve(async (req) => {
       });
     }
 
-    // Create Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from token
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     
@@ -71,114 +42,298 @@ serve(async (req) => {
       });
     }
 
-    console.log("User authenticated:", user.id);
+    console.log("User authenticated:", user.id, user.email);
 
-    // Fetch user profile
+    // ========== FETCH ALL USER DATA ==========
+
+    // 1. User auth data (from Supabase Auth)
+    const authData = {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at,
+      email_confirmed: user.email_confirmed_at ? true : false,
+      phone_confirmed: user.phone_confirmed_at ? true : false,
+    };
+
+    // 2. User profile (all fields)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name, investor_profile, monthly_income, investment_goal, risk_tolerance")
+      .select("*")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    // Fetch user portfolios
+    // 3. All portfolios with all details
     const { data: portfolios } = await supabase
       .from("portfolios")
-      .select("name, total_value, total_gain, cdi_percent")
-      .eq("user_id", user.id);
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
-    // Fetch user investments
+    // 4. All investments with all details
     const { data: investments } = await supabase
       .from("investments")
-      .select("asset_name, asset_type, ticker, quantity, total_invested, current_value, gain_percent")
-      .eq("user_id", user.id);
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
-    // Build context about the user
+    // 5. Recent chat history (last 50 messages for context)
+    const { data: recentConversations } = await supabase
+      .from("chat_conversations")
+      .select("id, title, created_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
+    let chatHistory: any[] = [];
+    if (recentConversations && recentConversations.length > 0) {
+      const conversationIds = recentConversations.map(c => c.id);
+      const { data: recentMessages } = await supabase
+        .from("chat_messages")
+        .select("role, content, created_at, conversation_id")
+        .in("conversation_id", conversationIds)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      chatHistory = recentMessages || [];
+    }
+
+    // ========== BUILD COMPREHENSIVE CONTEXT ==========
+
+    const now = new Date();
+    const brazilTime = now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
     let userContext = `
-## Informações do Usuário
+# 📊 DADOS COMPLETOS DO USUÁRIO
+
+**Data/Hora atual (Brasília):** ${brazilTime}
+
+---
+
+## 🔐 Dados da Conta
+
+- **ID do Usuário:** ${authData.id}
+- **Email:** ${authData.email || "Não informado"}
+- **Telefone:** ${authData.phone || "Não informado"}
+- **Conta criada em:** ${authData.created_at ? new Date(authData.created_at).toLocaleDateString("pt-BR") : "N/A"}
+- **Último login:** ${authData.last_sign_in_at ? new Date(authData.last_sign_in_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "N/A"}
+- **Email verificado:** ${authData.email_confirmed ? "Sim" : "Não"}
+- **Telefone verificado:** ${authData.phone_confirmed ? "Sim" : "Não"}
+
+---
+
+## 👤 Perfil do Investidor
 
 `;
-    
+
     if (profile) {
-      userContext += `- **Nome**: ${profile.full_name || "Não informado"}
-- **Perfil de Investidor**: ${profile.investor_profile || "Não definido"}
-- **Renda Mensal**: ${profile.monthly_income ? `R$ ${profile.monthly_income.toLocaleString("pt-BR")}` : "Não informada"}
-- **Objetivo de Investimento**: ${profile.investment_goal || "Não definido"}
-- **Tolerância ao Risco**: ${profile.risk_tolerance || "Não definida"}
+      userContext += `- **Nome completo:** ${profile.full_name || "Não informado"}
+- **Email de contato:** ${profile.email || authData.email || "Não informado"}
+- **Telefone:** ${profile.phone || authData.phone || "Não informado"}
+- **Data de nascimento:** ${profile.birth_date ? new Date(profile.birth_date).toLocaleDateString("pt-BR") : "Não informada"}
+- **Perfil de investidor:** ${profile.investor_profile || "Não definido"} (conservador/moderado/arrojado)
+- **Renda mensal:** ${profile.monthly_income ? `R$ ${Number(profile.monthly_income).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "Não informada"}
+- **Objetivo de investimento:** ${profile.investment_goal || "Não definido"}
+- **Tolerância ao risco:** ${profile.risk_tolerance || "Não definida"} (baixo/médio/alto)
+- **Perfil criado em:** ${profile.created_at ? new Date(profile.created_at).toLocaleDateString("pt-BR") : "N/A"}
+- **Última atualização:** ${profile.updated_at ? new Date(profile.updated_at).toLocaleDateString("pt-BR") : "N/A"}
 `;
     } else {
-      userContext += "O usuário ainda não preencheu seu perfil de investidor.\n";
+      userContext += `⚠️ **O usuário ainda NÃO preencheu seu perfil de investidor.**
+Incentive-o a completar o perfil para recomendações mais personalizadas.
+`;
     }
+
+    // Portfolios
+    userContext += `
+---
+
+## 💼 Carteiras de Investimento
+
+`;
 
     if (portfolios && portfolios.length > 0) {
-      userContext += `\n## Carteiras do Usuário\n`;
-      portfolios.forEach((p: Portfolio, index: number) => {
+      let totalPatrimonio = 0;
+      let totalGanhos = 0;
+
+      portfolios.forEach((p: any, index: number) => {
+        const valor = Number(p.total_value) || 0;
+        const ganho = Number(p.total_gain) || 0;
+        totalPatrimonio += valor;
+        totalGanhos += ganho;
+
         userContext += `
-### ${p.name}
-- Valor Total: R$ ${p.total_value?.toLocaleString("pt-BR") || "0"}
-- Ganho Total: R$ ${p.total_gain?.toLocaleString("pt-BR") || "0"}
-- Rendimento vs CDI: ${p.cdi_percent || 0}%
+### Carteira ${index + 1}: ${p.name}
+- **ID:** ${p.id}
+- **Valor total:** R$ ${valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Ganho total:** R$ ${ganho.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${ganho >= 0 ? "+" : ""}${valor > 0 ? ((ganho / (valor - ganho)) * 100).toFixed(2) : 0}%)
+- **Rendimento vs CDI:** ${p.cdi_percent || 0}%
+- **Criada em:** ${p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "N/A"}
+- **Atualizada em:** ${p.updated_at ? new Date(p.updated_at).toLocaleDateString("pt-BR") : "N/A"}
 `;
       });
+
+      userContext += `
+### 📈 Resumo do Patrimônio
+- **Patrimônio total:** R$ ${totalPatrimonio.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Ganhos totais:** R$ ${totalGanhos.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Número de carteiras:** ${portfolios.length}
+`;
     } else {
-      userContext += "\nO usuário ainda não tem carteiras cadastradas.\n";
+      userContext += `⚠️ **O usuário ainda NÃO possui carteiras cadastradas.**
+Ajude-o a criar sua primeira carteira de investimentos.
+`;
     }
 
-    if (investments && investments.length > 0) {
-      userContext += `\n## Investimentos Atuais\n`;
-      
-      // Group by type
-      const byType: { [key: string]: Investment[] } = {};
-      investments.forEach((inv: Investment) => {
-        const type = inv.asset_type || "outro";
-        if (!byType[type]) byType[type] = [];
-        byType[type].push(inv);
-      });
+    // Investments
+    userContext += `
+---
 
+## 📊 Investimentos Detalhados
+
+`;
+
+    if (investments && investments.length > 0) {
+      // Group by type
       const typeLabels: { [key: string]: string } = {
         acao: "Ações",
-        fii: "Fundos Imobiliários",
+        fii: "Fundos Imobiliários (FIIs)",
         renda_fixa: "Renda Fixa",
         tesouro: "Tesouro Direto",
         cdb: "CDB",
         lci: "LCI",
         lca: "LCA",
         crypto: "Criptomoedas",
+        etf: "ETFs",
+        fundo: "Fundos de Investimento",
         outro: "Outros",
       };
 
+      const byType: { [key: string]: any[] } = {};
+      let totalInvestido = 0;
+      let valorAtual = 0;
+
+      investments.forEach((inv: any) => {
+        const type = inv.asset_type || "outro";
+        if (!byType[type]) byType[type] = [];
+        byType[type].push(inv);
+        totalInvestido += Number(inv.total_invested) || 0;
+        valorAtual += Number(inv.current_value) || 0;
+      });
+
+      userContext += `### Resumo Geral
+- **Total investido:** R$ ${totalInvestido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Valor atual:** R$ ${valorAtual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Rentabilidade total:** ${totalInvestido > 0 ? (((valorAtual - totalInvestido) / totalInvestido) * 100).toFixed(2) : 0}%
+- **Lucro/Prejuízo:** R$ ${(valorAtual - totalInvestido).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+- **Número de ativos:** ${investments.length}
+
+`;
+
+      // Allocation by type
+      userContext += `### Alocação por Tipo de Ativo
+`;
       Object.entries(byType).forEach(([type, invs]) => {
-        userContext += `\n### ${typeLabels[type] || type}\n`;
-        (invs as Investment[]).forEach((inv) => {
-          userContext += `- **${inv.asset_name}** ${inv.ticker ? `(${inv.ticker})` : ""}: R$ ${inv.current_value?.toLocaleString("pt-BR") || "0"} (${inv.gain_percent > 0 ? "+" : ""}${inv.gain_percent?.toFixed(2) || 0}%)\n`;
+        const typeValue = invs.reduce((sum: number, inv: any) => sum + (Number(inv.current_value) || 0), 0);
+        const percentage = valorAtual > 0 ? ((typeValue / valorAtual) * 100).toFixed(1) : 0;
+        userContext += `- **${typeLabels[type] || type}:** R$ ${typeValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} (${percentage}%)\n`;
+      });
+
+      // Detailed list
+      Object.entries(byType).forEach(([type, invs]) => {
+        userContext += `
+### ${typeLabels[type] || type} (${invs.length} ativos)
+
+| Ativo | Ticker | Qtd | Preço Médio | Preço Atual | Investido | Valor Atual | Rent. |
+|-------|--------|-----|-------------|-------------|-----------|-------------|-------|
+`;
+        (invs as any[]).forEach((inv) => {
+          const invested = Number(inv.total_invested) || 0;
+          const current = Number(inv.current_value) || 0;
+          const rent = invested > 0 ? (((current - invested) / invested) * 100).toFixed(2) : "0.00";
+          userContext += `| ${inv.asset_name} | ${inv.ticker || "-"} | ${Number(inv.quantity).toLocaleString("pt-BR")} | R$ ${Number(inv.purchase_price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${Number(inv.current_price).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${invested.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | R$ ${current.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} | ${rent}% |
+`;
         });
       });
+
+      // Upcoming maturities
+      const withMaturity = investments.filter((inv: any) => inv.maturity_date);
+      if (withMaturity.length > 0) {
+        userContext += `
+### 📅 Vencimentos Próximos
+`;
+        withMaturity
+          .sort((a: any, b: any) => new Date(a.maturity_date).getTime() - new Date(b.maturity_date).getTime())
+          .slice(0, 10)
+          .forEach((inv: any) => {
+            const maturityDate = new Date(inv.maturity_date);
+            const daysUntil = Math.ceil((maturityDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            userContext += `- **${inv.asset_name}:** Vence em ${maturityDate.toLocaleDateString("pt-BR")} (${daysUntil > 0 ? `faltam ${daysUntil} dias` : "VENCIDO"})\n`;
+          });
+      }
+
     } else {
-      userContext += "\nO usuário ainda não tem investimentos cadastrados.\n";
+      userContext += `⚠️ **O usuário ainda NÃO possui investimentos cadastrados.**
+Ajude-o a começar a investir com base no seu perfil.
+`;
     }
 
-    // Build system prompt
-    const systemPrompt = `Você é o Kadig AI, um consultor financeiro pessoal inteligente e amigável. 
+    // Chat history
+    userContext += `
+---
 
-Seu papel é:
-1. Conhecer profundamente o usuário e suas finanças
-2. Analisar a carteira de investimentos e dar recomendações personalizadas
-3. Responder dúvidas sobre investimentos de forma clara e didática
-4. Sugerir estratégias baseadas no perfil de risco do usuário
-5. Alertar sobre oportunidades e riscos no mercado
+## 💬 Histórico de Conversas Recentes
 
-**IMPORTANTE**: 
-- Sempre seja empático e use linguagem acessível
-- Base suas respostas nos dados reais do usuário quando disponíveis
-- Se o usuário não tiver dados cadastrados, incentive-o a preencher seu perfil
-- Use emojis com moderação para tornar a conversa mais amigável
-- Mantenha respostas concisas mas informativas
-- Quando mencionar valores, use o formato brasileiro (R$)
+`;
+
+    if (chatHistory && chatHistory.length > 0) {
+      userContext += `O usuário já conversou ${chatHistory.length} vezes recentemente. Últimas interações:
+
+`;
+      // Show last 10 messages as context
+      chatHistory.slice(0, 10).reverse().forEach((msg: any) => {
+        const time = new Date(msg.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+        userContext += `**[${time}] ${msg.role === "user" ? "Usuário" : "Kadig AI"}:** ${msg.content.substring(0, 200)}${msg.content.length > 200 ? "..." : ""}\n\n`;
+      });
+    } else {
+      userContext += `Esta é a primeira conversa do usuário com o Kadig AI.
+`;
+    }
+
+    // ========== SYSTEM PROMPT ==========
+
+    const systemPrompt = `Você é o **Kadig AI**, o consultor financeiro pessoal mais inteligente e completo do Brasil. 
+
+# Sua Identidade
+- Você é um especialista em investimentos com profundo conhecimento do mercado brasileiro
+- Você conhece TODOS os dados do usuário e usa isso para dar recomendações PERSONALIZADAS
+- Você é amigável, didático e fala de forma clara e acessível
+- Você usa emojis com moderação para tornar a conversa agradável
+
+# Suas Capacidades
+1. **Análise de Carteira** - Você analisa a alocação, diversificação, riscos e oportunidades
+2. **Recomendações Personalizadas** - Baseadas no perfil de risco e objetivos do usuário
+3. **Educação Financeira** - Explica conceitos de investimento de forma simples
+4. **Alertas** - Identifica problemas como falta de diversificação, vencimentos próximos, etc
+5. **Planejamento** - Ajuda a definir metas e estratégias de investimento
+
+# Regras Importantes
+- SEMPRE use os dados reais do usuário quando disponíveis
+- Se dados estiverem faltando, incentive o usuário a completar o cadastro
+- Nunca invente dados ou valores que não estão no contexto
+- Mantenha respostas concisas mas completas
+- Use formato brasileiro para valores (R$) e datas (DD/MM/AAAA)
+- Cite números específicos da carteira do usuário quando relevante
+
+# Conhecimento Atual do Usuário
 
 ${userContext}
 
-Lembre-se: você tem acesso aos dados acima do usuário. Use-os para personalizar suas respostas!`;
+---
 
-    console.log("System prompt built, calling AI...");
+**IMPORTANTE:** Você tem acesso COMPLETO a todos os dados acima. Use-os ativamente nas suas respostas para mostrar que você realmente conhece o usuário e seus investimentos!`;
+
+    console.log("System prompt built with full user data");
 
     // Call Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -227,9 +382,8 @@ Lembre-se: você tem acesso aos dados acima do usuário. Use-os para personaliza
       });
     }
 
-    console.log("AI response received, streaming...");
+    console.log("AI response streaming...");
 
-    // Stream the response
     return new Response(response.body, {
       headers: { 
         ...corsHeaders, 
