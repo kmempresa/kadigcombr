@@ -64,9 +64,9 @@ const Auth = () => {
           transition={{ duration: 0.5 }}
           className="pt-8 sm:pt-12"
         >
-          {/* Kadig icon for light mode */}
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-            <img src={kadigLogo} alt="Kadig" className="h-8 sm:h-10 brightness-0 invert" />
+          {/* Kadig logo */}
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-kadig-navy to-background flex items-center justify-center shadow-lg">
+            <img src={kadigLogo} alt="Kadig" className="h-8 sm:h-10" />
           </div>
         </motion.header>
 

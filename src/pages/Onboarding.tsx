@@ -109,8 +109,8 @@ const Onboarding = () => {
       {/* Header */}
       <header className="relative z-10 p-4 sm:p-6 safe-area-inset-top">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-            <img src={kadigLogo} alt="Kadig" className="h-5 sm:h-6 brightness-0 invert" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-md">
+            <img src={kadigLogo} alt="Kadig" className="h-5 sm:h-6" />
           </div>
           <div className="flex gap-1.5 sm:gap-2">
             {Array.from({ length: totalSteps }).map((_, i) => (

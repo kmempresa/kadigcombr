@@ -127,9 +127,9 @@ const AppDashboard = () => {
       {/* Sidebar - Desktop */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex flex-col h-full p-4 safe-area-inset-top safe-area-inset-left">
-          <div className="flex items-center justify-between mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-              <img src={kadigLogo} alt="Kadig" className="h-5 brightness-0 invert" />
+        <div className="flex items-center justify-between mb-8">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-md">
+              <img src={kadigLogo} alt="Kadig" className="h-5" />
             </div>
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
               <X className="w-5 h-5" />
@@ -180,8 +180,8 @@ const AppDashboard = () => {
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-5 h-5" />
           </Button>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-            <img src={kadigLogo} alt="Kadig" className="h-4 brightness-0 invert" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-md">
+            <img src={kadigLogo} alt="Kadig" className="h-4" />
           </div>
           <div className="w-10" />
         </header>
