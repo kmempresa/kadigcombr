@@ -5,9 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/hooks/useTheme";
 
 const AdicionarCarteira = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [portfolioName, setPortfolioName] = useState("");
   const [isPrimary, setIsPrimary] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,24 +69,26 @@ const AdicionarCarteira = () => {
     navigate("/app");
   };
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   return (
-    <div className="min-h-screen bg-[#f8f9fa] flex flex-col">
+    <div className={`${themeClass} min-h-screen bg-background flex flex-col`}>
       {/* Header */}
-      <div className="flex items-center justify-center px-4 py-4 border-b border-gray-200 relative bg-white">
+      <div className="flex items-center justify-center px-4 py-4 border-b border-border relative bg-card">
         <button
           onClick={handleCancel}
           className="absolute left-4 w-8 h-8 flex items-center justify-center"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-500" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
-        <h1 className="text-lg font-semibold text-gray-900">Adicionar carteira</h1>
+        <h1 className="text-lg font-semibold text-foreground">Adicionar carteira</h1>
       </div>
 
       {/* Form Content */}
       <div className="flex-1 p-4 space-y-4">
         {/* Portfolio Name */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-200">
-          <label className="text-sm text-gray-500 mb-2 block">
+        <div className="bg-card rounded-2xl p-4 border border-border">
+          <label className="text-sm text-muted-foreground mb-2 block">
             Nome da carteira:
           </label>
           <Input
@@ -92,13 +96,13 @@ const AdicionarCarteira = () => {
             value={portfolioName}
             onChange={(e) => setPortfolioName(e.target.value)}
             placeholder="Ex: Investimentos, Reserva, etc."
-            className="bg-transparent border-none text-gray-900 placeholder:text-gray-400 p-0 h-auto text-base focus-visible:ring-0"
+            className="bg-transparent border-none text-foreground placeholder:text-muted-foreground p-0 h-auto text-base focus-visible:ring-0"
           />
         </div>
 
         {/* Primary Portfolio Toggle */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 flex items-center justify-between">
-          <span className="text-gray-900">
+        <div className="bg-card rounded-2xl p-4 border border-border flex items-center justify-between">
+          <span className="text-foreground">
             Esta será a sua carteira principal?
           </span>
           <Switch
@@ -109,26 +113,26 @@ const AdicionarCarteira = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-border bg-card">
         <div className="flex gap-3">
           <button
             onClick={handleCancel}
-            className="flex-1 py-4 rounded-2xl bg-gray-100 flex items-center justify-center gap-2 text-gray-900 font-medium"
+            className="flex-1 py-4 rounded-2xl bg-muted flex items-center justify-center gap-2 text-foreground font-medium"
           >
-            <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
-              <X className="w-4 h-4 text-gray-600" />
+            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+              <X className="w-4 h-4 text-muted-foreground" />
             </div>
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading || !portfolioName.trim()}
-            className="flex-1 py-4 rounded-2xl bg-gray-100 flex items-center justify-center gap-2 text-gray-900 font-medium disabled:opacity-50"
+            className="flex-1 py-4 rounded-2xl bg-muted flex items-center justify-center gap-2 text-foreground font-medium disabled:opacity-50"
           >
-            <div className="w-8 h-8 rounded-full bg-cyan-400 flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+              <Check className="w-4 h-4 text-primary-foreground" />
             </div>
-            {loading ? "Criando..." : "Confirmar"}
+            {loading ? "Salvando..." : "Confirmar"}
           </button>
         </div>
       </div>
