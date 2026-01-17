@@ -294,6 +294,9 @@ const AdicionarInvestimento = () => {
   const [cotacao, setCotacao] = useState("");
   const [cryptoSearchTerm, setCryptoSearchTerm] = useState("");
   const [moedaSearchTerm, setMoedaSearchTerm] = useState("");
+  const [loadingCotacao, setLoadingCotacao] = useState(false);
+  const [cryptoPrices, setCryptoPrices] = useState<{ [key: string]: { price: number; change24h: number } }>({});
+  const [currencyPrices, setCurrencyPrices] = useState<{ [key: string]: { price: number; change24h: number } }>({});
   
   // For "personalizado" flow
   const [customAssetName, setCustomAssetName] = useState("");
@@ -342,6 +345,64 @@ const AdicionarInvestimento = () => {
     };
     checkAuth();
   }, [navigate]);
+
+  // Fetch crypto prices when entering crypto flow
+  useEffect(() => {
+    const fetchCryptoPrices = async () => {
+      if (currentFlow === "cripto" && step >= 3 && Object.keys(cryptoPrices).length === 0) {
+        setLoadingCotacao(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('market-data', {
+            body: { type: 'crypto-prices' }
+          });
+          if (!error && data?.prices) {
+            setCryptoPrices(data.prices);
+            console.log('Crypto prices loaded:', data.prices);
+          }
+        } catch (error) {
+          console.error('Error fetching crypto prices:', error);
+        }
+        setLoadingCotacao(false);
+      }
+    };
+    fetchCryptoPrices();
+  }, [currentFlow, step]);
+
+  // Fetch currency prices when entering currency flow
+  useEffect(() => {
+    const fetchCurrencyPrices = async () => {
+      if (currentFlow === "moeda" && step >= 3 && Object.keys(currencyPrices).length === 0) {
+        setLoadingCotacao(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('market-data', {
+            body: { type: 'currency-prices' }
+          });
+          if (!error && data?.prices) {
+            setCurrencyPrices(data.prices);
+            console.log('Currency prices loaded:', data.prices);
+          }
+        } catch (error) {
+          console.error('Error fetching currency prices:', error);
+        }
+        setLoadingCotacao(false);
+      }
+    };
+    fetchCurrencyPrices();
+  }, [currentFlow, step]);
+
+  // Auto-fill cotacao when selecting crypto
+  useEffect(() => {
+    if (selectedCripto && cryptoPrices[selectedCripto]) {
+      setCotacao(cryptoPrices[selectedCripto].price.toFixed(2));
+    }
+  }, [selectedCripto, cryptoPrices]);
+
+  // Auto-fill cotacao when selecting currency
+  useEffect(() => {
+    if (selectedMoeda && currencyPrices[selectedMoeda]) {
+      setCotacao(currencyPrices[selectedMoeda].price.toFixed(4));
+    }
+  }, [selectedMoeda, currencyPrices]);
 
   // Search for assets when typing
   const searchAssets = async (term: string) => {
@@ -522,23 +583,27 @@ const AdicionarInvestimento = () => {
             qty = 1;
             price = totalInvested;
           } else if (currentFlow === "cripto") {
-            // Criptoativos
+            // Criptoativos - usar cotação atual em tempo real
             qty = parseFloat(quantity) || 0;
             price = parseFloat(cotacao) || 0;
             totalInvested = qty * price;
-            currentValue = totalInvested;
-            gainValue = 0;
-            gainPercent = 0;
+            // Usar preço atual da API para calcular valor atual
+            const currentApiPrice = cryptoPrices[selectedCripto]?.price || price;
+            currentValue = qty * currentApiPrice;
+            gainValue = currentValue - totalInvested;
+            gainPercent = totalInvested > 0 ? (gainValue / totalInvested) * 100 : 0;
             assetName = selectedCripto;
             ticker = selectedCripto.split(' ')[0].toUpperCase();
           } else if (currentFlow === "moeda") {
-            // Moedas
+            // Moedas - usar cotação atual em tempo real
             qty = parseFloat(quantity) || 0;
             price = parseFloat(cotacao) || 0;
             totalInvested = qty * price;
-            currentValue = totalInvested;
-            gainValue = 0;
-            gainPercent = 0;
+            // Usar preço atual da API para calcular valor atual
+            const currentApiPrice = currencyPrices[selectedMoeda]?.price || price;
+            currentValue = qty * currentApiPrice;
+            gainValue = currentValue - totalInvested;
+            gainPercent = totalInvested > 0 ? (gainValue / totalInvested) * 100 : 0;
             assetName = selectedMoeda;
             ticker = selectedMoeda.match(/\(([^)]+)\)/)?.[1] || selectedMoeda.split(' ')[0];
           } else if (currentFlow === "personalizado") {
@@ -566,6 +631,16 @@ const AdicionarInvestimento = () => {
             ticker = selectedAsset.symbol;
           }
           
+          // Get current price for crypto/currency
+          let currentPriceToSave = price;
+          if (currentFlow === "cripto" && cryptoPrices[selectedCripto]) {
+            currentPriceToSave = cryptoPrices[selectedCripto].price;
+          } else if (currentFlow === "moeda" && currencyPrices[selectedMoeda]) {
+            currentPriceToSave = currencyPrices[selectedMoeda].price;
+          } else if (currentFlow === "ativo" && assetDetails?.regularMarketPrice) {
+            currentPriceToSave = assetDetails.regularMarketPrice;
+          }
+          
           // Insert investment
           const { error: investmentError } = await supabase.from('investments').insert({
             user_id: userId,
@@ -575,7 +650,7 @@ const AdicionarInvestimento = () => {
             ticker: ticker,
             quantity: qty,
             purchase_price: price,
-            current_price: price,
+            current_price: currentPriceToSave,
             total_invested: totalInvested,
             current_value: currentValue,
             gain_percent: gainPercent,
@@ -1015,6 +1090,13 @@ const AdicionarInvestimento = () => {
               Escolha o criptoativo
             </h2>
 
+            {loadingCotacao && (
+              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Carregando cotações em tempo real...
+              </div>
+            )}
+
             {/* Search Input */}
             <div className="relative">
               <Input
@@ -1029,31 +1111,47 @@ const AdicionarInvestimento = () => {
 
             {/* Crypto List */}
             <div className="space-y-2">
-              {filteredCriptos.map((crypto) => (
-                <motion.button
-                  key={crypto}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedCripto(crypto)}
-                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
-                    selectedCripto === crypto
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
-                  }`}
-                >
-                  <span className="font-medium text-foreground text-sm">{crypto}</span>
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              {filteredCriptos.map((crypto) => {
+                const priceData = cryptoPrices[crypto];
+                return (
+                  <motion.button
+                    key={crypto}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedCripto(crypto)}
+                    className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
                       selectedCripto === crypto
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30"
+                        ? "border-primary bg-primary/5"
+                        : "border-border"
                     }`}
                   >
-                    {selectedCripto === crypto && (
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                    )}
-                  </div>
-                </motion.button>
-              ))}
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground text-sm">{crypto}</span>
+                      {priceData && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {formatCurrency(priceData.price)}
+                          </span>
+                          <span className={`text-xs flex items-center ${priceData.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {priceData.change24h >= 0 ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+                            {priceData.change24h.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        selectedCripto === crypto
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {selectedCripto === crypto && (
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
 
               {filteredCriptos.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1103,14 +1201,21 @@ const AdicionarInvestimento = () => {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
-                <span className="text-foreground text-sm">Cotação (R$):</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground text-sm">Cotação atual (R$):</span>
+                  {cryptoPrices[selectedCripto] && (
+                    <span className="text-xs text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
+                      Tempo real
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
                   value={cotacao}
                   onChange={(e) => setCotacao(e.target.value)}
                   placeholder="R$ 0,00"
                   step="0.01"
-                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                  className="bg-transparent text-right text-foreground text-sm border-none outline-none w-32 font-medium"
                 />
               </div>
 
@@ -1147,6 +1252,13 @@ const AdicionarInvestimento = () => {
               Escolha a moeda
             </h2>
 
+            {loadingCotacao && (
+              <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Carregando cotações em tempo real...
+              </div>
+            )}
+
             {/* Search Input */}
             <div className="relative">
               <Input
@@ -1161,31 +1273,47 @@ const AdicionarInvestimento = () => {
 
             {/* Moeda List */}
             <div className="space-y-2">
-              {filteredMoedas.map((moeda) => (
-                <motion.button
-                  key={moeda}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setSelectedMoeda(moeda)}
-                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
-                    selectedMoeda === moeda
-                      ? "border-primary bg-primary/5"
-                      : "border-border"
-                  }`}
-                >
-                  <span className="font-medium text-foreground text-sm">{moeda}</span>
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              {filteredMoedas.map((moeda) => {
+                const priceData = currencyPrices[moeda];
+                return (
+                  <motion.button
+                    key={moeda}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedMoeda(moeda)}
+                    className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
                       selectedMoeda === moeda
-                        ? "border-primary bg-primary"
-                        : "border-muted-foreground/30"
+                        ? "border-primary bg-primary/5"
+                        : "border-border"
                     }`}
                   >
-                    {selectedMoeda === moeda && (
-                      <div className="w-2 h-2 bg-white rounded-full" />
-                    )}
-                  </div>
-                </motion.button>
-              ))}
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground text-sm">{moeda}</span>
+                      {priceData && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {formatCurrency(priceData.price)}
+                          </span>
+                          <span className={`text-xs flex items-center ${priceData.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {priceData.change24h >= 0 ? <TrendingUp className="w-3 h-3 mr-0.5" /> : <TrendingDown className="w-3 h-3 mr-0.5" />}
+                            {priceData.change24h.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        selectedMoeda === moeda
+                          ? "border-primary bg-primary"
+                          : "border-muted-foreground/30"
+                      }`}
+                    >
+                      {selectedMoeda === moeda && (
+                        <div className="w-2 h-2 bg-white rounded-full" />
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
 
               {filteredMoedas.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1235,14 +1363,21 @@ const AdicionarInvestimento = () => {
               </div>
 
               <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
-                <span className="text-foreground text-sm">Cotação (R$):</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-foreground text-sm">Cotação atual (R$):</span>
+                  {currencyPrices[selectedMoeda] && (
+                    <span className="text-xs text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
+                      Tempo real
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
                   value={cotacao}
                   onChange={(e) => setCotacao(e.target.value)}
                   placeholder="R$ 0,00"
-                  step="0.01"
-                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                  step="0.0001"
+                  className="bg-transparent text-right text-foreground text-sm border-none outline-none w-32 font-medium"
                 />
               </div>
 
