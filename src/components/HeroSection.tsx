@@ -1,169 +1,144 @@
 import { motion } from "framer-motion";
-import { AnimatedCounter } from "./AnimatedCounter";
-import { TrendingUp, Shield, BarChart3 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Activity } from "lucide-react";
 
 export const HeroSection = () => {
+  const [value, setValue] = useState(2847650);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setValue((prev) => prev + Math.floor((Math.random() - 0.45) * 150));
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <section className="min-h-screen pt-24 pb-16 bg-gradient-hero relative overflow-hidden">
-      {/* Subtle grid background */}
-      <div className="absolute inset-0 opacity-30">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, hsl(var(--kadig-slate) / 0.15) 1px, transparent 0)`,
-            backgroundSize: "40px 40px",
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mb-6"
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-kadig-success-light text-kadig-success text-sm font-medium">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kadig-success opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-kadig-success"></span>
-              </span>
-              Patrimônio atualizado em tempo real
-            </span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground tracking-tight mb-6"
-          >
-            Gestão patrimonial
-            <br />
-            <span className="text-kadig-navy">inteligente</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto"
-          >
-            Centralize, monitore e otimize todo seu patrimônio em uma única
-            plataforma com visibilidade total e insights em tempo real.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center mb-20"
-          >
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-kadig-navy-light shadow-lg hover:shadow-glow transition-all px-8"
+    <section className="min-h-screen relative flex items-center">
+      <div className="container mx-auto px-6 pt-32 pb-20">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left - Content */}
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              Começar Agora
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-border hover:bg-secondary transition-all"
-            >
-              Ver Demo
-            </Button>
-          </motion.div>
+              {/* Live indicator */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 glass rounded-full mb-8">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kadig-cyan opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-kadig-cyan"></span>
+                </span>
+                <span className="text-xs text-kadig-cyan font-medium tracking-wide">
+                  SINCRONIZANDO EM TEMPO REAL
+                </span>
+              </div>
 
-          {/* Live Stats */}
+              <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-6">
+                <span className="text-foreground">Seu</span>
+                <br />
+                <span className="text-primary glow-text">Patrimônio</span>
+                <br />
+                <span className="text-foreground">Sob Controle</span>
+              </h1>
+
+              <p className="text-lg text-muted-foreground max-w-md mb-10 leading-relaxed">
+                Visualize, analise e proteja todos os seus ativos em uma 
+                experiência única e inteligente.
+              </p>
+
+              <div className="flex flex-wrap gap-4">
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="group px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium flex items-center gap-2 glow-blue"
+                >
+                  Começar Agora
+                  <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="px-8 py-4 glass rounded-2xl font-medium text-foreground hover:bg-secondary/50 transition-colors"
+                >
+                  Ver Demo
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right - Interactive Display */}
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.3 }}
+            className="relative"
           >
-            <StatCard
-              icon={<TrendingUp className="w-5 h-5" />}
-              label="Patrimônio Total"
-              value={2847650}
-              prefix="R$ "
-              trend="+12.4%"
-              delay={0.6}
-            />
-            <StatCard
-              icon={<BarChart3 className="w-5 h-5" />}
-              label="Ativos Monitorados"
-              value={156}
-              trend="+8"
-              delay={0.7}
-            />
-            <StatCard
-              icon={<Shield className="w-5 h-5" />}
-              label="Rentabilidade Anual"
-              value={18.7}
-              suffix="%"
-              trend="+2.3%"
-              delay={0.8}
-              isPercentage
-            />
+            {/* Main value display */}
+            <div className="relative">
+              {/* Glow behind */}
+              <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
+
+              <div className="relative glass-strong rounded-3xl p-8 glow-blue">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-kadig-cyan pulse-ring relative" />
+                    <span className="text-sm text-muted-foreground">Patrimônio Total</span>
+                  </div>
+                  <Activity className="w-5 h-5 text-primary animate-pulse" />
+                </div>
+
+                <motion.div
+                  key={value}
+                  initial={{ opacity: 0.7, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-5xl md:text-6xl font-bold text-foreground tracking-tight mb-2"
+                >
+                  R$ {value.toLocaleString("pt-BR")}
+                </motion.div>
+
+                <div className="flex items-center gap-2 text-kadig-cyan">
+                  <ArrowUpRight className="w-4 h-4" />
+                  <span className="text-sm font-medium">+12.4% este mês</span>
+                </div>
+
+                {/* Mini chart visualization */}
+                <div className="mt-8 flex items-end gap-1 h-16">
+                  {[40, 55, 45, 60, 50, 70, 65, 80, 75, 85, 78, 90].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{ delay: 0.5 + i * 0.05, duration: 0.5 }}
+                      className="flex-1 rounded-full bg-gradient-to-t from-primary/30 to-primary"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Floating stat cards */}
+              <motion.div
+                animate={{ y: [-5, 5, -5] }}
+                transition={{ duration: 4, repeat: Infinity }}
+                className="absolute -top-4 -right-4 glass rounded-2xl p-4"
+              >
+                <p className="text-xs text-muted-foreground mb-1">Investimentos</p>
+                <p className="text-lg font-bold text-foreground">R$ 1.8M</p>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [5, -5, 5] }}
+                transition={{ duration: 5, repeat: Infinity }}
+                className="absolute -bottom-4 -left-4 glass rounded-2xl p-4"
+              >
+                <p className="text-xs text-muted-foreground mb-1">Ativos</p>
+                <p className="text-lg font-bold text-kadig-cyan">156</p>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>
     </section>
-  );
-};
-
-interface StatCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  trend: string;
-  delay: number;
-  isPercentage?: boolean;
-}
-
-const StatCard = ({
-  icon,
-  label,
-  value,
-  prefix = "",
-  suffix = "",
-  trend,
-  delay,
-  isPercentage = false,
-}: StatCardProps) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ y: -4, scale: 1.02 }}
-      className="bg-card rounded-2xl p-6 shadow-lg border border-border hover:shadow-glow transition-all duration-300"
-    >
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 rounded-xl bg-secondary text-foreground">{icon}</div>
-        <span className="text-sm text-muted-foreground">{label}</span>
-      </div>
-      <div className="flex items-end justify-between">
-        <div className="text-2xl md:text-3xl font-bold text-foreground">
-          {isPercentage ? (
-            <span>
-              {prefix}
-              {value.toFixed(1)}
-              {suffix}
-            </span>
-          ) : (
-            <AnimatedCounter value={value} prefix={prefix} suffix={suffix} />
-          )}
-        </div>
-        <span className="text-sm font-medium text-kadig-success flex items-center gap-1">
-          <TrendingUp className="w-3 h-3" />
-          {trend}
-        </span>
-      </div>
-    </motion.div>
   );
 };

@@ -1,93 +1,113 @@
-import { motion } from "framer-motion";
-import {
-  LineChart,
-  Shield,
-  Zap,
-  Globe,
-  Lock,
-  BarChart2,
-} from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import { Shield, Zap, Eye, Lock } from "lucide-react";
 
 const features = [
   {
-    icon: <LineChart className="w-6 h-6" />,
-    title: "Análises em Tempo Real",
-    description:
-      "Acompanhe a evolução do seu patrimônio com atualizações instantâneas e alertas personalizados.",
+    icon: <Eye className="w-8 h-8" />,
+    title: "Visibilidade Total",
+    description: "Veja todos os seus ativos em um único lugar, atualizados automaticamente.",
   },
   {
-    icon: <Shield className="w-6 h-6" />,
-    title: "Proteção Patrimonial",
-    description:
-      "Estratégias avançadas para proteger e preservar seu patrimônio ao longo das gerações.",
+    icon: <Zap className="w-8 h-8" />,
+    title: "Decisões Rápidas",
+    description: "Insights inteligentes para agir no momento certo.",
   },
   {
-    icon: <Zap className="w-6 h-6" />,
-    title: "Automação Inteligente",
-    description:
-      "Rebalanceamento automático e otimização fiscal com inteligência artificial.",
+    icon: <Shield className="w-8 h-8" />,
+    title: "Proteção Ativa",
+    description: "Alertas e estratégias para preservar seu patrimônio.",
   },
   {
-    icon: <Globe className="w-6 h-6" />,
-    title: "Visão Global",
-    description:
-      "Consolide ativos nacionais e internacionais em uma única visão integrada.",
-  },
-  {
-    icon: <Lock className="w-6 h-6" />,
+    icon: <Lock className="w-8 h-8" />,
     title: "Segurança Máxima",
-    description:
-      "Criptografia de ponta e autenticação multi-fator para proteger seus dados.",
-  },
-  {
-    icon: <BarChart2 className="w-6 h-6" />,
-    title: "Relatórios Avançados",
-    description:
-      "Relatórios personalizados para tomada de decisão e planejamento tributário.",
+    description: "Seus dados criptografados com padrão bancário.",
   },
 ];
 
 export const FeaturesSection = () => {
-  return (
-    <section className="py-24 bg-secondary/50" id="sobre">
-      <div className="container mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Tudo que você precisa
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Ferramentas poderosas para uma gestão patrimonial completa
-          </p>
-        </motion.div>
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  });
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="bg-card rounded-2xl p-6 shadow-sm border border-border hover:shadow-md hover:border-kadig-slate/30 transition-all duration-300 group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors mb-4">
-                {feature.icon}
-              </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {feature.description}
-              </p>
-            </motion.div>
-          ))}
+  const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
+
+  return (
+    <section ref={containerRef} className="py-32 relative overflow-hidden">
+      {/* Parallax background element */}
+      <motion.div
+        style={{ y }}
+        className="absolute right-0 top-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,hsl(210_100%_60%_/_0.08)_0%,transparent_70%)]"
+      />
+
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
+          {/* Left - Text */}
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
+              Construído para
+              <br />
+              <span className="text-primary">quem pensa grande</span>
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+              Cada funcionalidade foi desenhada para dar a você controle absoluto
+              sobre seu futuro financeiro.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Ativos Suportados", value: "500+" },
+                { label: "Uptime", value: "99.9%" },
+                { label: "Clientes", value: "10K+" },
+                { label: "Processado", value: "R$50B+" },
+              ].map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="glass rounded-2xl p-4"
+                >
+                  <p className="text-2xl font-bold text-primary mb-1">{stat.value}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right - Feature cards */}
+          <div className="space-y-4">
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                whileHover={{ x: 8 }}
+                className="glass rounded-2xl p-6 flex items-start gap-5 group cursor-pointer"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                  {feature.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

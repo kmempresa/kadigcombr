@@ -2,126 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 220 30% 98%;
-    --foreground: 220 50% 12%;
+    --background: 220 60% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 50% 12%;
+    --card: 220 50% 12%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 50% 12%;
+    --popover: 220 50% 12%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 220 50% 15%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 100% 60%;
+    --primary-foreground: 220 60% 8%;
 
-    --secondary: 220 20% 94%;
-    --secondary-foreground: 220 50% 15%;
+    --secondary: 220 45% 18%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 40% 20%;
+    --muted-foreground: 210 20% 70%;
 
-    --accent: 160 60% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 170 70% 50%;
+    --accent-foreground: 220 60% 8%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 220 50% 15%;
+    --border: 220 40% 20%;
+    --input: 220 40% 20%;
+    --ring: 210 100% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Kadig Custom Tokens */
-    --kadig-navy: 220 50% 15%;
-    --kadig-navy-light: 220 40% 25%;
-    --kadig-slate: 220 15% 55%;
-    --kadig-success: 160 60% 45%;
-    --kadig-success-light: 160 50% 92%;
-    --kadig-warning: 38 92% 50%;
-    --kadig-glow: 220 80% 60%;
+    /* Kadig Custom */
+    --kadig-deep: 220 65% 6%;
+    --kadig-navy: 220 55% 12%;
+    --kadig-blue: 210 100% 60%;
+    --kadig-light: 210 100% 75%;
+    --kadig-cyan: 185 80% 55%;
+    --kadig-white: 210 40% 98%;
+    --kadig-glass: 220 50% 15%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(220 30% 98%) 0%, hsl(220 40% 95%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 30% 99%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(220 50% 15%) 0%, hsl(220 60% 25%) 100%);
-
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 50% 15% / 0.03);
-    --shadow-md: 0 4px 12px -2px hsl(220 50% 15% / 0.08);
-    --shadow-lg: 0 12px 32px -4px hsl(220 50% 15% / 0.12);
-    --shadow-glow: 0 0 40px -10px hsl(220 80% 60% / 0.3);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 10% 26%;
-    --sidebar-primary: 220 50% 15%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 95%;
-    --sidebar-accent-foreground: 220 50% 15%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 220 80% 60%;
-  }
-
-  .dark {
-    --background: 220 50% 8%;
-    --foreground: 220 20% 95%;
-
-    --card: 220 45% 12%;
-    --card-foreground: 220 20% 95%;
-
-    --popover: 220 45% 12%;
-    --popover-foreground: 220 20% 95%;
-
-    --primary: 220 70% 70%;
-    --primary-foreground: 220 50% 8%;
-
-    --secondary: 220 35% 18%;
-    --secondary-foreground: 220 20% 95%;
-
-    --muted: 220 35% 18%;
-    --muted-foreground: 220 15% 60%;
-
-    --accent: 160 60% 45%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 35% 18%;
-    --input: 220 35% 18%;
-    --ring: 220 70% 70%;
-
-    --kadig-navy: 220 70% 70%;
-    --kadig-navy-light: 220 60% 50%;
-    --kadig-slate: 220 15% 60%;
-    --kadig-success: 160 60% 50%;
-    --kadig-success-light: 160 40% 15%;
-    --kadig-warning: 38 92% 50%;
-    --kadig-glow: 220 80% 60%;
-
-    --gradient-hero: linear-gradient(135deg, hsl(220 50% 8%) 0%, hsl(220 45% 12%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(220 45% 12%) 0%, hsl(220 50% 10%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(220 70% 60%) 0%, hsl(220 80% 70%) 100%);
-
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
-    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.3);
-    --shadow-lg: 0 12px 32px -4px hsl(0 0% 0% / 0.4);
-    --shadow-glow: 0 0 40px -10px hsl(220 80% 60% / 0.4);
-
-    --sidebar-background: 220 50% 10%;
-    --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 220 70% 70%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 35% 15%;
-    --sidebar-accent-foreground: 220 15% 90%;
-    --sidebar-border: 220 35% 15%;
-    --sidebar-ring: 220 80% 60%;
+    --sidebar-background: 220 60% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 220 60% 8%;
+    --sidebar-accent: 220 45% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 40% 20%;
+    --sidebar-ring: 210 100% 60%;
   }
 }
 
@@ -131,6 +60,91 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+}
+
+/* Custom Glassmorphism */
+.glass {
+  background: linear-gradient(
+    135deg,
+    hsl(220 50% 15% / 0.6) 0%,
+    hsl(220 55% 12% / 0.4) 100%
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(210 100% 60% / 0.1);
+}
+
+.glass-strong {
+  background: linear-gradient(
+    135deg,
+    hsl(220 50% 18% / 0.8) 0%,
+    hsl(220 55% 14% / 0.6) 100%
+  );
+  backdrop-filter: blur(30px);
+  border: 1px solid hsl(210 100% 60% / 0.15);
+}
+
+/* Glowing effects */
+.glow-blue {
+  box-shadow: 0 0 60px -15px hsl(210 100% 60% / 0.5);
+}
+
+.glow-text {
+  text-shadow: 0 0 40px hsl(210 100% 60% / 0.6);
+}
+
+/* Animated gradient */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float 6s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+/* Pulse ring */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid hsl(210 100% 60% / 0.5);
+  animation: pulse-ring 2s ease-out infinite;
 }

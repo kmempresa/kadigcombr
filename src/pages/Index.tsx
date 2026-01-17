@@ -3,12 +3,14 @@ import { HeroSection } from "@/components/HeroSection";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { Footer } from "@/components/Footer";
+import { FloatingElements } from "@/components/FloatingElements";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      <FloatingElements />
       <Header />
-      <main>
+      <main className="relative z-10">
         <HeroSection />
         <DashboardPreview />
         <FeaturesSection />
