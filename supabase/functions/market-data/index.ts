@@ -33,8 +33,9 @@ serve(async (req) => {
       }
 
       try {
-        // Stock News API - buscar notícias gerais do mercado com muitos itens
-        const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=50&token=${STOCK_NEWS_API_KEY}`;
+        // Stock News API - buscar notícias gerais do mercado
+        // API limit seems to be around 20 items max
+        const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=20&token=${STOCK_NEWS_API_KEY}`;
         
         console.log(`Requesting Stock News API: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
         
@@ -42,7 +43,6 @@ serve(async (req) => {
         const newsData = await newsResponse.json();
         
         console.log(`Stock News response: total items = ${newsData.data?.length || 0}`);
-        console.log(`Stock News total_pages: ${newsData.total_pages || 'N/A'}`);
         
         const news = (newsData.data || []).map((item: any) => ({
           title: item.title,
@@ -53,8 +53,8 @@ serve(async (req) => {
           image_url: item.image_url,
           sentiment: item.sentiment,
         }));
-        
-        const totalPages = newsData.total_pages || 89;
+        const newsCount = news.length;
+        const totalPages = Math.ceil(newsCount / 5); // 5 news per page
         
         return new Response(
           JSON.stringify({ news, totalPages }),
