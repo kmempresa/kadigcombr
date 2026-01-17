@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { X, Plus, ChevronRight, ChevronDown, Check, Lock } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Plus, ChevronRight, ChevronDown, Check, Edit, Trash2, ArrowRightLeft } from "lucide-react";
 import {
   Drawer,
   DrawerContent,
@@ -7,6 +8,7 @@ import {
   DrawerTitle,
   DrawerClose,
 } from "@/components/ui/drawer";
+import kadigLogo from "@/assets/kadig-logo.png";
 
 interface Portfolio {
   id: string;
@@ -46,6 +48,30 @@ const PatrimonioDrawer = ({
   onAddPortfolio,
   onSelectPortfolio,
 }: PatrimonioDrawerProps) => {
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [selectedPortfolioForAction, setSelectedPortfolioForAction] = useState<Portfolio | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePortfolioClick = (portfolio: Portfolio) => {
+    setSelectedPortfolioForAction(portfolio);
+    setPreferencesOpen(true);
+  };
+
+  const handleGoToPortfolio = async () => {
+    if (!selectedPortfolioForAction) return;
+    
+    setPreferencesOpen(false);
+    setIsLoading(true);
+    
+    // Wait 3 seconds before changing
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    onSelectPortfolio(selectedPortfolioForAction.id);
+    setIsLoading(false);
+    onOpenChange(false);
+    setSelectedPortfolioForAction(null);
+  };
+
   const formatCurrency = (value: number) => {
     if (!showValues) return "R$ ••••••";
     return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -149,10 +175,7 @@ const PatrimonioDrawer = ({
                 return (
                   <button
                     key={portfolio.id}
-                    onClick={() => {
-                      onSelectPortfolio(portfolio.id);
-                      onOpenChange(false); // Close drawer after selecting
-                    }}
+                    onClick={() => handlePortfolioClick(portfolio)}
                     className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-[0.98] transition-transform ${
                       isSelected ? 'border-cyan-400 ring-2 ring-cyan-400/30' : 'border-border'
                     }`}
@@ -247,6 +270,117 @@ const PatrimonioDrawer = ({
             </button>
           </DrawerClose>
         </div>
+
+        {/* Preferences Bottom Sheet */}
+        <AnimatePresence>
+          {preferencesOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/30 z-50"
+              onClick={() => setPreferencesOpen(false)}
+            >
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
+              >
+                <div className="p-6">
+                  <h3 className="text-lg font-semibold text-center text-foreground mb-6">
+                    Preferência da carteira
+                  </h3>
+
+                  <div className="space-y-3 mb-4">
+                    <button className="w-full bg-slate-100 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
+                        <Edit className="w-5 h-5 text-slate-500" />
+                      </div>
+                      <span className="flex-1 text-left font-medium text-foreground">
+                        Editar carteira
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </button>
+
+                    <button className="w-full bg-slate-100 rounded-2xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
+                      <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center">
+                        <Trash2 className="w-5 h-5 text-slate-500" />
+                      </div>
+                      <span className="flex-1 text-left font-medium text-foreground">
+                        Excluir carteira
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  <button 
+                    onClick={handleGoToPortfolio}
+                    className="w-full bg-slate-50 rounded-2xl p-4 flex items-center gap-4 border border-border active:scale-[0.98] transition-transform"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-500 flex items-center justify-center">
+                      <ArrowRightLeft className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="flex-1 text-left font-medium text-foreground">
+                      Ir para esta carteira
+                    </span>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                  </button>
+                </div>
+
+                <div className="p-4 flex justify-center">
+                  <button 
+                    onClick={() => setPreferencesOpen(false)}
+                    className="w-12 h-12 rounded-full bg-slate-300 flex items-center justify-center"
+                  >
+                    <X className="w-5 h-5 text-slate-600" />
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loading Overlay */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-gradient-to-b from-slate-50 to-white z-[100] flex flex-col items-center justify-center"
+            >
+              <motion.img
+                src={kadigLogo}
+                alt="Kadig"
+                className="w-24 h-24 mb-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-2"
+              >
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+              </motion.div>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mt-4 text-muted-foreground text-sm"
+              >
+                Carregando carteira...
+              </motion.p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </DrawerContent>
     </Drawer>
   );
