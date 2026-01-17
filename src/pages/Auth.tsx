@@ -103,7 +103,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden fixed inset-0">
+    <div className="min-h-screen bg-background relative overflow-hidden fixed inset-0 light-theme" data-theme="light">
       {/* Background curved shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Top right curve */}
