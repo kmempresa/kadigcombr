@@ -149,7 +149,10 @@ const PatrimonioDrawer = ({
                 return (
                   <button
                     key={portfolio.id}
-                    onClick={() => onSelectPortfolio(portfolio.id)}
+                    onClick={() => {
+                      onSelectPortfolio(portfolio.id);
+                      onOpenChange(false); // Close drawer after selecting
+                    }}
                     className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-[0.98] transition-transform ${
                       isSelected ? 'border-cyan-400 ring-2 ring-cyan-400/30' : 'border-border'
                     }`}
