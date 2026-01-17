@@ -1,11 +1,12 @@
-import { useState, useRef } from "react";
-import { X, ChevronDown, Upload, FileText, Trash2 } from "lucide-react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { useState, useRef, useEffect } from "react";
+import { X, Upload, FileText, Trash2 } from "lucide-react";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 interface SupportDrawerProps {
   open: boolean;
@@ -25,12 +26,18 @@ const supportCategories = [
 ];
 
 export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDrawerProps) => {
+  const { theme } = useTheme();
   const [email, setEmail] = useState(userEmail);
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update email when userEmail prop changes
+  useEffect(() => {
+    if (userEmail) setEmail(userEmail);
+  }, [userEmail]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -84,27 +91,28 @@ export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDra
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-background">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <DrawerContent className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
           <span className="text-lg font-semibold text-foreground">Abrir chamado</span>
-          <button onClick={handleClose} className="p-2">
+          <button onClick={handleClose} className="p-2" type="button">
             <X className="w-6 h-6 text-foreground" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="bg-card rounded-2xl p-6 shadow-sm">
+        <div className="flex-1 overflow-y-auto p-4 bg-background">
+          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-foreground">Fale Conosco</h2>
               <button 
                 onClick={handleClose}
+                type="button"
                 className="text-primary font-medium hover:underline"
               >
                 Voltar
               </button>
             </div>
 
-            <div className="space-y-5">
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
               {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
@@ -115,7 +123,7 @@ export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDra
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="bg-muted/50 border-border rounded-xl h-12"
+                  className="bg-background border-input rounded-xl h-12 text-foreground"
                 />
               </div>
 
@@ -125,10 +133,10 @@ export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDra
                   Para onde precisa de ajuda?*
                 </label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-muted/50 border-border rounded-xl h-12">
+                  <SelectTrigger className="bg-background border-input rounded-xl h-12 text-foreground">
                     <SelectValue placeholder="Busque ou selecione uma das opções" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={theme === "light" ? "light-theme" : ""}>
                     {supportCategories.map((cat) => (
                       <SelectItem key={cat.value} value={cat.value}>
                         {cat.label}
@@ -140,14 +148,15 @@ export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDra
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label htmlFor="support-description" className="block text-sm font-medium text-foreground mb-2">
                   Descreva o problema *
                 </label>
-                <Textarea
+                <textarea
+                  id="support-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Descreva detalhadamente o problema ou dúvida..."
-                  className="bg-muted/50 border-border rounded-xl min-h-[120px] resize-none"
+                  className="flex w-full rounded-xl border border-input bg-background px-3 py-3 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[120px] resize-none"
                 />
               </div>
 
@@ -213,7 +222,7 @@ export const SupportDrawer = ({ open, onOpenChange, userEmail = "" }: SupportDra
               >
                 {isSubmitting ? "ENVIANDO..." : "ENVIAR"}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
       </DrawerContent>
