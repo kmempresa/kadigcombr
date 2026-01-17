@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle, FileEdit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -234,8 +234,20 @@ const AdicionarInvestimento = () => {
   const [quantity, setQuantity] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
   const [purchaseDate, setPurchaseDate] = useState("");
+  const [brokerageFee, setBrokerageFee] = useState("");
 
   const totalSteps = 5;
+  
+  // Get title based on asset type
+  const getAssetTypeTitle = () => {
+    const tipo = tiposAtivos.find(t => t.id === selectedTipoAtivo);
+    if (!tipo) return "Adicionar Ativo";
+    if (tipo.id === "acoes") return "Adicionar Ação";
+    if (tipo.id === "bdrs") return "Adicionar BDR";
+    if (tipo.id === "fiis") return "Adicionar FII";
+    if (tipo.id === "criptoativos") return "Adicionar Criptoativo";
+    return `Adicionar ${tipo.nome}`;
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -409,7 +421,7 @@ const AdicionarInvestimento = () => {
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold text-foreground">Adicionar novo ativo</h1>
+          <h1 className="text-lg font-semibold text-foreground">{step === 1 ? "Adicionar novo ativo" : getAssetTypeTitle()}</h1>
         </div>
         
         {/* Progress Bar */}
@@ -549,20 +561,17 @@ const AdicionarInvestimento = () => {
             className="space-y-4"
           >
             <h2 className="text-center text-muted-foreground font-medium">
-              Buscar ativo
+              Escolha o papel
             </h2>
-            <p className="text-center text-xs text-muted-foreground">
-              Instituição: <strong>{selectedInstituicao}</strong>
-            </p>
 
             {/* Asset Search Input */}
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Buscar ação (ex: PETR4, VALE3)..."
+                placeholder="Buscar..."
                 value={assetSearchTerm}
                 onChange={(e) => setAssetSearchTerm(e.target.value.toUpperCase())}
-                className="h-12 pr-10 bg-card border-border rounded-xl uppercase"
+                className="h-12 pr-10 bg-card border-border rounded-2xl"
               />
               {loadingAssets ? (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-spin" />
@@ -573,127 +582,55 @@ const AdicionarInvestimento = () => {
                 >
                   <X className="w-5 h-5" />
                 </button>
-              ) : (
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              )}
+              ) : null}
             </div>
 
             {/* Search Results */}
-            {searchResults.length > 0 && !selectedAsset && (
-              <div className="space-y-2">
-                {searchResults.map((stock) => (
-                  <motion.button
-                    key={stock.symbol}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setSelectedAsset(stock)}
-                    className="w-full p-4 bg-card border border-border rounded-xl text-left flex items-center gap-3"
+            <div className="space-y-2">
+              {searchResults.map((stock) => (
+                <motion.button
+                  key={stock.symbol}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setSelectedAsset(stock)}
+                  className={`w-full p-4 bg-card border rounded-2xl text-left flex items-center justify-between transition-all ${
+                    selectedAsset?.symbol === stock.symbol
+                      ? "border-primary bg-primary/5"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Brazil flag emoji for BDRs */}
+                    <span className="text-lg">🇧🇷</span>
+                    <span className="font-medium text-foreground text-sm">
+                      {stock.symbol}: {stock.shortName?.toUpperCase() || stock.symbol}
+                    </span>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedAsset?.symbol === stock.symbol
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30"
+                    }`}
                   >
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
-                      {stock.logoUrl ? (
-                        <img src={stock.logoUrl} alt={stock.symbol} className="w-8 h-8 object-contain" />
-                      ) : (
-                        <span className="text-xs font-bold text-primary">{stock.symbol.slice(0, 3)}</span>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-foreground">{stock.symbol}</p>
-                      <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-foreground">{formatCurrency(stock.regularMarketPrice)}</p>
-                      <p className={`text-xs ${stock.regularMarketChangePercent >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {stock.regularMarketChangePercent >= 0 ? '+' : ''}{stock.regularMarketChangePercent.toFixed(2)}%
-                      </p>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
+                    {selectedAsset?.symbol === stock.symbol && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
+                  </div>
+                </motion.button>
+              ))}
 
-            {/* Selected Asset Details */}
-            {selectedAsset && (
-              <div className="space-y-4">
-                <div className="bg-primary/5 border border-primary rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
-                        {selectedAsset.logoUrl ? (
-                          <img src={selectedAsset.logoUrl} alt={selectedAsset.symbol} className="w-10 h-10 object-contain" />
-                        ) : (
-                          <span className="text-sm font-bold text-primary">{selectedAsset.symbol.slice(0, 3)}</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-bold text-foreground text-lg">{selectedAsset.symbol}</p>
-                        <p className="text-sm text-muted-foreground">{selectedAsset.shortName}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => { setSelectedAsset(null); setAssetDetails(null); }}
-                      className="text-muted-foreground"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-4 h-4 text-emerald-500" />
-                    <span className="text-sm text-emerald-600 font-medium">Ativo selecionado</span>
-                  </div>
+              {searchResults.length === 0 && assetSearchTerm.length >= 2 && !loadingAssets && (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum ativo encontrado
                 </div>
-
-                {loadingDetails ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    <span className="ml-2 text-muted-foreground">Carregando dados...</span>
-                  </div>
-                ) : assetDetails && (
-                  <div className="bg-card border border-border rounded-xl p-4 space-y-4">
-                    <h3 className="font-semibold text-foreground">Dados do ativo</h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Preço atual</p>
-                        <p className="font-semibold text-foreground">{formatCurrency(assetDetails.regularMarketPrice || 0)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Variação</p>
-                        <div className={`flex items-center gap-1 ${(assetDetails.regularMarketChangePercent || 0) >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                          {(assetDetails.regularMarketChangePercent || 0) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                          <span className="font-semibold">{formatNumber(assetDetails.regularMarketChangePercent || 0)}%</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Mínima (52 sem)</p>
-                        <p className="font-medium text-foreground">{assetDetails.fiftyTwoWeekLow ? formatCurrency(assetDetails.fiftyTwoWeekLow) : '-'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Máxima (52 sem)</p>
-                        <p className="font-medium text-foreground">{assetDetails.fiftyTwoWeekHigh ? formatCurrency(assetDetails.fiftyTwoWeekHigh) : '-'}</p>
-                      </div>
-                      {assetDetails.dividendYield && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">Dividend Yield</p>
-                          <p className="font-medium text-foreground">{(assetDetails.dividendYield * 100).toFixed(2)}%</p>
-                        </div>
-                      )}
-                      {assetDetails.priceEarnings && (
-                        <div>
-                          <p className="text-xs text-muted-foreground">P/L</p>
-                          <p className="font-medium text-foreground">{assetDetails.priceEarnings.toFixed(2)}</p>
-                        </div>
-                      )}
-                      {assetDetails.sector && (
-                        <div className="col-span-2">
-                          <p className="text-xs text-muted-foreground">Setor</p>
-                          <p className="font-medium text-foreground">{assetDetails.sector}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+              
+              {assetSearchTerm.length < 2 && (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  Digite pelo menos 2 caracteres para buscar
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 
@@ -701,65 +638,90 @@ const AdicionarInvestimento = () => {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <h2 className="text-center text-muted-foreground font-medium">
-              Valores e quantidades
+            {/* Info Card */}
+            <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-4">
+              <div className="flex-1">
+                <h3 className="text-pink-500 font-semibold text-base mb-2">Informações adicionais</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Informe a data, quantidade, valor da compra e quais os valores pagos em taxas de corretagem, emolumentos e liquidação.
+                </p>
+              </div>
+              <div className="w-20 h-20 rounded-2xl bg-pink-500 flex items-center justify-center flex-shrink-0">
+                <FileEdit className="w-10 h-10 text-white" />
+              </div>
+            </div>
+
+            {/* Form Title */}
+            <h2 className="text-center text-foreground font-medium">
+              Preencha as informações
             </h2>
-            
-            {selectedAsset && (
-              <div className="bg-primary/5 border border-primary/30 rounded-xl p-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
-                  {selectedAsset.logoUrl ? (
-                    <img src={selectedAsset.logoUrl} alt={selectedAsset.symbol} className="w-8 h-8 object-contain" />
-                  ) : (
-                    <span className="text-xs font-bold text-primary">{selectedAsset.symbol.slice(0, 3)}</span>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">{selectedAsset.symbol}</p>
-                  <p className="text-xs text-muted-foreground">{selectedAsset.shortName}</p>
+
+            {/* Form Fields */}
+            <div className="space-y-3">
+              {/* Data de compra */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Data de compra:</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={purchaseDate}
+                    onChange={(e) => setPurchaseDate(e.target.value)}
+                    className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none"
+                    placeholder="DD.MM.AAAA"
+                  />
+                  {purchaseDate && <Check className="w-4 h-4 text-pink-500" />}
                 </div>
               </div>
-            )}
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Quantidade de ações</label>
-                <Input
+              {/* Quantidade */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Quantidade:</span>
+                <input
                   type="number"
-                  placeholder="Ex: 100"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
-                  className="h-12 bg-card border-border rounded-xl"
+                  placeholder="0"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-24"
                 />
-              </div>
-              
-              <div>
-                <label className="text-sm text-muted-foreground mb-2 block">Preço de compra (R$)</label>
-                <Input
-                  type="number"
-                  placeholder="Ex: 32.50"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(e.target.value)}
-                  className="h-12 bg-card border-border rounded-xl"
-                  step="0.01"
-                />
-                {assetDetails?.regularMarketPrice && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Preço atual: {formatCurrency(assetDetails.regularMarketPrice)}
-                  </p>
-                )}
               </div>
 
-              {quantity && purchasePrice && (
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <p className="text-sm text-muted-foreground mb-1">Total investido</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {formatCurrency(parseFloat(quantity) * parseFloat(purchasePrice))}
-                  </p>
-                </div>
-              )}
+              {/* Preço */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Preço:</span>
+                <input
+                  type="number"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="R$ 00,00"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-32"
+                />
+              </div>
+
+              {/* Taxa */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm">Taxa (corretagem e outros):</span>
+                <input
+                  type="number"
+                  value={brokerageFee}
+                  onChange={(e) => setBrokerageFee(e.target.value)}
+                  placeholder="R$ 00,00 (opcional)"
+                  step="0.01"
+                  className="bg-transparent text-right text-muted-foreground text-sm border-none outline-none w-40"
+                />
+              </div>
+
+              {/* Total investido */}
+              <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                <span className="text-foreground text-sm font-medium">Total investido:</span>
+                <span className="font-bold text-foreground">
+                  {formatCurrency(
+                    (parseFloat(quantity) || 0) * (parseFloat(purchasePrice) || 0) + (parseFloat(brokerageFee) || 0)
+                  )}
+                </span>
+              </div>
             </div>
           </motion.div>
         )}
@@ -835,13 +797,13 @@ const AdicionarInvestimento = () => {
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-inset-bottom">
         <div className="flex gap-3">
           <button
-            onClick={handleCancel}
+            onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
             className="flex-1 h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
           >
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <X className="w-4 h-4 text-muted-foreground" />
+              <ArrowLeft className="w-4 h-4 text-muted-foreground" />
             </div>
-            <span className="text-foreground font-medium">Cancelar</span>
+            <span className="text-foreground font-medium">Voltar</span>
           </button>
 
           <button
@@ -849,8 +811,8 @@ const AdicionarInvestimento = () => {
             disabled={!canAdvance}
             className="flex-1 h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <ArrowRight className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 text-muted-foreground" />
             </div>
             <span className="text-foreground font-medium">Avançar</span>
           </button>
