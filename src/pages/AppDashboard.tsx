@@ -1499,8 +1499,8 @@ const AppDashboard = () => {
       {activeTab === "trade" && (
         <TradeTab 
           showValues={showValues} 
-          userName={userName}
-          userAssets={userData?.investments || []}
+          userName={selectedPortfolio?.name || userName}
+          userAssets={filteredInvestments}
           onToggleValues={() => setShowValues(!showValues)}
           onAddAsset={() => setAdicionarDrawerOpen(true)}
           onAddConnection={() => navigate("/conexoes")}
