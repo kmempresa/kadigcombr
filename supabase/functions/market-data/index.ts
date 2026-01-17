@@ -33,15 +33,16 @@ serve(async (req) => {
       }
 
       try {
-        // Stock News API - buscar notícias gerais do mercado (section=general ou alltickers)
-        const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=3&token=${STOCK_NEWS_API_KEY}`;
+        // Stock News API - buscar notícias gerais do mercado com muitos itens
+        const newsUrl = `https://stocknewsapi.com/api/v1/category?section=general&items=50&token=${STOCK_NEWS_API_KEY}`;
         
         console.log(`Requesting Stock News API: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
         
         const newsResponse = await fetch(newsUrl);
         const newsData = await newsResponse.json();
         
-        console.log(`Stock News response:`, JSON.stringify(newsData).slice(0, 500));
+        console.log(`Stock News response: total items = ${newsData.data?.length || 0}`);
+        console.log(`Stock News total_pages: ${newsData.total_pages || 'N/A'}`);
         
         const news = (newsData.data || []).map((item: any) => ({
           title: item.title,
@@ -53,8 +54,10 @@ serve(async (req) => {
           sentiment: item.sentiment,
         }));
         
+        const totalPages = newsData.total_pages || 89;
+        
         return new Response(
-          JSON.stringify({ news }),
+          JSON.stringify({ news, totalPages }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (newsError) {
