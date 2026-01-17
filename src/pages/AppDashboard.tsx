@@ -863,58 +863,141 @@ const AppDashboard = () => {
           {/* Ativos Tab */}
           {carteiraTab === "ativos" && (
             <div className="p-4 space-y-6">
-              {/* Summary */}
-              <div className="bg-card border border-border rounded-xl p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-foreground">Total em Ativos</h3>
-                  <span className="text-2xl font-bold text-foreground">{formatCurrency(totalPatrimonio)}</span>
+              {/* Search and Filter */}
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <input 
+                    type="text" 
+                    placeholder="Buscar:"
+                    className="w-full h-12 bg-card border border-border rounded-2xl px-4 pr-10 text-foreground text-sm placeholder:text-muted-foreground"
+                  />
+                  <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className={totalGanhos >= 0 ? "text-emerald-500" : "text-red-500"}>
-                    {totalGanhos >= 0 ? "+" : ""}{formatCurrency(totalGanhos)}
+                <button className="h-12 w-12 bg-card border border-border rounded-2xl flex items-center justify-center relative">
+                  <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {Object.keys(investmentsByType).length}
                   </span>
-                  <span className="text-muted-foreground">de lucro</span>
-                </div>
+                </button>
               </div>
 
-              {/* Assets by Type */}
+              {/* Assets by Type with New Layout */}
               {Object.entries(investmentsByType).map(([type, investments]) => {
                 const typeTotal = investments.reduce((sum, inv) => sum + inv.current_value, 0);
                 const typePercent = totalPatrimonio > 0 ? (typeTotal / totalPatrimonio) * 100 : 0;
+                const typeLabel = typeLabels[type] || type;
+                
+                // Color mapping for each asset type
+                const typeColors: { [key: string]: string } = {
+                  'acoes': 'hsl(0, 84%, 60%)',
+                  'bdrs': 'hsl(25, 95%, 53%)',
+                  'conta_corrente': 'hsl(348, 83%, 47%)',
+                  'criptoativos': 'hsl(142, 71%, 45%)',
+                  'debentures': 'hsl(172, 66%, 50%)',
+                  'fundos': 'hsl(199, 89%, 48%)',
+                  'fiis': 'hsl(217, 91%, 60%)',
+                  'moedas': 'hsl(263, 70%, 50%)',
+                  'personalizados': 'hsl(280, 65%, 60%)',
+                  'poupanca': 'hsl(292, 84%, 61%)',
+                  'previdencia': 'hsl(330, 81%, 60%)',
+                  'renda_fixa_pre': 'hsl(142, 71%, 45%)',
+                  'renda_fixa_pos': 'hsl(185, 84%, 39%)',
+                  'tesouro': 'hsl(340, 82%, 52%)',
+                };
+                
+                const typeColor = typeColors[type] || 'hsl(var(--primary))';
                 
                 return (
                   <div key={type} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-foreground">{typeLabels[type] || type}</h3>
-                      <div className="text-right">
-                        <span className="font-medium text-foreground">{formatCurrency(typeTotal)}</span>
-                        <span className="text-xs text-muted-foreground ml-2">({typePercent.toFixed(1)}%)</span>
-                      </div>
+                    {/* Section Header */}
+                    <h2 className="text-center font-semibold text-foreground text-base">
+                      {typeLabel}
+                    </h2>
+                    
+                    {/* Summary Card */}
+                    <div className="bg-muted/50 rounded-2xl px-4 py-3 flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">
+                        Total de ativos: <span className="font-medium text-foreground">{investments.length}</span>
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        Saldo atual: <span className="font-bold text-foreground">{formatCurrency(typeTotal)}</span>
+                      </span>
                     </div>
                     
-                    <div className="space-y-2">
-                      {investments.map((inv) => (
+                    {/* Asset Cards */}
+                    {investments.map((inv) => {
+                      const invPercent = totalPatrimonio > 0 ? (inv.current_value / totalPatrimonio) * 100 : 0;
+                      const bankName = inv.asset_name.includes(' - ') 
+                        ? inv.asset_name.split(' - ')[1]?.split(' ')[0] 
+                        : inv.ticker || '';
+                      
+                      return (
                         <button 
                           key={inv.id} 
                           onClick={() => {
                             setEditingInvestment(inv);
                             setEditDrawerOpen(true);
                           }}
-                          className="w-full bg-card border border-border rounded-xl p-3 flex items-center justify-between hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-[0.99]"
+                          className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:border-primary/50 hover:bg-primary/5 transition-all active:scale-[0.99]"
                         >
-                          <div className="text-left">
-                            <p className="font-medium text-foreground">{inv.asset_name}</p>
-                            {inv.ticker && <p className="text-xs text-muted-foreground">{inv.ticker}</p>}
+                          {/* Bank Name */}
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                            {bankName || 'ATIVO'}
+                          </p>
+                          
+                          {/* Asset Name */}
+                          <p className="font-medium text-foreground text-sm mb-2">
+                            {inv.asset_name}
+                          </p>
+                          
+                          {/* Badge */}
+                          <span 
+                            className="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white mb-3"
+                            style={{ backgroundColor: typeColor }}
+                          >
+                            {typeLabel}
+                          </span>
+                          
+                          {/* Progress Bar */}
+                          <div className="w-full h-1 bg-muted rounded-full mb-4 overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all"
+                              style={{ 
+                                width: `${Math.min(invPercent, 100)}%`,
+                                backgroundColor: typeColor
+                              }}
+                            />
                           </div>
-                          <div className="text-right">
-                            <p className="font-medium text-foreground">{formatCurrency(inv.current_value)}</p>
-                            <p className={`text-xs ${inv.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                              {inv.gain_percent >= 0 ? "+" : ""}{inv.gain_percent.toFixed(2)}%
-                            </p>
+                          
+                          {/* Divider */}
+                          <div className="border-t border-border pt-3 space-y-2">
+                            {/* Saldo Atual */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Saldo Atual:</span>
+                              <span className="font-bold text-foreground">{formatCurrency(inv.current_value)}</span>
+                            </div>
+                            
+                            {/* Rentabilidade */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Rentabilidade:</span>
+                              <span className={`font-semibold ${inv.gain_percent >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+                                {inv.gain_percent >= 0 ? "+" : ""}{inv.gain_percent.toFixed(2)}%
+                              </span>
+                            </div>
+                            
+                            {/* % na carteira */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">% na carteira:</span>
+                              <span className="font-semibold text-foreground">{invPercent.toFixed(2)}%</span>
+                            </div>
                           </div>
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 );
               })}
