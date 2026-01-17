@@ -29,12 +29,20 @@ interface UserProfile {
   riskTolerance: string;
 }
 
+// Monthly data for the last 3 months
+const monthlyData = [
+  { month: "NOVEMBRO 2025", value: "R$ 121.850,20", gain: "R$ 2.150,00", cdiPercent: "82%" },
+  { month: "DEZEMBRO 2025", value: "R$ 124.320,80", gain: "R$ 2.470,60", cdiPercent: "85%" },
+  { month: "JANEIRO 2026", value: "R$ 127.450,53", gain: "R$ 3.280,00", cdiPercent: "88%" },
+];
+
 const AppDashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
   const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
   const [showValues, setShowValues] = useState(true);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(2); // Start at latest month (Janeiro)
 
   useEffect(() => {
     const savedProfile = localStorage.getItem("kadig-user-profile");
@@ -202,26 +210,49 @@ const AppDashboard = () => {
                     />
                   </svg>
                   
-                  {/* Center content */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
-                    <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
-                      JANEIRO 2026
-                    </span>
-                    <span className="text-2xl font-bold text-foreground flex items-center gap-1 leading-tight">
-                      {showValues ? "R$ 127.450,53" : "R$ ••••••"}
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-1 leading-tight">
-                      CARTEIRA <span className="text-primary font-semibold">88%</span> DO CDI
-                    </span>
-                    <div className="mt-3">
-                      <span className="text-[10px] text-muted-foreground tracking-wide">GANHO DE CAPITAL</span>
-                      <div className="mt-1">
-                        <span className="text-sm font-semibold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                          {showValues ? "R$ 3.280,00" : "R$ ••••"}
+                  {/* Center content - Swipeable */}
+                  <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                    <motion.div
+                      className="flex items-center"
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.2}
+                      onDragEnd={(e, info) => {
+                        if (info.offset.x > 50 && currentMonthIndex > 0) {
+                          setCurrentMonthIndex(currentMonthIndex - 1);
+                        } else if (info.offset.x < -50 && currentMonthIndex < monthlyData.length - 1) {
+                          setCurrentMonthIndex(currentMonthIndex + 1);
+                        }
+                      }}
+                    >
+                      <motion.div
+                        key={currentMonthIndex}
+                        initial={{ opacity: 0, x: 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -50 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="flex flex-col items-center justify-center text-center px-8 cursor-grab active:cursor-grabbing"
+                      >
+                        <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
+                          {monthlyData[currentMonthIndex].month}
                         </span>
-                      </div>
-                    </div>
+                        <span className="text-2xl font-bold text-foreground flex items-center gap-1 leading-tight">
+                          {showValues ? monthlyData[currentMonthIndex].value : "R$ ••••••"}
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        </span>
+                        <span className="text-xs text-muted-foreground mt-1 leading-tight">
+                          CARTEIRA <span className="text-primary font-semibold">{monthlyData[currentMonthIndex].cdiPercent}</span> DO CDI
+                        </span>
+                        <div className="mt-3">
+                          <span className="text-[10px] text-muted-foreground tracking-wide">GANHO DE CAPITAL</span>
+                          <div className="mt-1">
+                            <span className="text-sm font-semibold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                              {showValues ? monthlyData[currentMonthIndex].gain : "R$ ••••"}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </motion.div>
                   </div>
                 </div>
 
@@ -233,9 +264,21 @@ const AppDashboard = () => {
 
               {/* Pagination dots */}
               <div className="flex justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
-                <div className="w-2 h-2 rounded-full bg-muted-foreground" />
+                {monthlyData.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentMonthIndex(index)}
+                    className="p-1"
+                  >
+                    <motion.div
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        currentMonthIndex === index ? "bg-primary" : "bg-muted-foreground/30"
+                      }`}
+                      animate={{ scale: currentMonthIndex === index ? 1.2 : 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  </button>
+                ))}
               </div>
 
               {/* Stats Row */}
