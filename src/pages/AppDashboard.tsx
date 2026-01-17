@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+// Lucide icons
 import { 
   Bell, 
   Eye,
