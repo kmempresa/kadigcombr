@@ -20,38 +20,70 @@ serve(async (req) => {
 
     const { type = 'all', symbol } = await req.json().catch(() => ({}));
 
-    // Buscar notícias de uma ação específica
+    // Buscar notícias de uma ação específica usando Google News RSS
     if (type === 'news' && symbol) {
       console.log(`Fetching news for ${symbol}`);
       
-      if (!STOCK_NEWS_API_KEY) {
-        return new Response(
-          JSON.stringify({ news: [], error: 'STOCK_NEWS_API_KEY not configured' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Stock News API - buscar notícias por ticker brasileiro
-      const newsUrl = `https://stocknewsapi.com/api/v1?tickers=${symbol}&items=10&token=${STOCK_NEWS_API_KEY}`;
-      
-      console.log(`Requesting news: ${newsUrl.replace(STOCK_NEWS_API_KEY, '***')}`);
-      
       try {
-        const newsResponse = await fetch(newsUrl);
-        const newsData = await newsResponse.json();
+        // Remover número do ticker para buscar o nome da empresa
+        const companyName = symbol.replace(/[0-9]/g, '');
         
-        console.log(`News response:`, JSON.stringify(newsData).slice(0, 500));
+        // Usar Google News RSS para buscar notícias
+        const googleNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(symbol + ' OR ' + companyName + ' ação bolsa')}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
         
-        const news = (newsData.data || []).map((item: any) => ({
-          title: item.title,
-          text: item.text,
-          source_name: item.source_name,
-          date: item.date,
-          news_url: item.news_url,
-          image_url: item.image_url,
-          sentiment: item.sentiment,
-          tickers: item.tickers,
-        }));
+        console.log(`Requesting Google News: ${googleNewsUrl}`);
+        
+        const newsResponse = await fetch(googleNewsUrl);
+        const xmlText = await newsResponse.text();
+        
+        console.log(`Google News response length: ${xmlText.length}`);
+        
+        // Parse simple XML to extract news items
+        const news: any[] = [];
+        const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+        const titleRegex = /<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/;
+        const linkRegex = /<link>(.*?)<\/link>/;
+        const pubDateRegex = /<pubDate>(.*?)<\/pubDate>/;
+        const sourceRegex = /<source.*?>(.*?)<\/source>/;
+        
+        let match;
+        let count = 0;
+        
+        while ((match = itemRegex.exec(xmlText)) !== null && count < 5) {
+          const itemContent = match[1];
+          
+          const titleMatch = itemContent.match(titleRegex);
+          const linkMatch = itemContent.match(linkRegex);
+          const pubDateMatch = itemContent.match(pubDateRegex);
+          const sourceMatch = itemContent.match(sourceRegex);
+          
+          if (titleMatch && linkMatch) {
+            const title = titleMatch[1] || titleMatch[2] || '';
+            
+            // Skip se não parecer relacionado ao mercado financeiro
+            const isRelevant = title.toLowerCase().includes(symbol.toLowerCase()) || 
+                               title.toLowerCase().includes(companyName.toLowerCase()) ||
+                               title.toLowerCase().includes('ação') ||
+                               title.toLowerCase().includes('bolsa') ||
+                               title.toLowerCase().includes('ibovespa') ||
+                               title.toLowerCase().includes('mercado');
+            
+            if (isRelevant || count < 3) {
+              news.push({
+                title: title,
+                text: '',
+                source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+                date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
+                news_url: linkMatch[1],
+                image_url: null,
+                sentiment: null,
+              });
+              count++;
+            }
+          }
+        }
+        
+        console.log(`Found ${news.length} news items`);
         
         return new Response(
           JSON.stringify({ news }),
