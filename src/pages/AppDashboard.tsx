@@ -46,6 +46,7 @@ import GanhoCapitalDrawer from "@/components/analysis/GanhoCapitalDrawer";
 import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
+import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
@@ -166,6 +167,7 @@ const AppDashboard = () => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
+  const [projecaoOpen, setProjecaoOpen] = useState(false);
   const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
   const [goalType, setGoalType] = useState<"patrimonio" | "renda_passiva">("patrimonio");
   const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
@@ -1534,6 +1536,31 @@ const AppDashboard = () => {
                 </div>
               </motion.button>
 
+              {/* Projeção 12 Meses */}
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setProjecaoOpen(true)}
+                className="w-full bg-gradient-to-br from-card to-cyan-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-cyan-500/10 hover:border-cyan-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center shadow-lg">
+                        <TrendingUp className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <span className="font-bold text-foreground text-base">Projeção 12 Meses</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-cyan-500 transition-colors" />
+                  </div>
+                </div>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Veja quanto sua carteira pode render nos próximos 12 meses baseado no histórico.</p>
+                </div>
+              </motion.button>
+
               {/* Section Header - Recursos Premium */}
               <div className="flex items-center gap-3 pt-4 pb-1">
                 <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-violet-500 rounded-full" />
@@ -2273,6 +2300,16 @@ const AppDashboard = () => {
         onOpenChange={setProventosOpen}
         investments={filteredInvestments}
         formatCurrency={formatCurrency}
+      />
+
+      <ProjecaoDrawer
+        open={projecaoOpen}
+        onOpenChange={setProjecaoOpen}
+        showValues={showValues}
+        totalPatrimonio={totalPatrimonio}
+        totalInvestido={totalInvestido}
+        totalGanho={totalGanhos}
+        economicIndicators={economicIndicators}
       />
 
       {activePortfolioId && (
