@@ -1978,10 +1978,16 @@ const AppDashboard = () => {
           <header className="bg-muted/30 p-4 safe-area-inset-top">
             <h1 className="text-xl font-semibold text-foreground mb-4">Conta</h1>
             
-            <button className="w-full flex items-center gap-3 mb-4">
+            <motion.button 
+              onClick={() => navigate("/preferencias")}
+              className="w-full flex items-center gap-3 mb-4 p-3 bg-card border border-border rounded-xl hover:bg-muted/50 transition-colors active:scale-[0.98]"
+              whileTap={{ scale: 0.98 }}
+            >
               <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <User className="w-6 h-6 text-muted-foreground" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <span className="text-white font-bold text-lg">
+                    {userData?.profile?.full_name?.charAt(0)?.toUpperCase() || userData?.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </span>
                 </div>
                 {!userData?.profile?.full_name && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background" />
@@ -2000,7 +2006,7 @@ const AppDashboard = () => {
                 )}
               </div>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </motion.button>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
