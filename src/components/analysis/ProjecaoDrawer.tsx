@@ -135,6 +135,10 @@ const ProjecaoDrawer = ({
           setHistoricalReturns(returns);
         }
 
+        console.log("ProjecaoDrawer - Investments loaded:", investmentsResult.data?.length || 0);
+        console.log("ProjecaoDrawer - Global assets loaded:", globalResult.data?.length || 0, globalResult.data);
+        console.log("ProjecaoDrawer - Global assets error:", globalResult.error);
+        
         setInvestments(investmentsResult.data || []);
         setGlobalAssets(globalResult.data || []);
       } catch (error) {
@@ -148,7 +152,11 @@ const ProjecaoDrawer = ({
   }, [open]);
 
   // Calculate totals
-  const totalGlobal = useMemo(() => globalAssets.reduce((sum, a) => sum + a.value_brl, 0), [globalAssets]);
+  const totalGlobal = useMemo(() => {
+    const total = globalAssets.reduce((sum, a) => sum + (Number(a.value_brl) || 0), 0);
+    console.log("ProjecaoDrawer - totalGlobal calculated:", total, "from", globalAssets.length, "assets");
+    return total;
+  }, [globalAssets]);
   const totalCompleto = totalPatrimonio + totalGlobal;
 
   // Group investments by type
