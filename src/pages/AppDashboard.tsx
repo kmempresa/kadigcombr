@@ -226,26 +226,26 @@ const AppDashboard = () => {
   }, [emblaApi, onSelect, onScroll]);
 
   // Interpolate stats values based on scroll progress - uses monthlyData from state
+  // New order: monthly slides first (0 to length-1), then global and total at the end
   const interpolatedStats = useMemo(() => {
-    // Only interpolate for monthly slides (skip global and total slides at indices 0 and 1)
-    const monthlyStartIndex = 2;
-    const adjustedProgress = Math.max(0, scrollProgress - monthlyStartIndex);
+    const monthlyCount = monthlyData.length;
     
-    if (monthlyData.length === 0) {
+    if (monthlyCount === 0) {
       return { carteira: 0, cdi: 0, ipca: 0 };
     }
     
-    const lowerIndex = Math.max(0, Math.min(Math.floor(adjustedProgress), monthlyData.length - 1));
-    const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
-    const t = adjustedProgress - Math.floor(adjustedProgress);
+    // If we're past monthly slides (on global or total), show last month data
+    if (scrollProgress >= monthlyCount) {
+      return monthlyData[monthlyCount - 1]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    }
+    
+    // Interpolate between monthly slides
+    const lowerIndex = Math.max(0, Math.min(Math.floor(scrollProgress), monthlyCount - 1));
+    const upperIndex = Math.min(lowerIndex + 1, monthlyCount - 1);
+    const t = scrollProgress - Math.floor(scrollProgress);
 
     const lowerStats = monthlyData[lowerIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
     const upperStats = monthlyData[upperIndex]?.stats || lowerStats;
-
-    // If we're on global or total slide, show first month data
-    if (scrollProgress < monthlyStartIndex) {
-      return monthlyData[0]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
-    }
 
     return {
       carteira: lowerStats.carteira + (upperStats.carteira - lowerStats.carteira) * t,
