@@ -48,6 +48,7 @@ import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
+import PatrimonioTotalCarousel from "@/components/PatrimonioTotalCarousel";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -982,6 +983,14 @@ const AppDashboard = () => {
                   </p>
                 </div>
               </div>
+
+              {/* Patrimônio Total Carousel */}
+              <PatrimonioTotalCarousel
+                totalInvestimentos={totalPatrimonioGeral}
+                totalGanhosInvestimentos={totalGanhosGeral}
+                showValues={showValues}
+                userName={userName}
+              />
 
               {/* Kadig AI Card */}
               <button
