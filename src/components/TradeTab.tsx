@@ -198,28 +198,60 @@ const TradeTab = ({
 
   return (
     <div className="flex-1 pb-20 bg-background">
-      {/* Header */}
-      <header className="p-4 safe-area-inset-top">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Kadig Trade</h1>
-          <div className="flex items-center gap-2">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50">
-              <HelpCircle className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={onToggleValues}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-muted/50"
+      {/* Header Premium */}
+      <header className="relative overflow-hidden">
+        {/* Background gradient effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative p-4 safe-area-inset-top">
+          <div className="flex items-center justify-between">
+            {/* Left side - Title with icon */}
+            <motion.div 
+              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
             >
-              {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-            </button>
-            <button 
-              onClick={() => setSearchOpen(!searchOpen)}
-              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                searchOpen ? "bg-muted text-foreground" : "bg-muted/50 text-muted-foreground"
-              }`}
-            >
-              <Search className="w-5 h-5" />
-            </button>
+              <div className="relative">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Kadig</span>
+                <span className="font-bold text-lg text-foreground bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Trade</span>
+              </div>
+            </motion.div>
+
+            {/* Right side - Action buttons */}
+            <div className="flex items-center gap-1">
+              <motion.button 
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </motion.button>
+              <motion.button 
+                onClick={onToggleValues}
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+              >
+                {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </motion.button>
+              <motion.button 
+                onClick={() => setSearchOpen(!searchOpen)}
+                whileTap={{ scale: 0.9 }}
+                className={`p-2.5 rounded-xl transition-all ${
+                  searchOpen 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                }`}
+              >
+                <Search className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
         </div>
       </header>
