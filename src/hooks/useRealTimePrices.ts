@@ -132,30 +132,38 @@ export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
     return priceData.economic;
   }, [priceData.economic]);
 
-  // Setup auto-refresh - only runs once on mount
+  // Setup auto-refresh - runs once on mount
   useEffect(() => {
-    if (!autoRefresh || hasInitializedRef.current) return;
+    if (!autoRefresh) return;
     
+    // Prevent multiple initializations
+    if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
     
-    // Initial fetch (only market data, not full refresh)
+    console.log("[useRealTimePrices] Initializing auto-refresh...");
+    
+    // Initial fetch (only market data, not full price refresh)
     fetchMarketData();
     
     // Setup interval for periodic refresh
-    intervalRef.current = setInterval(() => {
+    const intervalId = setInterval(() => {
       console.log("[useRealTimePrices] Auto-refresh triggered");
-      refreshPrices(false);
-      fetchMarketData();
+      refreshPrices(false).then((success) => {
+        if (success) {
+          fetchMarketData();
+        }
+      });
     }, refreshInterval);
+    
+    intervalRef.current = intervalId;
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      hasInitializedRef.current = false;
     };
-  }, [autoRefresh, refreshInterval]); // Removed function dependencies
+  }, [autoRefresh, refreshInterval, fetchMarketData, refreshPrices]);
 
   return {
     priceData,
