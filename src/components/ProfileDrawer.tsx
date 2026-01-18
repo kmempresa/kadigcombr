@@ -77,30 +77,34 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
       }
 
       const userId = session.user.id;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
+      const fileExt = (file.name.split(".").pop() || "png").toLowerCase();
+      const uniqueId = (globalThis.crypto && "randomUUID" in globalThis.crypto)
+        ? globalThis.crypto.randomUUID()
+        : `${Date.now()}`;
+      const fileName = `${userId}/avatar-${uniqueId}.${fileExt}`;
 
-      // Delete old avatar if exists
-      await supabase.storage
-        .from("avatars")
-        .remove([`${userId}/avatar.png`, `${userId}/avatar.jpg`, `${userId}/avatar.jpeg`, `${userId}/avatar.webp`]);
+      // Delete previous avatar if we can infer its path
+      const currentUrl = (userData?.profile?.avatar_url || formData.avatar_url || "").split("?")[0];
+      const marker = "/avatars/";
+      const idx = currentUrl.indexOf(marker);
+      if (idx !== -1) {
+        const oldPath = currentUrl.slice(idx + marker.length);
+        await supabase.storage.from("avatars").remove([oldPath]);
+      }
 
       // Upload new avatar
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { upsert: true, cacheControl: "0" });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL with cache busting
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
-      // Add cache-busting timestamp
-      const publicUrlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-
-      // Update profile with avatar URL (without cache bust for storage)
+      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
@@ -108,8 +112,10 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
 
       if (updateError) throw updateError;
 
-      // Use cache-busted URL for immediate display
-      setFormData(prev => ({ ...prev, avatar_url: publicUrlWithCacheBust }));
+      // Update UI immediately
+      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+      // allow selecting the same file again
+      event.target.value = "";
       toast.success("Foto de perfil atualizada!");
       onProfileUpdate?.();
     } catch (error) {
