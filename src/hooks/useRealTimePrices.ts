@@ -36,6 +36,13 @@ export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const onUpdateRef = useRef(onUpdate);
+  const hasInitializedRef = useRef(false);
+
+  // Keep onUpdate ref current without triggering re-renders
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  }, [onUpdate]);
 
   // Fetch all prices and update investments
   const refreshPrices = useCallback(async (showToast = true) => {
@@ -66,7 +73,8 @@ export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
         toast.success(`${data.updated} cotações atualizadas!`);
       }
       
-      onUpdate?.();
+      // Call onUpdate via ref to avoid dependency issues
+      onUpdateRef.current?.();
       return true;
     } catch (error) {
       console.error("[useRealTimePrices] Error:", error);
@@ -74,7 +82,7 @@ export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
     } finally {
       setIsUpdating(false);
     }
-  }, [onUpdate]);
+  }, []); // No dependencies - uses refs
 
   // Fetch individual price data (for display purposes)
   const fetchMarketData = useCallback(async () => {
@@ -124,25 +132,30 @@ export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
     return priceData.economic;
   }, [priceData.economic]);
 
-  // Setup auto-refresh
+  // Setup auto-refresh - only runs once on mount
   useEffect(() => {
-    if (autoRefresh) {
-      // Initial fetch
+    if (!autoRefresh || hasInitializedRef.current) return;
+    
+    hasInitializedRef.current = true;
+    
+    // Initial fetch (only market data, not full refresh)
+    fetchMarketData();
+    
+    // Setup interval for periodic refresh
+    intervalRef.current = setInterval(() => {
+      console.log("[useRealTimePrices] Auto-refresh triggered");
+      refreshPrices(false);
       fetchMarketData();
-      
-      // Setup interval
-      intervalRef.current = setInterval(() => {
-        refreshPrices(false);
-        fetchMarketData();
-      }, refreshInterval);
-    }
+    }, refreshInterval);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
+      hasInitializedRef.current = false;
     };
-  }, [autoRefresh, refreshInterval, refreshPrices, fetchMarketData]);
+  }, [autoRefresh, refreshInterval]); // Removed function dependencies
 
   return {
     priceData,

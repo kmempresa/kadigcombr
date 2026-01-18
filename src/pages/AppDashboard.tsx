@@ -179,13 +179,10 @@ const AppDashboard = () => {
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
 
-  // Real-time price updates hook
-  const { isUpdating: isPricesUpdating, refreshPrices, lastUpdateTime } = useRealTimePrices({
+  // Real-time price updates hook - no onUpdate to prevent infinite loops
+  const { isUpdating: isPricesUpdating, refreshPrices } = useRealTimePrices({
     autoRefresh: true,
     refreshInterval: 5 * 60 * 1000, // 5 minutes
-    onUpdate: () => {
-      fetchUserData(); // Refresh user data after prices update
-    }
   });
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false,
@@ -376,14 +373,14 @@ const AppDashboard = () => {
     fetchUserData();
 
     // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         navigate("/welcome");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, economicIndicators, refreshKey]);
+  }, [navigate, refreshKey]); // Removed economicIndicators to prevent unnecessary re-fetches
 
   // Generate monthly performance data - uses real history when available
   const generateMonthlyPerformance = (
@@ -693,7 +690,13 @@ const AppDashboard = () => {
               </button>
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => refreshPrices(true)}
+                  onClick={async () => {
+                    const success = await refreshPrices(true);
+                    if (success) {
+                      // Refresh user data after manual price update
+                      setRefreshKey(prev => prev + 1);
+                    }
+                  }}
                   disabled={isPricesUpdating}
                   className="p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                   title="Atualizar cotações"
