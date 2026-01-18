@@ -637,7 +637,7 @@ const AppDashboard = () => {
     return generateMonthlyPerformance(totalPatrimonio, totalGanhos, totalInvestido, economicIndicators);
   }, [totalPatrimonio, totalGanhos, totalInvestido, economicIndicators]);
 
-  // Combined carousel slides: Global Patrimony + Monthly data
+  // Combined carousel slides: Monthly data first, then Global Patrimony
   const carouselSlides = useMemo(() => {
     const globalSlide = {
       id: "global",
@@ -664,7 +664,8 @@ const AppDashboard = () => {
       },
     };
 
-    return [globalSlide, totalSlide, ...portfolioMonthlyData.map((d, i) => ({ ...d, id: `month-${i}`, type: "monthly" as const }))];
+    // Order: Monthly data (current first) → Global → Total
+    return [...portfolioMonthlyData.map((d, i) => ({ ...d, id: `month-${i}`, type: "monthly" as const })), globalSlide, totalSlide];
   }, [portfolioMonthlyData, totalPatrimonioGlobal, totalPatrimonioCompleto, totalPatrimonioGeral, totalGanhosGeral, globalAssets.length]);
 
   const currentData = portfolioMonthlyData[currentMonthIndex] || {
