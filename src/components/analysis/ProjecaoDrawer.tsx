@@ -82,8 +82,9 @@ const ProjecaoDrawer = ({
   const [globalAssets, setGlobalAssets] = useState<GlobalAsset[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<string>("carteira");
   const [showSelector, setShowSelector] = useState(false);
+  const [assetVolatility, setAssetVolatility] = useState<{ [ticker: string]: { change: number; volatility: number } }>({});
 
-  // Fetch data
+  // Fetch data including real market volatility
   useEffect(() => {
     const fetchData = async () => {
       if (!open) return;
@@ -135,12 +136,67 @@ const ProjecaoDrawer = ({
           setHistoricalReturns(returns);
         }
 
-        console.log("ProjecaoDrawer - Investments loaded:", investmentsResult.data?.length || 0);
-        console.log("ProjecaoDrawer - Global assets loaded:", globalResult.data?.length || 0, globalResult.data);
-        console.log("ProjecaoDrawer - Global assets error:", globalResult.error);
-        
-        setInvestments(investmentsResult.data || []);
+        const loadedInvestments = investmentsResult.data || [];
+        setInvestments(loadedInvestments);
         setGlobalAssets(globalResult.data || []);
+
+        // Fetch real volatility data for stocks and crypto
+        const stockTickers = loadedInvestments
+          .filter(inv => inv.ticker && ['Ações, Stocks e ETF', 'BDRs', 'FIIs e REITs'].includes(inv.asset_type))
+          .map(inv => inv.ticker)
+          .filter(Boolean);
+
+        if (stockTickers.length > 0) {
+          try {
+            const { data: marketData } = await supabase.functions.invoke('market-data', {
+              body: { type: 'all' }
+            });
+            
+            if (marketData?.stocks) {
+              const volatilityMap: { [ticker: string]: { change: number; volatility: number } } = {};
+              marketData.stocks.forEach((stock: any) => {
+                if (stock.symbol && stock.regularMarketChangePercent !== undefined) {
+                  // Estimate monthly volatility from daily change (rough approximation)
+                  volatilityMap[stock.symbol] = {
+                    change: stock.regularMarketChangePercent,
+                    volatility: Math.abs(stock.regularMarketChangePercent) * 2.5, // Scale daily to monthly estimate
+                  };
+                }
+              });
+              setAssetVolatility(volatilityMap);
+            }
+          } catch (e) {
+            console.error("Error fetching market volatility:", e);
+          }
+        }
+
+        // Fetch crypto prices with 24h changes
+        const cryptoInvestments = loadedInvestments.filter(inv => inv.asset_type === 'Criptoativos');
+        if (cryptoInvestments.length > 0) {
+          try {
+            const { data: cryptoData } = await supabase.functions.invoke('market-data', {
+              body: { type: 'crypto-prices' }
+            });
+            
+            if (cryptoData?.prices) {
+              const volatilityMap = { ...assetVolatility };
+              Object.entries(cryptoData.prices).forEach(([name, data]: [string, any]) => {
+                if (data.change24h !== undefined) {
+                  volatilityMap[name] = {
+                    change: data.change24h,
+                    volatility: Math.abs(data.change24h) * 3, // Crypto is more volatile
+                  };
+                }
+              });
+              setAssetVolatility(prev => ({ ...prev, ...volatilityMap }));
+            }
+          } catch (e) {
+            console.error("Error fetching crypto volatility:", e);
+          }
+        }
+
+        console.log("ProjecaoDrawer - Investments loaded:", loadedInvestments.length);
+        console.log("ProjecaoDrawer - Global assets loaded:", globalResult.data?.length || 0);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

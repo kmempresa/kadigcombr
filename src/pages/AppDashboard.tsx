@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
+import { useRealTimePrices } from "@/hooks/useRealTimePrices";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 // Lucide icons
@@ -27,7 +28,8 @@ import {
   Sparkles,
   Loader2,
   Search,
-  Globe
+  Globe,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -177,7 +179,14 @@ const AppDashboard = () => {
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
 
-  // Embla Carousel for swipeable monthly chart (now includes global patrimony slide)
+  // Real-time price updates hook
+  const { isUpdating: isPricesUpdating, refreshPrices, lastUpdateTime } = useRealTimePrices({
+    autoRefresh: true,
+    refreshInterval: 5 * 60 * 1000, // 5 minutes
+    onUpdate: () => {
+      fetchUserData(); // Refresh user data after prices update
+    }
+  });
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false,
     startIndex: 0, // Start at first slide (global patrimony)
@@ -269,158 +278,6 @@ const AppDashboard = () => {
     fetchEconomicIndicators();
   }, []);
 
-  // Update crypto and currency prices for investments
-  const updateInvestmentPrices = async (userId: string) => {
-    try {
-      console.log('Updating investment prices...');
-      
-      // Fetch all investments
-      const { data: investments } = await supabase
-        .from("investments")
-        .select("*")
-        .eq("user_id", userId);
-      
-      if (!investments || investments.length === 0) return;
-      
-      // Identify crypto and currency investments
-      const cryptoInvestments = investments.filter((inv: any) => 
-        inv.asset_type === 'Criptoativos'
-      );
-      const currencyInvestments = investments.filter((inv: any) => 
-        inv.asset_type === 'Moedas'
-      );
-      const stockInvestments = investments.filter((inv: any) => 
-        ['Ações, Stocks e ETF', 'BDRs', 'FIIs e REITs', 'Fundos'].includes(inv.asset_type)
-      );
-      
-      // Fetch crypto prices if needed
-      if (cryptoInvestments.length > 0) {
-        console.log(`Updating ${cryptoInvestments.length} crypto investments`);
-        const { data: cryptoData } = await supabase.functions.invoke('market-data', {
-          body: { type: 'crypto-prices' }
-        });
-        
-        if (cryptoData?.prices) {
-          for (const inv of cryptoInvestments) {
-            const priceData = cryptoData.prices[inv.asset_name];
-            if (priceData) {
-              const newCurrentPrice = priceData.price;
-              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
-              const gainPercent = inv.total_invested > 0 
-                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
-                : 0;
-              
-              await supabase.from("investments").update({
-                current_price: newCurrentPrice,
-                current_value: newCurrentValue,
-                gain_percent: gainPercent,
-                updated_at: new Date().toISOString(),
-              }).eq("id", inv.id);
-            }
-          }
-        }
-      }
-      
-      // Fetch currency prices if needed
-      if (currencyInvestments.length > 0) {
-        console.log(`Updating ${currencyInvestments.length} currency investments`);
-        const { data: currencyData } = await supabase.functions.invoke('market-data', {
-          body: { type: 'currency-prices' }
-        });
-        
-        if (currencyData?.prices) {
-          for (const inv of currencyInvestments) {
-            const priceData = currencyData.prices[inv.asset_name];
-            if (priceData) {
-              const newCurrentPrice = priceData.price;
-              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
-              const gainPercent = inv.total_invested > 0 
-                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
-                : 0;
-              
-              await supabase.from("investments").update({
-                current_price: newCurrentPrice,
-                current_value: newCurrentValue,
-                gain_percent: gainPercent,
-                updated_at: new Date().toISOString(),
-              }).eq("id", inv.id);
-            }
-          }
-        }
-      }
-      
-      // Fetch stock prices if needed
-      if (stockInvestments.length > 0) {
-        console.log(`Updating ${stockInvestments.length} stock investments`);
-        const { data: stockData } = await supabase.functions.invoke('market-data', {
-          body: { type: 'all' }
-        });
-        
-        if (stockData?.stocks) {
-          const stockPrices: { [key: string]: number } = {};
-          stockData.stocks.forEach((s: any) => {
-            if (s.regularMarketPrice > 0) {
-              stockPrices[s.symbol] = s.regularMarketPrice;
-            }
-          });
-          
-          for (const inv of stockInvestments) {
-            if (inv.ticker && stockPrices[inv.ticker]) {
-              const newCurrentPrice = stockPrices[inv.ticker];
-              const newCurrentValue = (inv.quantity || 1) * newCurrentPrice;
-              const gainPercent = inv.total_invested > 0 
-                ? ((newCurrentValue - inv.total_invested) / inv.total_invested) * 100 
-                : 0;
-              
-              await supabase.from("investments").update({
-                current_price: newCurrentPrice,
-                current_value: newCurrentValue,
-                gain_percent: gainPercent,
-                updated_at: new Date().toISOString(),
-              }).eq("id", inv.id);
-            }
-          }
-        }
-      }
-      
-      // Update portfolio totals
-      const { data: updatedInvestments } = await supabase
-        .from("investments")
-        .select("current_value, total_invested, portfolio_id")
-        .eq("user_id", userId);
-      
-      if (updatedInvestments && updatedInvestments.length > 0) {
-        // Group by portfolio
-        const portfolioTotals: { [key: string]: { value: number; invested: number } } = {};
-        updatedInvestments.forEach((inv: any) => {
-          if (!portfolioTotals[inv.portfolio_id]) {
-            portfolioTotals[inv.portfolio_id] = { value: 0, invested: 0 };
-          }
-          portfolioTotals[inv.portfolio_id].value += inv.current_value || 0;
-          portfolioTotals[inv.portfolio_id].invested += inv.total_invested || 0;
-        });
-        
-        // Update each portfolio
-        for (const [portfolioId, totals] of Object.entries(portfolioTotals)) {
-          const gain = totals.value - totals.invested;
-          const cdiPercent = totals.invested > 0 ? (gain / totals.invested) * 100 : 0;
-          
-          await supabase.from("portfolios").update({
-            total_value: totals.value,
-            total_gain: gain,
-            cdi_percent: cdiPercent,
-            updated_at: new Date().toISOString(),
-          }).eq("id", portfolioId);
-        }
-      }
-      
-      console.log('Investment prices updated successfully');
-      toast.success("Cotações atualizadas!");
-    } catch (error) {
-      console.error('Error updating investment prices:', error);
-    }
-  };
-
   // Fetch all user data from database
   const fetchUserData = async () => {
     try {
@@ -442,7 +299,7 @@ const AppDashboard = () => {
 
       // Update investment prices in background (only on first load)
       if (!userData) {
-        updateInvestmentPrices(userId);
+        refreshPrices(false); // Silent refresh
       }
 
       // Calculate date 3 months ago for history fetch
@@ -834,7 +691,15 @@ const AppDashboard = () => {
                   Patrimônio {userName}
                 </span>
               </button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => refreshPrices(true)}
+                  disabled={isPricesUpdating}
+                  className="p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  title="Atualizar cotações"
+                >
+                  <RefreshCw className={`w-5 h-5 ${isPricesUpdating ? 'animate-spin' : ''}`} />
+                </button>
                 <button className="p-2 text-muted-foreground">
                   <Bell className="w-5 h-5" />
                 </button>
