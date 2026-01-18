@@ -153,7 +153,7 @@ const AppDashboard = () => {
   const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
   const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
   const [showValues, setShowValues] = useState(true);
-  const [currentMonthIndex, setCurrentMonthIndex] = useState(2);
+  const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // 0 = current month (first slide)
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [patrimonioDrawerOpen, setPatrimonioDrawerOpen] = useState(false);
   const [adicionarDrawerOpen, setAdicionarDrawerOpen] = useState(false);
