@@ -92,12 +92,15 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL with cache busting
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
-      // Update profile with avatar URL
+      // Add cache-busting timestamp
+      const publicUrlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
+
+      // Update profile with avatar URL (without cache bust for storage)
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: publicUrl })
@@ -105,7 +108,8 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
 
       if (updateError) throw updateError;
 
-      setFormData(prev => ({ ...prev, avatar_url: publicUrl }));
+      // Use cache-busted URL for immediate display
+      setFormData(prev => ({ ...prev, avatar_url: publicUrlWithCacheBust }));
       toast.success("Foto de perfil atualizada!");
       onProfileUpdate?.();
     } catch (error) {
