@@ -2112,19 +2112,19 @@ const AppDashboard = () => {
             }}
           />
 
-          {/* Spinning logo */}
+          {/* Spinning Kadig logo */}
           <motion.div className="relative z-10 mb-6">
-            <motion.div
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/30"
+            <motion.img
+              src={kadigLogo}
+              alt="Kadig"
+              className="w-24 h-24 object-contain drop-shadow-2xl"
               animate={{ rotate: 360 }}
               transition={{
-                duration: 3,
+                duration: 2,
                 repeat: Infinity,
                 ease: "linear",
               }}
-            >
-              <Link2 className="w-10 h-10 text-white" />
-            </motion.div>
+            />
           </motion.div>
 
           {/* Em breve text */}
