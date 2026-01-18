@@ -222,14 +222,26 @@ const ProjecaoDrawer = ({
       });
     });
 
-    // Add individual investments (top 5 by value)
-    investments.slice(0, 5).forEach(inv => {
+    // Add ALL individual investments
+    investments.forEach(inv => {
+      const assetTypeIcons: { [key: string]: React.ReactNode } = {
+        "Ação": <TrendingUp className="w-5 h-5" />,
+        "Ações, Stocks e ETF": <TrendingUp className="w-5 h-5" />,
+        "FIIs e REITs": <Building2 className="w-5 h-5" />,
+        "Criptoativos": <Bitcoin className="w-5 h-5" />,
+        "Renda Fixa": <Landmark className="w-5 h-5" />,
+        "Tesouro Direto": <Landmark className="w-5 h-5" />,
+        "Moedas": <Coins className="w-5 h-5" />,
+        "Conta Corrente": <Wallet className="w-5 h-5" />,
+        "BDRs": <Globe className="w-5 h-5" />,
+        "Fundos": <PieChart className="w-5 h-5" />,
+      };
       items.push({
         id: `asset_${inv.id}`,
-        name: inv.asset_name,
+        name: inv.ticker ? `${inv.ticker} - ${inv.asset_name}` : inv.asset_name,
         value: inv.current_value,
         type: "asset",
-        icon: <TrendingUp className="w-5 h-5" />,
+        icon: assetTypeIcons[inv.asset_type] || <TrendingUp className="w-5 h-5" />,
         color: "from-rose-400 to-pink-500",
       });
     });
