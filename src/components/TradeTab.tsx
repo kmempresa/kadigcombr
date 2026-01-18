@@ -61,6 +61,8 @@ const TradeTab = ({
   const [maioresAltas, setMaioresAltas] = useState<StockQuote[]>([]);
   const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
+  const [globalPatrimonio, setGlobalPatrimonio] = useState(0);
+  const [loadingGlobalPatrimonio, setLoadingGlobalPatrimonio] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('kadig-favorites');
     return saved ? JSON.parse(saved) : [];
@@ -111,6 +113,34 @@ const TradeTab = ({
       fetchMarketStocks();
       const interval = setInterval(fetchMarketStocks, 30000);
       return () => clearInterval(interval);
+    }
+  }, [activeTab]);
+
+  const fetchGlobalPatrimonio = async () => {
+    setLoadingGlobalPatrimonio(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from("global_assets")
+        .select("value_brl")
+        .eq("user_id", session.user.id);
+
+      if (error) throw error;
+
+      const total = (data || []).reduce((sum: number, row: any) => sum + Number(row.value_brl || 0), 0);
+      setGlobalPatrimonio(total);
+    } catch (error) {
+      console.error("Error fetching global patrimony:", error);
+    } finally {
+      setLoadingGlobalPatrimonio(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "patrimonio" || activeTab === "meus-ativos") {
+      fetchGlobalPatrimonio();
     }
   }, [activeTab]);
 
@@ -405,6 +435,30 @@ const TradeTab = ({
                 <span className="text-xs text-muted-foreground">
                   Última atualização: {lastUpdate}
                 </span>
+              </div>
+            </div>
+
+            {/* Section Title */}
+            <div className="px-4 pb-3">
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl p-4 border border-border">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Patrimônio total</p>
+                    <p className="text-[11px] text-muted-foreground">Bolsa + Global</p>
+                  </div>
+                  <div className="text-right">
+                    {loadingGlobalPatrimonio ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    ) : (
+                      <p className="text-lg font-semibold text-foreground tabular-nums">
+                        {showValues ? formatPrice(portfolios.reduce((s, p) => s + (p.total_value || 0), 0) + globalPatrimonio) : "R$ ••••••"}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">
+                      Global: {showValues ? formatPrice(globalPatrimonio) : "R$ ••••••"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
