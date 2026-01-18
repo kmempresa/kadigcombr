@@ -662,7 +662,7 @@ const AdicionarInvestimento = () => {
           }
           
           // Insert investment
-          const { error: investmentError } = await supabase.from('investments').insert({
+          const { data: newInvestment, error: investmentError } = await supabase.from('investments').insert({
             user_id: userId,
             portfolio_id: portfolioId,
             asset_name: assetName,
@@ -675,13 +675,41 @@ const AdicionarInvestimento = () => {
             current_value: currentValue,
             gain_percent: gainPercent,
             maturity_date: currentFlow === "renda_fixa" ? maturityDate : null,
-          });
+          }).select('id').single();
           
           if (investmentError) {
             console.error("Error inserting investment:", investmentError);
             toast.error("Erro ao salvar investimento");
             return;
           }
+          
+          // Get portfolio name for movement record
+          const { data: portfolioData } = await supabase
+            .from('portfolios')
+            .select('name')
+            .eq('id', portfolioId)
+            .single();
+          
+          // Record the movement for "extrato"
+          const movementDate = currentFlow === "renda_fixa" ? startDate : 
+                              (currentFlow === "cripto" || currentFlow === "moeda") ? purchaseDate :
+                              purchaseDate || new Date().toISOString().split('T')[0];
+          
+          await supabase.from('movements').insert({
+            user_id: userId,
+            portfolio_id: portfolioId,
+            investment_id: newInvestment?.id || null,
+            type: 'aplicacao',
+            asset_name: assetName,
+            ticker: ticker,
+            asset_type: assetTypeLabel,
+            quantity: qty,
+            unit_price: price,
+            total_value: totalInvested,
+            portfolio_name: portfolioData?.name || 'Minha Carteira',
+            notes: `Aplicação inicial - ${selectedInstituicao}`,
+            movement_date: movementDate || new Date().toISOString().split('T')[0],
+          });
           
           // Update portfolio totals
           const newTotalValue = Number(currentPortfolioValue) + currentValue;
