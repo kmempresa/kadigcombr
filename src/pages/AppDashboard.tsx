@@ -179,10 +179,16 @@ const AppDashboard = () => {
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
 
-  // Real-time price updates hook - no onUpdate to prevent infinite loops
-  const { isUpdating: isPricesUpdating, refreshPrices } = useRealTimePrices({
+  // Real-time price updates hook with callback to refresh data
+  const handlePriceUpdate = useCallback(() => {
+    console.log("[AppDashboard] Prices updated, refreshing data...");
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  const { isUpdating: isPricesUpdating, refreshPrices, lastUpdateTime } = useRealTimePrices({
     autoRefresh: true,
     refreshInterval: 5 * 60 * 1000, // 5 minutes
+    onUpdate: handlePriceUpdate,
   });
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false,
