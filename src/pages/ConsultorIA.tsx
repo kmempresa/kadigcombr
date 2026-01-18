@@ -211,9 +211,24 @@ const ConsultorIA = () => {
   const themeClass = theme === "light" ? "light-theme" : "";
 
   return (
-    <div className={`${themeClass} h-screen bg-gradient-to-b from-background to-card flex flex-col overflow-hidden fixed inset-0`}>
+    <div 
+      className={`${themeClass} bg-gradient-to-b from-background to-card flex flex-col`}
+      style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        bottom: 0, 
+        overflow: 'hidden',
+        height: '100%',
+        width: '100%'
+      }}
+    >
       {/* Minimal Header - Fixed */}
-      <header className="flex-shrink-0 flex items-center justify-between px-5 py-4 safe-area-inset-top bg-gradient-to-b from-background to-transparent">
+      <header 
+        className="flex items-center justify-between px-5 py-4 safe-area-inset-top bg-gradient-to-b from-background to-transparent"
+        style={{ flexShrink: 0, position: 'relative', zIndex: 10 }}
+      >
         <button
           onClick={() => navigate("/app")}
           className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all"
@@ -240,7 +255,16 @@ const ConsultorIA = () => {
       </header>
 
       {/* Messages Area - Scrollable */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-6">
+      <div 
+        className="px-5 py-4 space-y-6"
+        style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+          position: 'relative'
+        }}
+      >
         <AnimatePresence>
           {messages.map((message) => (
             <motion.div
@@ -347,7 +371,10 @@ const ConsultorIA = () => {
       </div>
 
       {/* Modern Input Area - Fixed */}
-      <div className="flex-shrink-0 p-4 safe-area-inset-bottom bg-gradient-to-t from-card to-transparent">
+      <div 
+        className="p-4 safe-area-inset-bottom bg-gradient-to-t from-card to-transparent"
+        style={{ flexShrink: 0, position: 'relative', zIndex: 10 }}
+      >
         <div className="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 p-2">
           <div className="flex items-end gap-2">
             <button className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all flex-shrink-0">
