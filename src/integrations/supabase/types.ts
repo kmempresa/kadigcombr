@@ -73,6 +73,48 @@ export type Database = {
           },
         ]
       }
+      global_assets: {
+        Row: {
+          category: string
+          created_at: string
+          currency: string
+          exchange_rate: number | null
+          id: string
+          name: string
+          notes: string | null
+          original_value: number
+          updated_at: string
+          user_id: string
+          value_brl: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          currency?: string
+          exchange_rate?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          original_value?: number
+          updated_at?: string
+          user_id: string
+          value_brl?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          currency?: string
+          exchange_rate?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          original_value?: number
+          updated_at?: string
+          user_id?: string
+          value_brl?: number
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
