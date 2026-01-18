@@ -178,11 +178,11 @@ const AppDashboard = () => {
   // Embla Carousel for swipeable monthly chart (now includes global patrimony slide)
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false,
-    startIndex: 3, // Start at the most recent month (after global slide)
+    startIndex: 0, // Start at first slide (global patrimony)
     dragFree: false,
   });
-  const [selectedIndex, setSelectedIndex] = useState(3);
-  const [scrollProgress, setScrollProgress] = useState(3); // Float index for smooth interpolation
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0); // Float index for smooth interpolation
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -209,37 +209,32 @@ const AppDashboard = () => {
     };
   }, [emblaApi, onSelect, onScroll]);
 
-  // Interpolate stats values based on scroll progress
+  // Interpolate stats values based on scroll progress - uses monthlyData from state
   const interpolatedStats = useMemo(() => {
-    const lowerIndex = Math.floor(scrollProgress);
+    // Only interpolate for monthly slides (skip global and total slides at indices 0 and 1)
+    const monthlyStartIndex = 2;
+    const adjustedProgress = Math.max(0, scrollProgress - monthlyStartIndex);
+    
+    if (monthlyData.length === 0) {
+      return { carteira: 0, cdi: 0, ipca: 0 };
+    }
+    
+    const lowerIndex = Math.max(0, Math.min(Math.floor(adjustedProgress), monthlyData.length - 1));
     const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
-    const t = scrollProgress - lowerIndex;
+    const t = adjustedProgress - Math.floor(adjustedProgress);
 
     const lowerStats = monthlyData[lowerIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
-    const upperStats = monthlyData[upperIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    const upperStats = monthlyData[upperIndex]?.stats || lowerStats;
+
+    // If we're on global or total slide, show first month data
+    if (scrollProgress < monthlyStartIndex) {
+      return monthlyData[0]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    }
 
     return {
       carteira: lowerStats.carteira + (upperStats.carteira - lowerStats.carteira) * t,
       cdi: lowerStats.cdi + (upperStats.cdi - lowerStats.cdi) * t,
       ipca: lowerStats.ipca + (upperStats.ipca - lowerStats.ipca) * t,
-    };
-  }, [scrollProgress, monthlyData]);
-
-  const interpolatedCenter = useMemo(() => {
-    const lowerIndex = Math.floor(scrollProgress);
-    const upperIndex = Math.min(lowerIndex + 1, monthlyData.length - 1);
-    const t = scrollProgress - lowerIndex;
-
-    const lower = monthlyData[lowerIndex] || monthlyData[0];
-    const upper = monthlyData[upperIndex] || lower;
-
-    const month = t < 0.5 ? lower?.month : upper?.month;
-
-    return {
-      month: month || "---",
-      value: (lower?.value ?? 0) + ((upper?.value ?? 0) - (lower?.value ?? 0)) * t,
-      gain: (lower?.gain ?? 0) + ((upper?.gain ?? 0) - (lower?.gain ?? 0)) * t,
-      cdiPercent: (lower?.cdiPercent ?? 0) + ((upper?.cdiPercent ?? 0) - (lower?.cdiPercent ?? 0)) * t,
     };
   }, [scrollProgress, monthlyData]);
 
