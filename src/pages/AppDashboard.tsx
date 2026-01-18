@@ -52,6 +52,7 @@ import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
+import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -177,6 +178,7 @@ const AppDashboard = () => {
   const [extratoSearch, setExtratoSearch] = useState("");
   const [supportDrawerOpen, setSupportDrawerOpen] = useState(false);
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
+  const [globalPatrimonioDrawerOpen, setGlobalPatrimonioDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
 
   // Real-time price updates hook with callback to refresh data
@@ -558,21 +560,34 @@ const AppDashboard = () => {
     }
   }, [activePortfolioId]);
 
+  // Fetch global assets function
+  const fetchGlobalAssets = useCallback(async () => {
+    if (!userData?.id) return;
+    const { data } = await supabase
+      .from("global_assets")
+      .select("id, name, category, value_brl")
+      .eq("user_id", userData.id)
+      .order("value_brl", { ascending: false });
+    if (data) setGlobalAssets(data);
+  }, [userData?.id]);
+
   useEffect(() => {
     if (userData?.id) {
       fetchMovements();
-      // Fetch global assets
-      const fetchGlobalAssets = async () => {
-        const { data } = await supabase
-          .from("global_assets")
-          .select("id, name, category, value_brl")
-          .eq("user_id", userData.id)
-          .order("value_brl", { ascending: false });
-        if (data) setGlobalAssets(data);
-      };
       fetchGlobalAssets();
     }
-  }, [userData?.id, refreshKey]);
+  }, [userData?.id, refreshKey, fetchGlobalAssets]);
+
+  // Re-fetch global assets when page becomes visible (user returning from add page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && userData?.id) {
+        fetchGlobalAssets();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [userData?.id, fetchGlobalAssets]);
   
   // Filter investments by selected portfolio
   const filteredInvestments = activePortfolioId 
@@ -762,7 +777,12 @@ const AppDashboard = () => {
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
                   {carouselSlides.map((slide, index) => (
-                    <div key={slide.id || index} className="flex-[0_0_100%] min-w-0">
+                    <div 
+                      key={slide.id || index} 
+                      className="flex-[0_0_100%] min-w-0"
+                      onClick={() => slide.type === "global" && setGlobalPatrimonioDrawerOpen(true)}
+                      style={{ cursor: slide.type === "global" ? "pointer" : "default" }}
+                    >
                       <div className="relative flex items-center justify-center py-8">
                         <div className="relative w-72 h-72">
                           {/* SVG Chart */}
@@ -2206,6 +2226,13 @@ const AppDashboard = () => {
       <SecurityDrawer
         open={securityDrawerOpen}
         onOpenChange={setSecurityDrawerOpen}
+      />
+
+      <GlobalPatrimonioDrawer
+        open={globalPatrimonioDrawerOpen}
+        onOpenChange={setGlobalPatrimonioDrawerOpen}
+        showValues={showValues}
+        onUpdate={fetchGlobalAssets}
       />
     </div>
   );

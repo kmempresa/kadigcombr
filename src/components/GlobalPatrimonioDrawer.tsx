@@ -27,6 +27,7 @@ interface GlobalPatrimonioDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   showValues: boolean;
+  onUpdate?: () => void;
 }
 
 const CURRENCIES = [
@@ -56,6 +57,7 @@ const GlobalPatrimonioDrawer = ({
   open,
   onOpenChange,
   showValues,
+  onUpdate,
 }: GlobalPatrimonioDrawerProps) => {
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
@@ -175,6 +177,7 @@ const GlobalPatrimonioDrawer = ({
       
       toast.success("Patrimônio excluído!");
       fetchAssets();
+      onUpdate?.();
     } catch (error) {
       console.error("Error deleting asset:", error);
       toast.error("Erro ao excluir patrimônio");
@@ -230,6 +233,7 @@ const GlobalPatrimonioDrawer = ({
       setShowAddForm(false);
       resetForm();
       fetchAssets();
+      onUpdate?.();
     } catch (error) {
       console.error("Error saving asset:", error);
       toast.error("Erro ao salvar patrimônio");
