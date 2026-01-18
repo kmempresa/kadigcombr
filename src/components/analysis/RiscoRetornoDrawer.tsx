@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, HelpCircle, Info, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -108,6 +109,8 @@ export default function RiscoRetornoDrawer({
   totalInvested,
   economicIndicators
 }: RiscoRetornoDrawerProps) {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativos'>('carteira');
   const [loading, setLoading] = useState(false);
   const [marketAnalysis, setMarketAnalysis] = useState<Map<string, MarketAnalysis>>(new Map());
@@ -252,7 +255,7 @@ export default function RiscoRetornoDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-background light-theme">
+      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
