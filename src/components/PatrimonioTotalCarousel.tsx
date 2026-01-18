@@ -175,8 +175,18 @@ const PatrimonioTotalCarousel = ({
 
   // Interpolate between slides for smooth animation
   const interpolatedData = useMemo(() => {
+    if (slides.length === 0) {
+      return {
+        value: 0,
+        gain: 0,
+        title: "INVESTIMENTOS",
+        subtitle: undefined,
+        showGain: true,
+      };
+    }
+
     const floatIndex = scrollProgress * (slides.length - 1);
-    const lowerIndex = Math.floor(floatIndex);
+    const lowerIndex = Math.max(0, Math.min(Math.floor(floatIndex), slides.length - 1));
     const upperIndex = Math.min(lowerIndex + 1, slides.length - 1);
     const t = floatIndex - lowerIndex;
 
@@ -185,11 +195,21 @@ const PatrimonioTotalCarousel = ({
     const lower = slides[lowerIndex];
     const upper = slides[upperIndex];
 
+    if (!lower || !upper) {
+      return {
+        value: slides[0]?.value ?? 0,
+        gain: slides[0]?.gain ?? 0,
+        title: slides[0]?.title ?? "INVESTIMENTOS",
+        subtitle: undefined,
+        showGain: true,
+      };
+    }
+
     return {
       value: lerp(lower.value, upper.value),
       gain: lerp(lower.gain ?? 0, upper.gain ?? 0),
-      title: selectedIndex === 0 ? slides[0].title : slides[1].title,
-      subtitle: selectedIndex === 1 ? slides[1].subtitle : undefined,
+      title: selectedIndex === 0 ? slides[0].title : slides[1]?.title ?? slides[0].title,
+      subtitle: selectedIndex === 1 ? slides[1]?.subtitle : undefined,
       showGain: selectedIndex === 0,
     };
   }, [scrollProgress, slides, selectedIndex]);
