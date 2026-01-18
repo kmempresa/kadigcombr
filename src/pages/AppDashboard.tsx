@@ -2069,6 +2069,7 @@ const AppDashboard = () => {
         open={adicionarDrawerOpen}
         onClose={() => setAdicionarDrawerOpen(false)}
         onNavigate={(path) => navigate(path)}
+        showValues={showValues}
       />
 
       {/* Investment Edit Drawer */}

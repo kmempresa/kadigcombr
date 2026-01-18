@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, 
@@ -7,16 +8,27 @@ import {
   FileInput, 
   Upload, 
   ArrowRightLeft, 
-  Trash2 
+  Trash2,
+  Globe
 } from "lucide-react";
+import GlobalPatrimonioDrawer from "./GlobalPatrimonioDrawer";
 
 interface AdicionarDrawerProps {
   open: boolean;
   onClose: () => void;
   onNavigate: (path: string) => void;
+  showValues?: boolean;
 }
 
 const menuItems = [
+  {
+    id: "patrimonio-global",
+    title: "Patrimônio Global",
+    description: "Adicione imóveis, veículos, empresas e outros bens com conversão automática de moedas.",
+    icon: Globe,
+    color: "bg-violet-500",
+    path: "patrimonio-global"
+  },
   {
     id: "novo-ativo",
     title: "Adicionar novo ativo",
@@ -67,8 +79,14 @@ const menuItems = [
   }
 ];
 
-const AdicionarDrawer = ({ open, onClose, onNavigate }: AdicionarDrawerProps) => {
+const AdicionarDrawer = ({ open, onClose, onNavigate, showValues = true }: AdicionarDrawerProps) => {
+  const [globalPatrimonioOpen, setGlobalPatrimonioOpen] = useState(false);
+
   const handleItemClick = (path: string) => {
+    if (path === "patrimonio-global") {
+      setGlobalPatrimonioOpen(true);
+      return;
+    }
     onClose();
     onNavigate(path);
   };
@@ -140,6 +158,13 @@ const AdicionarDrawer = ({ open, onClose, onNavigate }: AdicionarDrawerProps) =>
           </motion.div>
         </>
       )}
+
+      {/* Global Patrimonio Drawer */}
+      <GlobalPatrimonioDrawer
+        open={globalPatrimonioOpen}
+        onOpenChange={setGlobalPatrimonioOpen}
+        showValues={showValues}
+      />
     </AnimatePresence>
   );
 };
