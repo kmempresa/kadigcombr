@@ -199,13 +199,13 @@ const TradeTab = ({
   return (
     <div className="flex-1 pb-20 bg-background">
       {/* Header Premium */}
-      <header className="relative overflow-hidden">
+      <header className="relative overflow-hidden pt-safe">
         {/* Background gradient effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute top-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
         
-        <div className="relative p-4 safe-area-inset-top">
+        <div className="relative px-4 pb-4 pt-2">
           <div className="flex items-center justify-between">
             {/* Left side - Title with icon */}
             <motion.div 
