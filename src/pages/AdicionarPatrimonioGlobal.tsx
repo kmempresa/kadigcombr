@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 // Categorias de patrimônio
 const categorias = [
@@ -48,9 +49,11 @@ const moedas = [
 
 const AdicionarPatrimonioGlobal = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [step, setStep] = useState(1);
   const [userId, setUserId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   // Step 1 - Categoria
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
@@ -78,6 +81,7 @@ const AdicionarPatrimonioGlobal = () => {
         return;
       }
       setUserId(session.user.id);
+      setLoading(false);
     };
     checkAuth();
   }, [navigate]);
@@ -543,43 +547,43 @@ const AdicionarPatrimonioGlobal = () => {
     );
   };
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
+  if (loading) {
+    return (
+      <div className={`${themeClass} min-h-screen bg-background flex items-center justify-center`}>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col">
+    <div className={`${themeClass} min-h-screen bg-background`}>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4 safe-area-inset-top">
+      <header className="flex items-center gap-4 px-4 py-4 border-b border-border safe-area-inset-top">
         <button
           onClick={handleBack}
-          className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center"
+          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        
-        <div className="flex items-center gap-2">
-          <Globe className="w-5 h-5 text-primary" />
+        <div className="flex-1">
           <h1 className="font-semibold text-foreground">Patrimônio Global</h1>
+          <p className="text-sm text-muted-foreground">Passo {step} de {totalSteps}</p>
         </div>
-
-        <div className="w-10" />
       </header>
 
-      {/* Progress bar */}
-      <div className="px-4 mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-muted-foreground">Passo {step} de {totalSteps}</span>
-          <span className="text-sm font-medium text-primary">{Math.round((step / totalSteps) * 100)}%</span>
-        </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-primary to-accent"
-            initial={{ width: 0 }}
-            animate={{ width: `${(step / totalSteps) * 100}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
+      {/* Progress */}
+      <div className="h-1 bg-muted">
+        <motion.div
+          className="h-full bg-primary"
+          initial={{ width: 0 }}
+          animate={{ width: `${(step / totalSteps) * 100}%` }}
+        />
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 pb-32 overflow-y-auto">
+      <div className="p-4 pb-32">
         <AnimatePresence mode="wait">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
@@ -589,7 +593,7 @@ const AdicionarPatrimonioGlobal = () => {
       </div>
 
       {/* Bottom action */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent pt-8 safe-area-inset-bottom">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-inset-bottom">
         {step < totalSteps ? (
           <motion.button
             whileTap={{ scale: 0.98 }}
@@ -604,7 +608,7 @@ const AdicionarPatrimonioGlobal = () => {
             whileTap={{ scale: 0.98 }}
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-2xl p-4 font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-primary text-primary-foreground rounded-2xl p-4 font-semibold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSaving ? (
               <>
