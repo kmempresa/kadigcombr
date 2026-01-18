@@ -2,3 +2,15 @@ project_id = "purbhxibouvtmgtsoidh"
 
 [functions.kadig-ai-chat]
 verify_jwt = false
+
+[functions.market-data]
+verify_jwt = false
+
+[functions.market-analysis]
+verify_jwt = false
+
+[functions.update-prices]
+verify_jwt = false
+
+[functions.portfolio-snapshot]
+verify_jwt = false
