@@ -26,7 +26,8 @@ import {
   LogOut,
   Sparkles,
   Loader2,
-  Search
+  Search,
+  Globe
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -48,7 +49,6 @@ import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
-import PatrimonioTotalCarousel from "@/components/PatrimonioTotalCarousel";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -173,15 +173,16 @@ const AppDashboard = () => {
   const [extratoSearch, setExtratoSearch] = useState("");
   const [supportDrawerOpen, setSupportDrawerOpen] = useState(false);
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
+  const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
 
-  // Embla Carousel for swipeable monthly chart
+  // Embla Carousel for swipeable monthly chart (now includes global patrimony slide)
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false,
-    startIndex: 2, // Start at the most recent month
+    startIndex: 3, // Start at the most recent month (after global slide)
     dragFree: false,
   });
-  const [selectedIndex, setSelectedIndex] = useState(2);
-  const [scrollProgress, setScrollProgress] = useState(2); // Float index for smooth interpolation
+  const [selectedIndex, setSelectedIndex] = useState(3);
+  const [scrollProgress, setScrollProgress] = useState(3); // Float index for smooth interpolation
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -191,7 +192,7 @@ const AppDashboard = () => {
   const onScroll = useCallback(() => {
     if (!emblaApi) return;
     const progress = emblaApi.scrollProgress();
-    const totalSlides = monthlyData.length;
+    const totalSlides = emblaApi.scrollSnapList().length;
     const floatIndex = progress * (totalSlides - 1);
     setScrollProgress(floatIndex);
   }, [emblaApi]);
@@ -703,6 +704,16 @@ const AppDashboard = () => {
   useEffect(() => {
     if (userData?.id) {
       fetchMovements();
+      // Fetch global assets
+      const fetchGlobalAssets = async () => {
+        const { data } = await supabase
+          .from("global_assets")
+          .select("id, name, category, value_brl")
+          .eq("user_id", userData.id)
+          .order("value_brl", { ascending: false });
+        if (data) setGlobalAssets(data);
+      };
+      fetchGlobalAssets();
     }
   }, [userData?.id, refreshKey]);
   
@@ -721,6 +732,10 @@ const AppDashboard = () => {
   const totalPatrimonioGeral = userData?.portfolios.reduce((sum, p) => sum + p.total_value, 0) || 0;
   const totalGanhosGeral = userData?.portfolios.reduce((sum, p) => sum + p.total_gain, 0) || 0;
   const totalInvestidoGeral = userData?.investments.reduce((sum, inv) => sum + inv.total_invested, 0) || 0;
+  
+  // Global assets total
+  const totalPatrimonioGlobal = globalAssets.reduce((sum, a) => sum + a.value_brl, 0);
+  const totalPatrimonioCompleto = totalPatrimonioGeral + totalPatrimonioGlobal;
   
   const userName = userData?.profile?.full_name?.split(" ")[0] || userData?.email?.split("@")[0] || "";
 
@@ -749,6 +764,36 @@ const AppDashboard = () => {
   const portfolioMonthlyData = useMemo(() => {
     return generateMonthlyPerformance(totalPatrimonio, totalGanhos, totalInvestido, economicIndicators);
   }, [totalPatrimonio, totalGanhos, totalInvestido, economicIndicators]);
+
+  // Combined carousel slides: Global Patrimony + Monthly data
+  const carouselSlides = useMemo(() => {
+    const globalSlide = {
+      id: "global",
+      type: "global" as const,
+      month: "PATRIMÔNIO GLOBAL",
+      value: totalPatrimonioGlobal,
+      gain: 0,
+      cdiPercent: 0,
+      stats: { carteira: 0, cdi: 0, ipca: 0 },
+      globalAssetsCount: globalAssets.length,
+    };
+    
+    const totalSlide = {
+      id: "total",
+      type: "total" as const,
+      month: "PATRIMÔNIO TOTAL",
+      value: totalPatrimonioCompleto,
+      gain: totalGanhosGeral,
+      cdiPercent: 0,
+      stats: { carteira: 0, cdi: 0, ipca: 0 },
+      breakdown: {
+        investimentos: totalPatrimonioGeral,
+        global: totalPatrimonioGlobal,
+      },
+    };
+
+    return [globalSlide, totalSlide, ...portfolioMonthlyData.map((d, i) => ({ ...d, id: `month-${i}`, type: "monthly" as const }))];
+  }, [portfolioMonthlyData, totalPatrimonioGlobal, totalPatrimonioCompleto, totalPatrimonioGeral, totalGanhosGeral, globalAssets.length]);
 
   const currentData = portfolioMonthlyData[currentMonthIndex] || {
     month: "---",
@@ -845,89 +890,163 @@ const AppDashboard = () => {
               {/* Swipeable Chart Section */}
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
-                  {monthlyData.map((data, index) => (
-                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                  {carouselSlides.map((slide, index) => (
+                    <div key={slide.id || index} className="flex-[0_0_100%] min-w-0">
                       <div className="relative flex items-center justify-center py-8">
                         <div className="relative w-72 h-72">
-                          {
-                            (() => {
-                              return (
-                                <svg viewBox="0 0 200 200" className="w-full h-full">
-                                  <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+                          {/* SVG Chart */}
+                          <svg viewBox="0 0 200 200" className="w-full h-full">
+                            <circle cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
 
-                                  <motion.circle
-                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
-                                    strokeDasharray={interpolatedSegments.carteira.dasharray}
-                                    strokeDashoffset={interpolatedSegments.carteira.offset}
-                                    strokeLinecap="round"
-                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                    animate={{
-                                      strokeDasharray: interpolatedSegments.carteira.dasharray,
-                                      strokeDashoffset: interpolatedSegments.carteira.offset,
-                                    }}
-                                    transition={{ type: 'tween', duration: 0.08 }}
-                                  />
-
-                                  <motion.circle
-                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
-                                    strokeDasharray={interpolatedSegments.cdi.dasharray}
-                                    strokeDashoffset={interpolatedSegments.cdi.offset}
-                                    strokeLinecap="round"
-                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                    animate={{
-                                      strokeDasharray: interpolatedSegments.cdi.dasharray,
-                                      strokeDashoffset: interpolatedSegments.cdi.offset,
-                                    }}
-                                    transition={{ type: 'tween', duration: 0.08 }}
-                                  />
-
-                                  <motion.circle
-                                    cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
-                                    strokeDasharray={interpolatedSegments.ipca.dasharray}
-                                    strokeDashoffset={interpolatedSegments.ipca.offset}
-                                    strokeLinecap="round"
-                                    style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                    animate={{
-                                      strokeDasharray: interpolatedSegments.ipca.dasharray,
-                                      strokeDashoffset: interpolatedSegments.ipca.offset,
-                                    }}
-                                    transition={{ type: 'tween', duration: 0.08 }}
-                                  />
-                                </svg>
-                              );
-                            })()
-                          }
+                            {slide.type === "global" ? (
+                              // Global patrimony - single purple ring
+                              <motion.circle
+                                cx="100" cy="100" r="85" fill="none" 
+                                stroke="hsl(var(--primary))" 
+                                strokeWidth="18"
+                                strokeDasharray={`${2 * Math.PI * 85} ${2 * Math.PI * 85}`}
+                                strokeDashoffset={2 * Math.PI * 85 * 0.25}
+                                strokeLinecap="round"
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                              />
+                            ) : slide.type === "total" ? (
+                              // Total patrimony - split ring (investments green, global purple)
+                              <>
+                                {(() => {
+                                  const circumference = 2 * Math.PI * 85;
+                                  const gap = 8;
+                                  const investPercent = totalPatrimonioCompleto > 0 ? (totalPatrimonioGeral / totalPatrimonioCompleto) * 100 : 50;
+                                  const globalPercent = totalPatrimonioCompleto > 0 ? (totalPatrimonioGlobal / totalPatrimonioCompleto) * 100 : 50;
+                                  const investLength = circumference * (investPercent / 100) - gap;
+                                  const globalLength = circumference * (globalPercent / 100) - gap;
+                                  
+                                  return (
+                                    <>
+                                      <motion.circle
+                                        cx="100" cy="100" r="85" fill="none" 
+                                        stroke="hsl(var(--success))" 
+                                        strokeWidth="18"
+                                        strokeDasharray={`${Math.max(0, investLength)} ${circumference}`}
+                                        strokeDashoffset={circumference * 0.25}
+                                        strokeLinecap="round"
+                                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                      />
+                                      <motion.circle
+                                        cx="100" cy="100" r="85" fill="none" 
+                                        stroke="hsl(var(--primary))" 
+                                        strokeWidth="18"
+                                        strokeDasharray={`${Math.max(0, globalLength)} ${circumference}`}
+                                        strokeDashoffset={circumference * 0.25 - investLength - gap}
+                                        strokeLinecap="round"
+                                        style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                      />
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            ) : (
+                              // Monthly data - regular chart with carteira/cdi/ipca
+                              <>
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
+                                  strokeDasharray={interpolatedSegments.carteira.dasharray}
+                                  strokeDashoffset={interpolatedSegments.carteira.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{
+                                    strokeDasharray: interpolatedSegments.carteira.dasharray,
+                                    strokeDashoffset: interpolatedSegments.carteira.offset,
+                                  }}
+                                  transition={{ type: 'tween', duration: 0.08 }}
+                                />
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
+                                  strokeDasharray={interpolatedSegments.cdi.dasharray}
+                                  strokeDashoffset={interpolatedSegments.cdi.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{
+                                    strokeDasharray: interpolatedSegments.cdi.dasharray,
+                                    strokeDashoffset: interpolatedSegments.cdi.offset,
+                                  }}
+                                  transition={{ type: 'tween', duration: 0.08 }}
+                                />
+                                <motion.circle
+                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
+                                  strokeDasharray={interpolatedSegments.ipca.dasharray}
+                                  strokeDashoffset={interpolatedSegments.ipca.offset}
+                                  strokeLinecap="round"
+                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                  animate={{
+                                    strokeDasharray: interpolatedSegments.ipca.dasharray,
+                                    strokeDashoffset: interpolatedSegments.ipca.offset,
+                                  }}
+                                  transition={{ type: 'tween', duration: 0.08 }}
+                                />
+                              </>
+                            )}
+                          </svg>
 
                           {/* Center content */}
                           <div className="absolute inset-0 flex items-center justify-center">
                             <div className="flex flex-col items-center text-center px-4">
-                              <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border">
-                                {interpolatedCenter.month}
+                              <span className="text-[11px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full mb-2 border border-border flex items-center gap-1">
+                                {slide.type === "global" && <Globe className="w-3 h-3" />}
+                                {slide.type === "total" && <Wallet className="w-3 h-3" />}
+                                {slide.month}
                               </span>
                               <span className="text-2xl font-bold text-foreground tabular-nums">
-                                {formatCurrency(interpolatedCenter.value)}
+                                {formatCurrency(slide.value)}
                               </span>
-                              <span className="text-xs text-muted-foreground mt-1">
-                                CARTEIRA <span className="text-primary font-semibold">{formatPercent(interpolatedCenter.cdiPercent)}</span> DO CDI
-                              </span>
-                              <div className="mt-3">
-                                <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>
-                                <div className="mt-1">
-                                  <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                                    interpolatedCenter.gain >= 0
-                                      ? "text-success bg-success/10 border border-success/20"
-                                      : "text-destructive bg-destructive/10 border border-destructive/20"
-                                  }`}>
-                                    {interpolatedCenter.gain >= 0 ? "+" : ""}{formatCurrency(interpolatedCenter.gain)}
-                                  </span>
+                              
+                              {slide.type === "global" && (
+                                <span className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                                  {(slide as any).globalAssetsCount || 0} bens cadastrados
+                                </span>
+                              )}
+                              
+                              {slide.type === "total" && (
+                                <div className="mt-2 space-y-1">
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <div className="w-2 h-2 rounded-full bg-success" />
+                                    <span className="text-muted-foreground">Invest:</span>
+                                    <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.investimentos || 0)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                    <span className="text-muted-foreground">Global:</span>
+                                    <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.global || 0)}</span>
+                                  </div>
                                 </div>
-                              </div>
+                              )}
+                              
+                              {slide.type === "monthly" && (
+                                <>
+                                  <span className="text-xs text-muted-foreground mt-1">
+                                    CARTEIRA <span className="text-primary font-semibold">{formatPercent(slide.cdiPercent)}</span> DO CDI
+                                  </span>
+                                  <div className="mt-3">
+                                    <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>
+                                    <div className="mt-1">
+                                      <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                                        slide.gain >= 0
+                                          ? "text-success bg-success/10 border border-success/20"
+                                          : "text-destructive bg-destructive/10 border border-destructive/20"
+                                      }`}>
+                                        {slide.gain >= 0 ? "+" : ""}{formatCurrency(slide.gain)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
 
                         <button className="absolute left-4 bottom-4 w-10 h-10 rounded-full border border-border bg-card flex items-center justify-center shadow-sm">
-                          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                          {slide.type === "global" ? <Globe className="w-4 h-4 text-muted-foreground" /> : 
+                           slide.type === "total" ? <Wallet className="w-4 h-4 text-muted-foreground" /> :
+                           <TrendingUp className="w-4 h-4 text-muted-foreground" />}
                         </button>
                       </div>
                     </div>
@@ -937,8 +1056,8 @@ const AppDashboard = () => {
 
               {/* Pagination dots */}
               <div className="flex justify-center gap-3">
-                {monthlyData.map((_, index) => (
-                  <button key={index} onClick={() => emblaApi?.scrollTo(index)} className="p-1 relative">
+                {carouselSlides.map((slide, index) => (
+                  <button key={slide.id || index} onClick={() => emblaApi?.scrollTo(index)} className="p-1 relative">
                     <div className="w-2 h-2 rounded-full bg-muted-foreground/30" />
                     {selectedIndex === index && (
                       <motion.div
@@ -984,13 +1103,6 @@ const AppDashboard = () => {
                 </div>
               </div>
 
-              {/* Patrimônio Total Carousel */}
-              <PatrimonioTotalCarousel
-                totalInvestimentos={totalPatrimonioGeral}
-                totalGanhosInvestimentos={totalGanhosGeral}
-                showValues={showValues}
-                userName={userName}
-              />
 
               {/* Kadig AI Card */}
               <button
