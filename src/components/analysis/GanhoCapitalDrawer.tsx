@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronDown, Search, List } from "lucide-react";
+import { X, HelpCircle, ChevronDown, Search, List, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Investment {
   id: string;
@@ -10,6 +11,12 @@ interface Investment {
   current_value: number;
   total_invested: number;
   gain_percent: number;
+}
+
+interface HistoryRecord {
+  snapshot_date: string;
+  total_value: number;
+  total_gain: number;
 }
 
 interface GanhoCapitalDrawerProps {
@@ -64,13 +71,90 @@ export default function GanhoCapitalDrawer({
 }: GanhoCapitalDrawerProps) {
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativo'>('carteira');
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
 
   const totalGain = totalPatrimonio - totalInvested;
-  
-  // Calculate gains per period
-  const monthlyGain = totalGain / 12;
-  const threeMonthGain = monthlyGain * 3;
-  const yearlyGain = totalGain;
+
+  // Fetch real historical data
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      if (!open) return;
+      
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        const { data: history, error } = await supabase
+          .from("portfolio_history")
+          .select("snapshot_date, total_value, total_gain")
+          .eq("user_id", session.user.id)
+          .gte("snapshot_date", oneYearAgo.toISOString().split('T')[0])
+          .order("snapshot_date", { ascending: true });
+
+        if (error) throw error;
+        setHistoryData(history || []);
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistoricalData();
+  }, [open]);
+
+  // Calculate gains per period from real data
+  const calculatePeriodGains = () => {
+    const today = new Date();
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    if (historyData.length === 0) {
+      // Fallback: estimate from current data
+      const monthlyGain = totalGain / 12;
+      return {
+        monthlyGain,
+        threeMonthGain: monthlyGain * 3,
+        yearlyGain: totalGain,
+      };
+    }
+
+    // Find closest records to each date
+    const findClosestRecord = (targetDate: Date) => {
+      let closest = historyData[0];
+      let minDiff = Math.abs(new Date(historyData[0].snapshot_date).getTime() - targetDate.getTime());
+      
+      historyData.forEach(record => {
+        const diff = Math.abs(new Date(record.snapshot_date).getTime() - targetDate.getTime());
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = record;
+        }
+      });
+      
+      return closest;
+    };
+
+    const currentRecord = historyData[historyData.length - 1];
+    const oneMonthRecord = findClosestRecord(oneMonthAgo);
+    const threeMonthRecord = findClosestRecord(threeMonthsAgo);
+    const yearRecord = historyData[0];
+
+    return {
+      monthlyGain: currentRecord.total_gain - oneMonthRecord.total_gain,
+      threeMonthGain: currentRecord.total_gain - threeMonthRecord.total_gain,
+      yearlyGain: currentRecord.total_gain - yearRecord.total_gain,
+    };
+  };
+
+  const { monthlyGain, threeMonthGain, yearlyGain } = calculatePeriodGains();
 
   const barChartData = [
     { name: 'Mês atual', value: monthlyGain, color: 'hsl(200, 70%, 70%)' },
@@ -78,27 +162,40 @@ export default function GanhoCapitalDrawer({
     { name: '12 meses', value: yearlyGain, color: 'hsl(200, 70%, 40%)' },
   ];
 
-  // Generate monthly history
+  // Generate monthly history from real data
   const generateMonthlyHistory = () => {
-    const today = new Date();
-    const months = [];
+    if (historyData.length === 0) return [];
+
+    // Group by month
+    const monthlyMap = new Map<string, { gain: number; date: Date }>();
     
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today);
-      date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    historyData.forEach(record => {
+      const date = new Date(record.snapshot_date);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const existing = monthlyMap.get(key);
       
-      const monthGain = monthlyGain * (Math.random() * 0.5 + 0.75);
+      if (!existing || date > existing.date) {
+        monthlyMap.set(key, { gain: record.total_gain, date });
+      }
+    });
+
+    // Calculate monthly differences
+    const sortedMonths = Array.from(monthlyMap.entries())
+      .sort((a, b) => b[1].date.getTime() - a[1].date.getTime());
+
+    return sortedMonths.map(([key, data], index) => {
+      const prevMonth = sortedMonths[index + 1];
+      const monthGain = prevMonth ? data.gain - prevMonth[1].gain : data.gain;
       
-      months.push({
+      const monthName = data.date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      
+      return {
         month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
         ganhoCapital: monthGain,
         rendimentos: monthGain,
         proventos: 0,
-      });
-    }
-    
-    return months;
+      };
+    });
   };
 
   // Group investments by type
@@ -155,7 +252,11 @@ export default function GanhoCapitalDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {activeTab === 'carteira' ? (
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : activeTab === 'carteira' ? (
               <>
                 {/* Summary */}
                 <div className="flex items-center justify-between">
@@ -163,7 +264,7 @@ export default function GanhoCapitalDrawer({
                     <div className="w-1 h-6 rounded-full bg-primary" />
                     <div>
                       <span className="text-sm text-muted-foreground">Ganho de capital: </span>
-                      <span className="font-bold text-foreground">{formatCurrency(yearlyGain)}</span>
+                      <span className="font-bold text-foreground">{formatCurrency(totalGain)}</span>
                     </div>
                   </div>
                   <ChevronDown className="w-5 h-5 text-muted-foreground" />
@@ -207,46 +308,65 @@ export default function GanhoCapitalDrawer({
                   <h3 className="font-semibold text-foreground">Histórico Mensal</h3>
                 </div>
 
-                {monthlyHistory.map((month, index) => (
-                  <div key={index} className="bg-card border border-border rounded-2xl p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-1 h-6 rounded-full bg-primary" />
-                      <span className="font-medium text-foreground">{month.month}</span>
-                    </div>
-                    
-                    {/* Progress bar */}
-                    <div className="relative h-3 bg-muted rounded-full mb-4">
-                      <div 
-                        className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400"
-                        style={{ transform: 'translateX(-50%)' }}
-                      >
-                        <span className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-muted-foreground">0</span>
+                {monthlyHistory.length > 0 ? (
+                  monthlyHistory.map((month, index) => (
+                    <div key={index} className="bg-card border border-border rounded-2xl p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-1 h-6 rounded-full bg-primary" />
+                        <span className="font-medium text-foreground">{month.month}</span>
                       </div>
-                      <div 
-                        className="absolute right-0 h-full bg-primary rounded-r-full"
-                        style={{ width: `${Math.min(50, (month.ganhoCapital / yearlyGain) * 100)}%` }}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-1 h-4 rounded-full bg-primary" />
-                          <span className="text-sm text-muted-foreground">Ganho de Capital:</span>
+                      
+                      {/* Progress bar */}
+                      <div className="relative h-3 bg-muted rounded-full mb-4">
+                        <div 
+                          className="absolute left-1/2 top-0 bottom-0 w-px bg-gray-400"
+                          style={{ transform: 'translateX(-50%)' }}
+                        >
+                          <span className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-muted-foreground">0</span>
                         </div>
-                        <span className="font-semibold text-foreground">{formatCurrency(month.ganhoCapital)}</span>
+                        {month.ganhoCapital > 0 && (
+                          <div 
+                            className="absolute left-1/2 h-full bg-primary rounded-r-full"
+                            style={{ width: `${Math.min(50, Math.abs(month.ganhoCapital / totalGain) * 100)}%` }}
+                          />
+                        )}
+                        {month.ganhoCapital < 0 && (
+                          <div 
+                            className="absolute right-1/2 h-full bg-red-500 rounded-l-full"
+                            style={{ width: `${Math.min(50, Math.abs(month.ganhoCapital / totalGain) * 100)}%` }}
+                          />
+                        )}
                       </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-sm text-muted-foreground">(+) Rendimentos:</span>
-                        <span className="font-medium text-foreground">{formatCurrency(month.rendimentos)}</span>
-                      </div>
-                      <div className="flex justify-between pl-3">
-                        <span className="text-sm text-muted-foreground">(+) Proventos:</span>
-                        <span className="font-medium text-foreground">{formatCurrency(month.proventos)}</span>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1 h-4 rounded-full bg-primary" />
+                            <span className="text-sm text-muted-foreground">Ganho de Capital:</span>
+                          </div>
+                          <span className={`font-semibold ${month.ganhoCapital >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+                            {formatCurrency(month.ganhoCapital)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between pl-3">
+                          <span className="text-sm text-muted-foreground">(+) Rendimentos:</span>
+                          <span className="font-medium text-foreground">{formatCurrency(month.rendimentos)}</span>
+                        </div>
+                        <div className="flex justify-between pl-3">
+                          <span className="text-sm text-muted-foreground">(+) Proventos:</span>
+                          <span className="font-medium text-foreground">{formatCurrency(month.proventos)}</span>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-muted-foreground text-center">
+                      Histórico ainda não disponível.<br />
+                      Os dados serão registrados automaticamente.
+                    </p>
                   </div>
-                ))}
+                )}
               </>
             ) : (
               <>
@@ -299,10 +419,16 @@ export default function GanhoCapitalDrawer({
                               >
                                 <span className="absolute -top-5 left-1/2 transform -translate-x-1/2 text-xs text-muted-foreground">0</span>
                               </div>
-                              {assetGain > 0 && (
+                              {assetGain > 0 && totalGain > 0 && (
                                 <div 
                                   className="absolute left-1/2 h-full bg-primary rounded-r-full"
-                                  style={{ width: `${Math.min(50, (assetGain / yearlyGain) * 100)}%` }}
+                                  style={{ width: `${Math.min(50, (assetGain / totalGain) * 100)}%` }}
+                                />
+                              )}
+                              {assetGain < 0 && (
+                                <div 
+                                  className="absolute right-1/2 h-full bg-red-500 rounded-l-full"
+                                  style={{ width: `${Math.min(50, Math.abs(assetGain / (totalGain || 1)) * 100)}%` }}
                                 />
                               )}
                             </div>
@@ -313,14 +439,16 @@ export default function GanhoCapitalDrawer({
                                   <div className="w-1 h-4 rounded-full bg-primary" />
                                   <span className="text-sm text-muted-foreground">Ganho de Capital:</span>
                                 </div>
-                                <span className="font-semibold text-foreground">{formatCurrency(assetGain)}</span>
+                                <span className={`font-semibold ${assetGain >= 0 ? 'text-foreground' : 'text-red-500'}`}>
+                                  {formatCurrency(assetGain)}
+                                </span>
                               </div>
                               <div className="flex justify-between pl-3">
                                 <span className="text-sm text-muted-foreground">(+) Rendimentos:</span>
                                 <span className="font-medium text-foreground">{formatCurrency(assetGain)}</span>
                               </div>
                               <div className="flex justify-between pl-3">
-                                <span className="text-sm text-muted-foreground">(+) Proventos :</span>
+                                <span className="text-sm text-muted-foreground">(+) Proventos:</span>
                                 <span className="font-medium text-foreground">{formatCurrency(0)}</span>
                               </div>
                             </div>
