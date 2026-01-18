@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
+import SimuladorDrawer from "@/components/analysis/SimuladorDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -89,6 +90,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [showAllDividends, setShowAllDividends] = useState(false);
   const [showAllNews, setShowAllNews] = useState(false);
   const [showAllKadig, setShowAllKadig] = useState(false);
+  const [simuladorOpen, setSimuladorOpen] = useState(false);
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -213,11 +215,11 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   };
 
   const tools = [
-    { label: "Simulador de investimentos", gradient: "from-violet-500 to-purple-600", icon: Calculator },
-    { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3 },
-    { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase },
-    { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText },
-    { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award },
+    { label: "Simulador de investimentos", gradient: "from-violet-500 to-purple-600", icon: Calculator, onClick: () => setSimuladorOpen(true) },
+    { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => {} },
+    { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase, onClick: () => {} },
+    { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => {} },
+    { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => {} },
   ];
 
   return (
@@ -291,6 +293,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             {tools.map((tool, index) => (
               <button
                 key={index}
+                onClick={tool.onClick}
                 className={`w-full flex items-center justify-between bg-gradient-to-r ${tool.gradient} rounded-xl px-5 py-4`}
               >
                 <span className="text-white font-medium">{tool.label}</span>
@@ -750,6 +753,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
         showValues={showValues}
         onToggleFavorite={toggleFavorite}
         isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
+      />
+      
+      {/* Simulador Drawer */}
+      <SimuladorDrawer
+        open={simuladorOpen}
+        onOpenChange={setSimuladorOpen}
       />
     </div>
   );
