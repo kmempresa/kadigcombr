@@ -58,8 +58,64 @@ const PatrimonioTotalCarousel = ({
     };
   }, [emblaApi, onSelect, onScroll]);
 
+  // Fetch global assets
+  const fetchGlobalAssets = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return [];
+
+      const { data, error } = await supabase
+        .from("global_assets")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("value_brl", { ascending: false });
+
+      if (!error && data) {
+        setGlobalAssets(data);
+        return data;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching global assets:", error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Update global assets with new exchange rates
+  const updateGlobalAssetsRates = useCallback(async (rates: Record<string, number>, assets: GlobalAsset[]) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || assets.length === 0) return;
+
+    let hasUpdates = false;
+    for (const asset of assets) {
+      if (asset.currency !== "BRL" && rates[asset.currency]) {
+        const newRate = rates[asset.currency];
+        const newValueBrl = asset.original_value * newRate;
+        
+        // Only update if value changed significantly (> 0.01%)
+        if (Math.abs(newValueBrl - asset.value_brl) / asset.value_brl > 0.0001) {
+          await supabase
+            .from("global_assets")
+            .update({
+              exchange_rate: newRate,
+              value_brl: newValueBrl,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", asset.id);
+          hasUpdates = true;
+        }
+      }
+    }
+
+    if (hasUpdates) {
+      await fetchGlobalAssets();
+    }
+  }, [fetchGlobalAssets]);
+
   // Fetch exchange rates from API
-  const fetchExchangeRates = async () => {
+  const fetchExchangeRates = useCallback(async (assets?: GlobalAsset[]) => {
     setUpdatingRates(true);
     try {
       const response = await fetch("https://api.exchangerate-api.com/v4/latest/BRL");
@@ -67,69 +123,49 @@ const PatrimonioTotalCarousel = ({
         const data = await response.json();
         const rates: Record<string, number> = { BRL: 1 };
         for (const [currency, rate] of Object.entries(data.rates)) {
+          // Convert from "how many units of currency per 1 BRL" to "how many BRL per 1 unit of currency"
           rates[currency] = 1 / (rate as number);
         }
         setExchangeRates(rates);
         setLastUpdate(new Date());
         
-        await updateGlobalAssetsRates(rates);
+        // Update assets with new rates
+        const assetsToUpdate = assets || globalAssets;
+        if (assetsToUpdate.length > 0) {
+          await updateGlobalAssetsRates(rates, assetsToUpdate);
+        }
       }
     } catch (error) {
       console.error("Error fetching exchange rates:", error);
     } finally {
       setUpdatingRates(false);
     }
-  };
+  }, [globalAssets, updateGlobalAssetsRates]);
 
-  const updateGlobalAssetsRates = async (rates: Record<string, number>) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    for (const asset of globalAssets) {
-      if (asset.currency !== "BRL" && rates[asset.currency]) {
-        const newRate = rates[asset.currency];
-        const newValueBrl = asset.original_value * newRate;
-        
-        await supabase
-          .from("global_assets")
-          .update({
-            exchange_rate: newRate,
-            value_brl: newValueBrl,
-          })
-          .eq("id", asset.id);
-      }
-    }
-
-    fetchGlobalAssets();
-  };
-
-  const fetchGlobalAssets = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const { data, error } = await supabase
-        .from("global_assets")
-        .select("*")
-        .order("value_brl", { ascending: false });
-
-      if (!error && data) {
-        setGlobalAssets(data);
-      }
-    } catch (error) {
-      console.error("Error fetching global assets:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Initial load - fetch assets first, then rates
   useEffect(() => {
-    fetchGlobalAssets();
-    fetchExchangeRates();
-
-    const interval = setInterval(fetchExchangeRates, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    const initializeData = async () => {
+      const assets = await fetchGlobalAssets();
+      if (assets.length > 0) {
+        await fetchExchangeRates(assets);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    initializeData();
   }, []);
+
+  // Auto-refresh rates every 5 minutes
+  useEffect(() => {
+    if (globalAssets.length === 0) return;
+    
+    const interval = setInterval(() => {
+      fetchExchangeRates(globalAssets);
+    }, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [globalAssets]);
 
   // Calculate totals
   const totalPatrimonioGlobal = globalAssets.reduce((sum, asset) => sum + asset.value_brl, 0);
@@ -249,7 +285,7 @@ const PatrimonioTotalCarousel = ({
           <h2 className="font-semibold text-foreground">Patrimônio Total</h2>
         </div>
         <button
-          onClick={fetchExchangeRates}
+          onClick={() => fetchExchangeRates()}
           disabled={updatingRates}
           className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
