@@ -42,6 +42,7 @@ interface PatrimonioDrawerProps {
   totalPatrimonio: number;
   totalInvestido: number;
   totalGanhos: number;
+  globalPatrimonio?: number;
   showValues: boolean;
   selectedPortfolioId?: string | null;
   onAddPortfolio: () => void;
@@ -57,6 +58,7 @@ const PatrimonioDrawer = ({
   totalPatrimonio,
   totalInvestido,
   totalGanhos,
+  globalPatrimonio = 0,
   showValues,
   selectedPortfolioId,
   onAddPortfolio,
@@ -196,7 +198,11 @@ const PatrimonioDrawer = ({
     return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
-  // Calculate rentabilidade
+  // Calculate totals including global patrimony
+  const totalPatrimonioCompleto = totalPatrimonio + globalPatrimonio;
+  const totalGanhosCompleto = totalGanhos; // Global assets don't have gain tracking yet
+  
+  // Calculate rentabilidade (only based on investments, not global)
   const rentabilidade = totalInvestido > 0 
     ? ((totalPatrimonio - totalInvestido) / totalInvestido) * 100 
     : 0;
@@ -247,17 +253,29 @@ const PatrimonioDrawer = ({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Saldo bruto atual:</span>
-                <span className="font-semibold text-foreground">{formatCurrency(totalPatrimonio)}</span>
+                <span className="text-sm text-muted-foreground">Saldo bruto total:</span>
+                <span className="font-semibold text-foreground">{formatCurrency(totalPatrimonioCompleto)}</span>
               </div>
+              {globalPatrimonio > 0 && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground pl-2">↳ Investimentos:</span>
+                  <span className="text-muted-foreground">{formatCurrency(totalPatrimonio)}</span>
+                </div>
+              )}
+              {globalPatrimonio > 0 && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground pl-2">↳ Patrimônio global:</span>
+                  <span className="text-muted-foreground">{formatCurrency(globalPatrimonio)}</span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Valor aplicado total:</span>
+                <span className="text-sm text-muted-foreground">Valor aplicado (invest.):</span>
                 <span className="font-semibold text-foreground">{formatCurrency(totalInvestido)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Resultado:</span>
-                <span className={`font-semibold ${totalGanhos >= 0 ? "text-success" : "text-destructive"}`}>
-                  {formatCurrency(totalGanhos)}
+                <span className="text-sm text-muted-foreground">Resultado (invest.):</span>
+                <span className={`font-semibold ${totalGanhosCompleto >= 0 ? "text-success" : "text-destructive"}`}>
+                  {formatCurrency(totalGanhosCompleto)}
                 </span>
               </div>
             </div>

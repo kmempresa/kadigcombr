@@ -2061,6 +2061,7 @@ const AppDashboard = () => {
         totalPatrimonio={totalPatrimonioGeral}
         totalInvestido={totalInvestidoGeral}
         totalGanhos={totalGanhosGeral}
+        globalPatrimonio={totalPatrimonioGlobal}
         showValues={showValues}
         selectedPortfolioId={activePortfolioId}
         onAddPortfolio={() => {
