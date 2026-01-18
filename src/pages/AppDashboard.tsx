@@ -696,51 +696,82 @@ const AppDashboard = () => {
       {activeTab === "carteira" && (
         <div className="flex-1 pb-20">
           {/* Header */}
-          <header className="flex flex-col p-4 safe-area-inset-top gap-2">
-            <div className="flex items-center justify-between">
-              <button 
-                onClick={() => setPatrimonioDrawerOpen(true)}
-                className="flex items-center gap-2 active:opacity-70 transition-opacity"
-              >
-                {patrimonioDrawerOpen ? (
-                  <ChevronUp className="w-5 h-5 text-foreground" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-foreground" />
-                )}
-                <span className="font-semibold text-foreground">
-                  Patrimônio {userName}
-                </span>
-              </button>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={async () => {
-                    const success = await refreshPrices(true);
-                    if (success) {
-                      // Refresh user data after manual price update
-                      setRefreshKey(prev => prev + 1);
-                    }
-                  }}
-                  disabled={isPricesUpdating}
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
-                  title="Atualizar cotações"
+          <header className="relative overflow-hidden">
+            {/* Background gradient effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="relative p-4 safe-area-inset-top">
+              <div className="flex items-center justify-between">
+                {/* Left side - User greeting with avatar */}
+                <motion.button 
+                  onClick={() => setPatrimonioDrawerOpen(true)}
+                  className="flex items-center gap-3 group"
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <RefreshCw className={`w-5 h-5 ${isPricesUpdating ? 'animate-spin' : ''}`} />
-                </button>
-                <button className="p-2 text-muted-foreground">
-                  <Bell className="w-5 h-5" />
-                </button>
-                <button className="p-2 text-muted-foreground" onClick={() => setShowValues(!showValues)}>
-                  {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                </button>
-                <button className="p-2 text-muted-foreground">
-                  <HelpCircle className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => setAdicionarDrawerOpen(true)}
-                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-md"
-                >
-                  <Plus className="w-5 h-5 text-white" />
-                </button>
+                  <div className="relative">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+                      <span className="text-white font-bold text-lg">
+                        {userName?.charAt(0)?.toUpperCase() || 'K'}
+                      </span>
+                    </div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-muted-foreground">Patrimônio de</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-foreground text-base">
+                        {userName || 'Usuário'}
+                      </span>
+                      <motion.div
+                        animate={{ rotate: patrimonioDrawerOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Right side - Action buttons */}
+                <div className="flex items-center gap-1">
+                  <motion.button 
+                    onClick={async () => {
+                      const success = await refreshPrices(true);
+                      if (success) {
+                        setRefreshKey(prev => prev + 1);
+                      }
+                    }}
+                    disabled={isPricesUpdating}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all disabled:opacity-50"
+                    title="Atualizar cotações"
+                  >
+                    <RefreshCw className={`w-5 h-5 ${isPricesUpdating ? 'animate-spin' : ''}`} />
+                  </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all relative"
+                  >
+                    <Bell className="w-5 h-5" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                  </motion.button>
+                  <motion.button 
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowValues(!showValues)}
+                    className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                  >
+                    {showValues ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                  </motion.button>
+                  <motion.button 
+                    onClick={() => setAdicionarDrawerOpen(true)}
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
+                    className="ml-1 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30"
+                  >
+                    <Plus className="w-5 h-5 text-white" />
+                  </motion.button>
+                </div>
               </div>
             </div>
           </header>
