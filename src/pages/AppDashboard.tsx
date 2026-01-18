@@ -54,6 +54,7 @@ import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
+import ProfileDrawer from "@/components/ProfileDrawer";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -181,6 +182,7 @@ const AppDashboard = () => {
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
   const [globalPatrimonioDrawerOpen, setGlobalPatrimonioDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
+  const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
 
   // Real-time price updates hook with callback to refresh data
   const handlePriceUpdate = useCallback(() => {
@@ -1979,7 +1981,7 @@ const AppDashboard = () => {
             <h1 className="text-xl font-semibold text-foreground mb-4">Conta</h1>
             
             <motion.button 
-              onClick={() => navigate("/preferencias")}
+              onClick={() => setProfileDrawerOpen(true)}
               className="w-full flex items-center gap-3 mb-4 p-3 bg-card border border-border rounded-xl hover:bg-muted/50 transition-colors active:scale-[0.98]"
               whileTap={{ scale: 0.98 }}
             >
@@ -2365,6 +2367,13 @@ const AppDashboard = () => {
         onOpenChange={setGlobalPatrimonioDrawerOpen}
         showValues={showValues}
         onUpdate={fetchGlobalAssets}
+      />
+
+      <ProfileDrawer
+        open={profileDrawerOpen}
+        onOpenChange={setProfileDrawerOpen}
+        userData={userData}
+        onProfileUpdate={fetchUserData}
       />
     </div>
   );
