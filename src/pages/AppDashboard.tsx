@@ -428,8 +428,9 @@ const AppDashboard = () => {
       });
     }
 
+    // Generate months: current first, then going back
     return Array.from({ length: 3 }, (_, i) => {
-      const monthOffset = 2 - i;
+      const monthOffset = i; // 0 = current, 1 = last month, 2 = two months ago
       let month = currentMonth - monthOffset;
       let year = currentYear;
       
