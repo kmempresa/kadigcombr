@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronDown } from "lucide-react";
+import { X, HelpCircle, ChevronDown, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
+
+interface HistoryRecord {
+  snapshot_date: string;
+  total_value: number;
+  total_invested: number;
+  total_gain: number;
+  gain_percent: number;
+  cdi_accumulated: number | null;
+  ipca_accumulated: number | null;
+}
 
 interface RentabilidadeDrawerProps {
   open: boolean;
@@ -24,6 +35,8 @@ export default function RentabilidadeDrawer({
 }: RentabilidadeDrawerProps) {
   const [activeTab, setActiveTab] = useState<'geral' | 'mensal' | 'anual'>('geral');
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
+  const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const totalGain = totalPatrimonio - totalInvested;
   const returnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
@@ -31,11 +44,69 @@ export default function RentabilidadeDrawer({
   const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.44;
   const cdiPercent = cdi12m > 0 ? (returnPercent / cdi12m) * 100 : 0;
 
-  // Generate chart data for line chart
+  // Fetch real historical data
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      if (!open) return;
+      
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const months = selectedPeriod === '3 MESES' ? 3 : selectedPeriod === '6 MESES' ? 6 : 12;
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - months);
+
+        const { data: history, error } = await supabase
+          .from("portfolio_history")
+          .select("snapshot_date, total_value, total_invested, total_gain, gain_percent, cdi_accumulated, ipca_accumulated")
+          .eq("user_id", session.user.id)
+          .gte("snapshot_date", startDate.toISOString().split('T')[0])
+          .order("snapshot_date", { ascending: true });
+
+        if (error) throw error;
+        setHistoryData(history || []);
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistoricalData();
+  }, [open, selectedPeriod]);
+
+  // Generate chart data for line chart from real data
   const generateChartData = () => {
     const months = selectedPeriod === '3 MESES' ? 3 : selectedPeriod === '6 MESES' ? 6 : 12;
-    const data = [];
     
+    if (historyData.length > 0) {
+      // Use real historical data
+      let cumulativeReturn = 0;
+      let cumulativeCdi = 0;
+      let cumulativeIpca = 0;
+      
+      return historyData.map((record, index) => {
+        const date = new Date(record.snapshot_date);
+        const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+        
+        // Calculate cumulative values
+        const dailyReturn = record.total_invested > 0 
+          ? (record.total_gain / record.total_invested) * 100 
+          : 0;
+        
+        return {
+          month: monthLabel,
+          carteira: dailyReturn,
+          cdi: record.cdi_accumulated || (cdi12m * (index + 1) / historyData.length),
+          ipca: record.ipca_accumulated || (ipca12m * (index + 1) / historyData.length),
+        };
+      });
+    }
+    
+    // Fallback: generate estimated progression
+    const data = [];
     for (let i = 0; i <= months; i++) {
       const progress = i / months;
       data.push({
@@ -48,52 +119,77 @@ export default function RentabilidadeDrawer({
     return data;
   };
 
-  // Generate monthly data
+  // Generate monthly data from real history
   const generateMonthlyData = () => {
-    const today = new Date();
-    const months = [];
+    if (historyData.length === 0) return [];
+
+    // Group by month
+    const monthlyMap = new Map<string, HistoryRecord>();
     
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today);
-      date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    historyData.forEach(record => {
+      const date = new Date(record.snapshot_date);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const existing = monthlyMap.get(key);
       
-      const progress = (12 - i) / 12;
-      const monthValue = totalInvested + (totalGain * progress);
-      const monthReturn = (returnPercent / 12) * (Math.random() * 0.5 + 0.75);
-      const monthCdi = cdi12m / 12;
-      const monthIpca = ipca12m / 12;
-      
-      months.push({
-        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-        saldoBruto: monthValue,
-        rentabilidade: monthReturn,
-        sobreCdi: (monthReturn / monthCdi) * 100,
-        cdi: monthCdi,
-        ipca: monthIpca,
+      if (!existing || new Date(record.snapshot_date) > new Date(existing.snapshot_date)) {
+        monthlyMap.set(key, record);
+      }
+    });
+
+    return Array.from(monthlyMap.values())
+      .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime())
+      .map(record => {
+        const date = new Date(record.snapshot_date);
+        const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const monthReturn = record.total_invested > 0 ? (record.total_gain / record.total_invested) * 100 : 0;
+        const monthCdi = record.cdi_accumulated || (cdi12m / 12);
+        
+        return {
+          month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+          saldoBruto: record.total_value,
+          rentabilidade: monthReturn,
+          sobreCdi: monthCdi > 0 ? (monthReturn / monthCdi) * 100 : 0,
+          cdi: monthCdi,
+          ipca: record.ipca_accumulated || (ipca12m / 12),
+        };
       });
-    }
-    
-    return months;
   };
 
   // Generate annual data
   const generateAnnualData = () => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    
-    return [
-      {
+    if (historyData.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return [{
         year: currentYear,
-        rentNoAno: returnPercent * 0.1,
+        rentNoAno: returnPercent,
         rentAcumulada: returnPercent,
-      },
-      {
-        year: currentYear - 1,
-        rentNoAno: returnPercent * 0.9,
-        rentAcumulada: returnPercent * 0.9,
-      },
-    ];
+      }];
+    }
+
+    // Group by year
+    const yearlyMap = new Map<number, HistoryRecord>();
+    
+    historyData.forEach(record => {
+      const date = new Date(record.snapshot_date);
+      const year = date.getFullYear();
+      const existing = yearlyMap.get(year);
+      
+      if (!existing || new Date(record.snapshot_date) > new Date(existing.snapshot_date)) {
+        yearlyMap.set(year, record);
+      }
+    });
+
+    return Array.from(yearlyMap.entries())
+      .sort((a, b) => b[0] - a[0])
+      .map(([year, record]) => {
+        const yearReturn = record.total_invested > 0 ? (record.total_gain / record.total_invested) * 100 : 0;
+        
+        return {
+          year,
+          rentNoAno: yearReturn,
+          rentAcumulada: yearReturn,
+        };
+      });
   };
 
   const chartData = generateChartData();
@@ -108,6 +204,10 @@ export default function RentabilidadeDrawer({
     
     return `De ${startDate.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })} a ${today.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })}`;
   };
+
+  // Get current month data from indicators
+  const currentMonthCdi = economicIndicators?.current?.cdi || (cdi12m / 12);
+  const currentMonthReturn = returnPercent / 12; // Estimate monthly return
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -140,7 +240,11 @@ export default function RentabilidadeDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {activeTab === 'geral' && (
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : activeTab === 'geral' ? (
               <>
                 <div className="bg-card border border-border rounded-2xl p-4">
                   {/* Period Filters */}
@@ -206,50 +310,55 @@ export default function RentabilidadeDrawer({
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Rent. do período:</span>
-                      <span className="font-semibold text-foreground">{(returnPercent / 12).toFixed(2)}%</span>
+                      <span className="font-semibold text-foreground">{currentMonthReturn.toFixed(2)}%</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">CDI:</span>
-                      <span className="font-medium text-foreground">{(cdi12m / 12).toFixed(2)}%</span>
+                      <span className="font-medium text-foreground">{currentMonthCdi.toFixed(2)}%</span>
                     </div>
                   </div>
                 </div>
               </>
-            )}
-
-            {activeTab === 'mensal' && (
+            ) : activeTab === 'mensal' ? (
               <>
-                {monthlyData.map((month, index) => (
-                  <div key={index} className="bg-card border border-border rounded-2xl p-4">
-                    <h3 className="font-semibold text-foreground mb-3">{month.month}</h3>
-                    <div className="border-t border-border pt-3 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Saldo Bruto Atual:</span>
-                        <span className="font-semibold text-foreground">{formatCurrency(month.saldoBruto)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Rentabilidade do Mês:</span>
-                        <span className="font-medium text-foreground">{month.rentabilidade.toFixed(2)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">% sobre o CDI:</span>
-                        <span className="font-medium text-foreground">{month.sobreCdi.toFixed(0)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">CDI:</span>
-                        <span className="font-medium text-foreground">{month.cdi.toFixed(2)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">IPCA:</span>
-                        <span className="font-medium text-foreground">{month.ipca.toFixed(2)}%</span>
+                {monthlyData.length > 0 ? (
+                  monthlyData.map((month, index) => (
+                    <div key={index} className="bg-card border border-border rounded-2xl p-4">
+                      <h3 className="font-semibold text-foreground mb-3">{month.month}</h3>
+                      <div className="border-t border-border pt-3 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Saldo Bruto Atual:</span>
+                          <span className="font-semibold text-foreground">{formatCurrency(month.saldoBruto)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Rentabilidade do Mês:</span>
+                          <span className="font-medium text-foreground">{month.rentabilidade.toFixed(2)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">% sobre o CDI:</span>
+                          <span className="font-medium text-foreground">{month.sobreCdi.toFixed(0)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">CDI:</span>
+                          <span className="font-medium text-foreground">{month.cdi.toFixed(2)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">IPCA:</span>
+                          <span className="font-medium text-foreground">{month.ipca.toFixed(2)}%</span>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-muted-foreground text-center">
+                      Histórico mensal ainda não disponível.<br />
+                      Os dados serão registrados automaticamente.
+                    </p>
                   </div>
-                ))}
+                )}
               </>
-            )}
-
-            {activeTab === 'anual' && (
+            ) : (
               <>
                 {annualData.map((year, index) => (
                   <div key={index} className="bg-card border border-border rounded-2xl p-4">

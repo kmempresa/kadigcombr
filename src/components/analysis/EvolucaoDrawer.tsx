@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle } from "lucide-react";
+import { X, HelpCircle, Loader2 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Investment {
   id: string;
@@ -10,6 +11,16 @@ interface Investment {
   current_value: number;
   total_invested: number;
   gain_percent: number;
+}
+
+interface HistoryRecord {
+  snapshot_date: string;
+  total_value: number;
+  total_invested: number;
+  total_gain: number;
+  gain_percent: number;
+  cdi_accumulated: number | null;
+  ipca_accumulated: number | null;
 }
 
 interface EvolucaoDrawerProps {
@@ -35,6 +46,9 @@ export default function EvolucaoDrawer({
 }: EvolucaoDrawerProps) {
   const [activeTab, setActiveTab] = useState<'acumulado' | 'historico'>('acumulado');
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
+  const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [firstInvestmentDate, setFirstInvestmentDate] = useState<string | null>(null);
 
   // Calculate real return
   const totalGain = totalPatrimonio - totalInvested;
@@ -45,62 +59,132 @@ export default function EvolucaoDrawer({
   const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.44;
   const cdiPercent = cdi12m > 0 ? (returnPercent / cdi12m) * 100 : 0;
 
-  // Generate chart data based on period
+  // Fetch real historical data from Supabase
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      if (!open) return;
+      
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const months = selectedPeriod === '3 MESES' ? 3 : selectedPeriod === '6 MESES' ? 6 : 12;
+        const startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - months);
+
+        // Fetch portfolio history
+        const { data: history, error } = await supabase
+          .from("portfolio_history")
+          .select("snapshot_date, total_value, total_invested, total_gain, gain_percent, cdi_accumulated, ipca_accumulated")
+          .eq("user_id", session.user.id)
+          .gte("snapshot_date", startDate.toISOString().split('T')[0])
+          .order("snapshot_date", { ascending: true });
+
+        if (error) throw error;
+
+        setHistoryData(history || []);
+
+        // Get first investment date from movements
+        const { data: firstMovement } = await supabase
+          .from("movements")
+          .select("movement_date")
+          .eq("user_id", session.user.id)
+          .eq("type", "aplicacao")
+          .order("movement_date", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+
+        if (firstMovement) {
+          setFirstInvestmentDate(firstMovement.movement_date);
+        }
+      } catch (error) {
+        console.error("Error fetching historical data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistoricalData();
+  }, [open, selectedPeriod]);
+
+  // Generate chart data based on real history
   const generateChartData = () => {
-    const months = selectedPeriod === '3 MESES' ? 3 : selectedPeriod === '6 MESES' ? 6 : 12;
-    const data = [];
-    const today = new Date();
-    
-    for (let i = months; i >= 0; i--) {
-      const date = new Date(today);
-      date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    if (historyData.length === 0) {
+      // Fallback: generate estimated progression
+      const months = selectedPeriod === '3 MESES' ? 3 : selectedPeriod === '6 MESES' ? 6 : 12;
+      const data = [];
+      const today = new Date();
       
-      // Simulate gradual growth
-      const progress = (months - i) / months;
-      const value = totalInvested + (totalGain * progress);
-      
-      data.push({
-        month: monthName,
-        value: Math.round(value),
-      });
+      for (let i = months; i >= 0; i--) {
+        const date = new Date(today);
+        date.setMonth(date.getMonth() - i);
+        const monthName = date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+        
+        const progress = (months - i) / months;
+        const value = totalInvested + (totalGain * progress);
+        
+        data.push({
+          month: monthName,
+          value: Math.round(value),
+        });
+      }
+      return data;
     }
-    return data;
+
+    // Use real historical data
+    return historyData.map(record => {
+      const date = new Date(record.snapshot_date);
+      return {
+        month: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
+        value: Math.round(record.total_value),
+      };
+    });
   };
 
-  // Generate monthly history data
+  // Generate monthly history data from real records
   const generateHistoryData = () => {
-    const today = new Date();
-    const months = [];
-    
-    for (let i = 0; i < 12; i++) {
-      const date = new Date(today);
-      date.setMonth(date.getMonth() - i);
-      const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-      
-      // Estimate values
-      const progress = (12 - i) / 12;
-      const monthValue = totalInvested + (totalGain * progress);
-      const monthReturn = returnPercent * progress / (12 - i || 1);
-      const monthCdi = cdi12m / 12;
-      const monthIpca = ipca12m / 12;
-      
-      months.push({
-        month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-        saldoBruto: monthValue,
-        valorAplicado: totalInvested,
-        rentabilidade: monthReturn,
-        rentSobreCdi: cdiPercent,
-        rentDoCdi: monthCdi,
-        rentIpca: monthIpca,
-      });
+    if (historyData.length === 0) {
+      // Fallback if no real data
+      return [];
     }
+
+    // Group by month (get last entry for each month)
+    const monthlyMap = new Map<string, HistoryRecord>();
     
-    return months;
+    historyData.forEach(record => {
+      const date = new Date(record.snapshot_date);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const existing = monthlyMap.get(key);
+      
+      if (!existing || new Date(record.snapshot_date) > new Date(existing.snapshot_date)) {
+        monthlyMap.set(key, record);
+      }
+    });
+
+    return Array.from(monthlyMap.values())
+      .sort((a, b) => new Date(b.snapshot_date).getTime() - new Date(a.snapshot_date).getTime())
+      .map(record => {
+        const date = new Date(record.snapshot_date);
+        const monthName = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        const monthReturn = record.total_invested > 0 ? (record.total_gain / record.total_invested) * 100 : 0;
+        
+        return {
+          month: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+          saldoBruto: record.total_value,
+          valorAplicado: record.total_invested,
+          rentabilidade: monthReturn,
+          rentSobreCdi: record.cdi_accumulated && record.cdi_accumulated > 0 
+            ? (monthReturn / record.cdi_accumulated) * 100 
+            : cdiPercent,
+          rentDoCdi: record.cdi_accumulated || (cdi12m / 12),
+          rentIpca: record.ipca_accumulated || (ipca12m / 12),
+        };
+      });
   };
 
   const chartData = generateChartData();
-  const historyData = generateHistoryData();
+  const monthlyHistoryData = generateHistoryData();
 
   const getPeriodLabel = () => {
     const today = new Date();
@@ -109,6 +193,12 @@ export default function EvolucaoDrawer({
     startDate.setMonth(startDate.getMonth() - months);
     
     return `De ${startDate.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })} até ${today.toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric' })}`;
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   return (
@@ -142,7 +232,11 @@ export default function EvolucaoDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            {activeTab === 'acumulado' ? (
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : activeTab === 'acumulado' ? (
               <div className="p-4 space-y-4">
                 {/* Chart Card */}
                 <div className="bg-card border border-border rounded-2xl p-4">
@@ -208,7 +302,7 @@ export default function EvolucaoDrawer({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Primeira Aplicação:</span>
-                      <span className="font-medium text-foreground">19.02.2025</span>
+                      <span className="font-medium text-foreground">{formatDate(firstInvestmentDate)}</span>
                     </div>
                     <div className="border-t border-border pt-3">
                       <div className="flex justify-between">
@@ -229,39 +323,48 @@ export default function EvolucaoDrawer({
               </div>
             ) : (
               <div className="p-4 space-y-4">
-                {historyData.map((month, index) => (
-                  <div key={index} className="bg-card border border-border rounded-2xl p-4">
-                    <h3 className="font-semibold text-foreground mb-3">{month.month}</h3>
-                    <div className="border-t border-border pt-3 space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Saldo Bruto Atual:</span>
-                        <span className="font-semibold text-foreground">{formatCurrency(month.saldoBruto)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Valor Aplicado:</span>
-                        <span className="font-medium text-foreground">{formatCurrency(month.valorAplicado)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Rentabilidade:</span>
-                        <span className="font-medium text-foreground">{month.rentabilidade.toFixed(2)}%</span>
-                      </div>
-                      <div className="border-t border-border pt-2 mt-2">
+                {monthlyHistoryData.length > 0 ? (
+                  monthlyHistoryData.map((month, index) => (
+                    <div key={index} className="bg-card border border-border rounded-2xl p-4">
+                      <h3 className="font-semibold text-foreground mb-3">{month.month}</h3>
+                      <div className="border-t border-border pt-3 space-y-2">
                         <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Rent. sobre CDI:</span>
-                          <span className="font-medium text-foreground">{month.rentSobreCdi.toFixed(2)}%</span>
+                          <span className="text-sm text-muted-foreground">Saldo Bruto Atual:</span>
+                          <span className="font-semibold text-foreground">{formatCurrency(month.saldoBruto)}</span>
                         </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-sm text-muted-foreground">Rent. do CDI:</span>
-                          <span className="font-medium text-foreground">{month.rentDoCdi.toFixed(2)}%</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Valor Aplicado:</span>
+                          <span className="font-medium text-foreground">{formatCurrency(month.valorAplicado)}</span>
                         </div>
-                        <div className="flex justify-between mt-1">
-                          <span className="text-sm text-muted-foreground">Rent. IPCA:</span>
-                          <span className="font-medium text-foreground">{month.rentIpca.toFixed(2)}%</span>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Rentabilidade:</span>
+                          <span className="font-medium text-foreground">{month.rentabilidade.toFixed(2)}%</span>
+                        </div>
+                        <div className="border-t border-border pt-2 mt-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Rent. sobre CDI:</span>
+                            <span className="font-medium text-foreground">{month.rentSobreCdi.toFixed(2)}%</span>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-sm text-muted-foreground">Rent. do CDI:</span>
+                            <span className="font-medium text-foreground">{month.rentDoCdi.toFixed(2)}%</span>
+                          </div>
+                          <div className="flex justify-between mt-1">
+                            <span className="text-sm text-muted-foreground">Rent. IPCA:</span>
+                            <span className="font-medium text-foreground">{month.rentIpca.toFixed(2)}%</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <p className="text-muted-foreground text-center">
+                      Histórico ainda não disponível.<br />
+                      Os dados serão registrados automaticamente a cada dia.
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             )}
           </div>
