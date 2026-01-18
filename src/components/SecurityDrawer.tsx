@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { ArrowLeft, ChevronRight, Smartphone } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,8 @@ interface SecurityDrawerProps {
 
 type View = "main" | "change-password" | "devices";
 
-export function SecurityDrawer({ open, onOpenChange }: SecurityDrawerProps) {
+export const SecurityDrawer = forwardRef<HTMLDivElement, SecurityDrawerProps>(
+  function SecurityDrawer({ open, onOpenChange }, ref) {
   const { theme } = useTheme();
   const [view, setView] = useState<View>("main");
   const [biometricEnabled, setBiometricEnabled] = useState(false);
@@ -224,6 +225,7 @@ export function SecurityDrawer({ open, onOpenChange }: SecurityDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
+        ref={ref}
         className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}
       >
         {/* Header with purple background */}
@@ -244,4 +246,4 @@ export function SecurityDrawer({ open, onOpenChange }: SecurityDrawerProps) {
       </DrawerContent>
     </Drawer>
   );
-}
+});
