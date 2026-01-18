@@ -272,48 +272,87 @@ const ProjecaoDrawer = ({
   }, [selectableItems, selectedTarget]);
 
   // Calculate projection based on selected item
+  // Get asset type for individual assets
+  const getAssetTypeForItem = (itemId: string): string | null => {
+    if (itemId.startsWith("asset_")) {
+      const assetId = itemId.replace("asset_", "");
+      const inv = investments.find(i => i.id === assetId);
+      return inv?.asset_type || null;
+    }
+    if (itemId.startsWith("type_")) {
+      return itemId.replace("type_", "");
+    }
+    return null;
+  };
+
   const projectionData = useMemo((): ProjectionData[] => {
     const currentDate = new Date();
     const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     
     const baseValue = selectedItem?.value || totalPatrimonio;
     
-    // Calculate historical average return
-    const avgHistoricalReturn = historicalReturns.length > 0
-      ? historicalReturns.reduce((a, b) => a + b, 0) / historicalReturns.length
-      : 0;
-    
-    // Calculate standard deviation for scenarios
-    const variance = historicalReturns.length > 1
-      ? historicalReturns.reduce((sum, r) => sum + Math.pow(r - avgHistoricalReturn, 2), 0) / historicalReturns.length
-      : 1;
-    const stdDev = Math.sqrt(variance);
-    
-    // Get CDI and IPCA monthly rates
+    // Get CDI and IPCA monthly rates from real economic indicators
     const cdi12m = economicIndicators?.accumulated12m?.cdi || 11.5;
     const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.5;
     const cdiMonthly = Math.pow(1 + cdi12m / 100, 1/12) - 1;
     const ipcaMonthly = Math.pow(1 + ipca12m / 100, 1/12) - 1;
     
-    // Determine base monthly return
+    // Determine base monthly return and volatility based on asset type
     let baseMonthlyReturn: number;
+    let volatility: number; // Standard deviation for scenarios
+    
+    const assetType = selectedItem ? getAssetTypeForItem(selectedItem.id) : null;
     
     if (selectedItem?.type === "global" || selectedItem?.type === "global_asset") {
-      // For global assets, use IPCA + small premium (real assets tend to follow inflation)
-      baseMonthlyReturn = ipcaMonthly * 1.2;
-    } else if (historicalReturns.length > 0) {
-      baseMonthlyReturn = avgHistoricalReturn / 100;
-    } else {
+      // Real assets (real estate, vehicles, etc.) - follow inflation + small premium
+      baseMonthlyReturn = ipcaMonthly * 1.3; // IPCA + 30% premium
+      volatility = 0.02; // Low volatility
+    } else if (assetType === "Criptoativos") {
+      // Crypto - high volatility, estimate based on historical crypto market
+      // Average crypto annual return ~50-100% but with huge volatility
+      baseMonthlyReturn = 0.04; // ~4% monthly (48% annual) - moderate estimate
+      volatility = 0.15; // Very high volatility (15% monthly std dev)
+    } else if (assetType === "Ação" || assetType === "Ações, Stocks e ETF" || assetType === "BDRs") {
+      // Stocks - use historical stock market average
+      baseMonthlyReturn = 0.01; // ~1% monthly (12% annual) - IBOV average
+      volatility = 0.05; // Medium-high volatility
+    } else if (assetType === "FIIs e REITs") {
+      // REITs - dividend yield + appreciation
+      baseMonthlyReturn = 0.008; // ~0.8% monthly (~10% annual)
+      volatility = 0.03; // Medium volatility
+    } else if (assetType === "Renda Fixa" || assetType === "Tesouro Direto") {
+      // Fixed income - use CDI rate
       baseMonthlyReturn = cdiMonthly;
+      volatility = 0.005; // Very low volatility
+    } else if (assetType === "Moedas") {
+      // Currencies - moderate volatility
+      baseMonthlyReturn = 0.005; // ~0.5% monthly
+      volatility = 0.04; // Medium volatility
+    } else if (assetType === "Fundos") {
+      // Funds - varies, use CDI + small alpha
+      baseMonthlyReturn = cdiMonthly * 1.1;
+      volatility = 0.02;
+    } else if (selectedItem?.type === "carteira" && historicalReturns.length > 0) {
+      // Portfolio with historical data
+      const avgHistoricalReturn = historicalReturns.reduce((a, b) => a + b, 0) / historicalReturns.length;
+      baseMonthlyReturn = avgHistoricalReturn / 100;
+      const variance = historicalReturns.reduce((sum, r) => sum + Math.pow(r - avgHistoricalReturn, 2), 0) / historicalReturns.length;
+      volatility = Math.sqrt(variance) / 100;
+    } else if (selectedItem?.type === "total") {
+      // Total patrimony - weighted average estimate
+      const investmentWeight = totalPatrimonio / (totalPatrimonio + totalGlobal || 1);
+      const globalWeight = totalGlobal / (totalPatrimonio + totalGlobal || 1);
+      baseMonthlyReturn = (cdiMonthly * investmentWeight) + (ipcaMonthly * 1.3 * globalWeight);
+      volatility = 0.03;
+    } else {
+      // Default to CDI
+      baseMonthlyReturn = cdiMonthly;
+      volatility = 0.01;
     }
     
-    // Scenario multipliers
-    const pessimisticMultiplier = historicalReturns.length > 0 
-      ? Math.max(0.3, 1 - stdDev / 100) 
-      : 0.7;
-    const optimisticMultiplier = historicalReturns.length > 0 
-      ? Math.min(1.7, 1 + stdDev / 100) 
-      : 1.3;
+    // Scenario multipliers based on volatility
+    const pessimisticMultiplier = Math.max(0.2, 1 - volatility * 3);
+    const optimisticMultiplier = Math.min(2.5, 1 + volatility * 3);
     
     const data: ProjectionData[] = [];
     let pessimista = baseValue;
@@ -355,7 +394,7 @@ const ProjecaoDrawer = ({
     }
     
     return data;
-  }, [selectedItem, historicalReturns, economicIndicators, totalPatrimonio]);
+  }, [selectedItem, historicalReturns, economicIndicators, totalPatrimonio, totalGlobal, investments]);
 
   // Calculate final projections
   const finalProjections = useMemo(() => {
