@@ -34,6 +34,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
+import kadigIcon from "@/assets/kadig-icon.png";
 import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 import AdicionarDrawer from "@/components/AdicionarDrawer";
 import TradeTab from "@/components/TradeTab";
@@ -2112,12 +2113,12 @@ const AppDashboard = () => {
             }}
           />
 
-          {/* Spinning Kadig logo */}
+          {/* Spinning Kadig icon */}
           <motion.div className="relative z-10 mb-6">
             <motion.img
-              src={kadigLogo}
+              src={kadigIcon}
               alt="Kadig"
-              className="w-24 h-24 object-contain drop-shadow-2xl"
+              className="w-24 h-24 object-contain drop-shadow-2xl rounded-2xl"
               animate={{ rotate: 360 }}
               transition={{
                 duration: 2,
