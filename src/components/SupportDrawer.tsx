@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect, forwardRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Upload, FileText, Trash2 } from "lucide-react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
@@ -25,8 +24,7 @@ const supportCategories = [
   { value: "outro", label: "Outro" },
 ];
 
-export const SupportDrawer = forwardRef<HTMLDivElement, SupportDrawerProps>(
-  function SupportDrawer({ open, onOpenChange, userEmail = "" }, ref) {
+const SupportDrawerComponent = ({ open, onOpenChange, userEmail = "" }: SupportDrawerProps) => {
   const { theme } = useTheme();
   const [email, setEmail] = useState(userEmail);
   const [category, setCategory] = useState("");
@@ -92,7 +90,7 @@ export const SupportDrawer = forwardRef<HTMLDivElement, SupportDrawerProps>(
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent ref={ref} className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}>
+      <DrawerContent className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
           <span className="text-lg font-semibold text-foreground">Abrir chamado</span>
           <button onClick={handleClose} className="p-2" type="button">
@@ -229,4 +227,6 @@ export const SupportDrawer = forwardRef<HTMLDivElement, SupportDrawerProps>(
       </DrawerContent>
     </Drawer>
   );
-});
+};
+
+export { SupportDrawerComponent as SupportDrawer };
