@@ -637,6 +637,13 @@ const AppDashboard = () => {
     return generateMonthlyPerformance(totalPatrimonio, totalGanhos, totalInvestido, economicIndicators);
   }, [totalPatrimonio, totalGanhos, totalInvestido, economicIndicators]);
 
+  // Calculate investment CDI percentage for total slide
+  const investmentCdiPercent = useMemo(() => {
+    if (!economicIndicators?.accumulated12m?.cdi || totalInvestidoGeral === 0) return 0;
+    const investmentReturnPercent = (totalGanhosGeral / totalInvestidoGeral) * 100;
+    return (investmentReturnPercent / economicIndicators.accumulated12m.cdi) * 100;
+  }, [totalGanhosGeral, totalInvestidoGeral, economicIndicators]);
+
   // Combined carousel slides: Global Patrimony + Monthly data
   const carouselSlides = useMemo(() => {
     const globalSlide = {
@@ -650,14 +657,17 @@ const AppDashboard = () => {
       globalAssetsCount: globalAssets.length,
     };
     
+    // For total slide, calculate stats based on investment portion only
+    const investmentStats = portfolioMonthlyData[0]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+    
     const totalSlide = {
       id: "total",
       type: "total" as const,
       month: "PATRIMÔNIO TOTAL",
       value: totalPatrimonioCompleto,
       gain: totalGanhosGeral,
-      cdiPercent: 0,
-      stats: { carteira: 0, cdi: 0, ipca: 0 },
+      cdiPercent: investmentCdiPercent,
+      stats: investmentStats,
       breakdown: {
         investimentos: totalPatrimonioGeral,
         global: totalPatrimonioGlobal,
@@ -665,7 +675,7 @@ const AppDashboard = () => {
     };
 
     return [globalSlide, totalSlide, ...portfolioMonthlyData.map((d, i) => ({ ...d, id: `month-${i}`, type: "monthly" as const }))];
-  }, [portfolioMonthlyData, totalPatrimonioGlobal, totalPatrimonioCompleto, totalPatrimonioGeral, totalGanhosGeral, globalAssets.length]);
+  }, [portfolioMonthlyData, totalPatrimonioGlobal, totalPatrimonioCompleto, totalPatrimonioGeral, totalGanhosGeral, globalAssets.length, investmentCdiPercent]);
 
   const currentData = portfolioMonthlyData[currentMonthIndex] || {
     month: "---",
@@ -897,17 +907,40 @@ const AppDashboard = () => {
                               )}
                               
                               {slide.type === "total" && (
-                                <div className="mt-2 space-y-1">
-                                  <div className="flex items-center gap-2 text-xs">
-                                    <div className="w-2 h-2 rounded-full bg-success" />
-                                    <span className="text-muted-foreground">Invest:</span>
-                                    <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.investimentos || 0)}</span>
+                                <div className="mt-2 space-y-2">
+                                  {/* CDI percentage for investments */}
+                                  {slide.cdiPercent > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      Investimentos <span className="text-primary font-semibold">{formatPercent(slide.cdiPercent)}</span> do CDI
+                                    </span>
+                                  )}
+                                  
+                                  {/* Breakdown */}
+                                  <div className="flex items-center gap-4 text-xs">
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-2 h-2 rounded-full bg-success" />
+                                      <span className="text-muted-foreground">Invest:</span>
+                                      <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.investimentos || 0)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <div className="w-2 h-2 rounded-full bg-primary" />
+                                      <span className="text-muted-foreground">Global:</span>
+                                      <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.global || 0)}</span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2 text-xs">
-                                    <div className="w-2 h-2 rounded-full bg-primary" />
-                                    <span className="text-muted-foreground">Global:</span>
-                                    <span className="text-foreground font-medium">{formatCurrency((slide as any).breakdown?.global || 0)}</span>
-                                  </div>
+                                  
+                                  {/* Total gain from investments */}
+                                  {slide.gain !== 0 && (
+                                    <div className="pt-1">
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                        slide.gain >= 0
+                                          ? "text-success bg-success/10 border border-success/20"
+                                          : "text-destructive bg-destructive/10 border border-destructive/20"
+                                      }`}>
+                                        {slide.gain >= 0 ? "+" : ""}{formatCurrency(slide.gain)} ganhos
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                               
