@@ -70,9 +70,8 @@ const Welcome = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-kadig-deep via-background/80 to-transparent" />
       </div>
 
-      {/* Content - Centered on desktop */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-center lg:justify-center pb-8 sm:pb-12 px-5 sm:px-6 safe-area-inset-bottom">
-        <div className="w-full max-w-md lg:max-w-lg mx-auto lg:mt-0 mt-auto">
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex flex-col justify-end pb-8 sm:pb-12 px-5 sm:px-6 safe-area-inset-bottom">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,8 +128,7 @@ const Welcome = () => {
         </motion.div>
 
         {/* Bottom safe area for mobile */}
-        <div className="h-6 sm:h-4 lg:h-0" />
-        </div>
+        <div className="h-6 sm:h-4" />
       </div>
     </div>
   );

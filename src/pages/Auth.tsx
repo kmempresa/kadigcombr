@@ -103,7 +103,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="light-theme min-h-screen bg-background relative overflow-hidden">
+    <div className="light-theme min-h-screen bg-background relative overflow-hidden fixed inset-0">
       {/* Background curved shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Top right curve */}
@@ -132,9 +132,8 @@ const Auth = () => {
         <div className="absolute top-1/3 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
-      {/* Content - Centered on desktop */}
-      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-5 sm:px-6 safe-area-inset-top safe-area-inset-bottom">
-        <div className="w-full max-w-md lg:max-w-lg">
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex flex-col px-5 sm:px-6 safe-area-inset-top safe-area-inset-bottom">
         {/* Header with logo */}
         <motion.header
           initial={{ opacity: 0, y: -20 }}
@@ -166,7 +165,7 @@ const Auth = () => {
           </div>
 
           {/* Form */}
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-md">
             {/* Email input */}
             <div className="relative">
               <Input
@@ -245,7 +244,6 @@ const Auth = () => {
             Esqueceu a senha?
           </button>
         </motion.footer>
-        </div>
       </div>
     </div>
   );
