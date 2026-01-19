@@ -702,6 +702,8 @@ const AppDashboard = () => {
 
   return (
     <div className={`${themeClass} min-h-screen bg-background flex flex-col`}>
+      {/* Desktop container - centers content with max-width */}
+      <div className="w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
       {/* Carteira Tab Content */}
       {activeTab === "carteira" && (
         <div className="flex-1 pb-20">
@@ -2139,27 +2141,31 @@ const AppDashboard = () => {
         }}
       />
 
-      {/* Bottom Navigation */}
+      </div> {/* End desktop container */}
+
+      {/* Bottom Navigation - Full width but content centered */}
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-inset-bottom">
-        <div className="flex items-center justify-around py-2">
-          {[
-            { id: "carteira", icon: Wallet, label: "Carteira" },
-            { id: "trade", icon: TrendingUp, label: "Trade" },
-            { id: "conexoes", icon: Link2, label: "Conexões" },
-            { id: "mercado", icon: Store, label: "Mercado" },
-            { id: "conta", icon: User, label: "Conta" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center py-2 px-4 ${
-                activeTab === tab.id ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              <tab.icon className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">{tab.label}</span>
-            </button>
-          ))}
+        <div className="max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
+          <div className="flex items-center justify-around py-2">
+            {[
+              { id: "carteira", icon: Wallet, label: "Carteira" },
+              { id: "trade", icon: TrendingUp, label: "Trade" },
+              { id: "conexoes", icon: Link2, label: "Conexões" },
+              { id: "mercado", icon: Store, label: "Mercado" },
+              { id: "conta", icon: User, label: "Conta" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex flex-col items-center py-2 px-4 lg:px-8 transition-colors ${
+                  activeTab === tab.id ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <tab.icon className="w-5 h-5 lg:w-6 lg:h-6 mb-1" />
+                <span className="text-[10px] lg:text-xs font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </nav>
 
