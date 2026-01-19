@@ -63,7 +63,7 @@ async function createConnectToken(accessToken: string, itemId?: string): Promise
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
     body: JSON.stringify(body),
   });
@@ -86,7 +86,7 @@ async function listItems(accessToken: string): Promise<any> {
   const response = await fetch(`${PLUGGY_API_URL}/items`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
   });
 
@@ -111,7 +111,7 @@ async function getItem(accessToken: string, itemId: string): Promise<any> {
   const response = await fetch(`${PLUGGY_API_URL}/items/${itemId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
   });
 
@@ -131,7 +131,7 @@ async function getAccounts(accessToken: string, itemId: string): Promise<any> {
   const response = await fetch(`${PLUGGY_API_URL}/accounts?itemId=${itemId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
   });
 
@@ -151,7 +151,7 @@ async function getInvestments(accessToken: string, itemId: string): Promise<any>
   const response = await fetch(`${PLUGGY_API_URL}/investments?itemId=${itemId}`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
   });
 
@@ -171,7 +171,7 @@ async function deleteItem(accessToken: string, itemId: string): Promise<void> {
   const response = await fetch(`${PLUGGY_API_URL}/items/${itemId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      'X-API-KEY': accessToken,
     },
   });
 
