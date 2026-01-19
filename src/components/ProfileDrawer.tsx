@@ -167,7 +167,7 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "bg-background" : ""}`}>
+      <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "light-theme" : ""}`}>
         <DrawerHeader className="text-center pb-2">
           <DrawerTitle className="text-xl font-bold text-foreground">Meu Perfil</DrawerTitle>
         </DrawerHeader>
