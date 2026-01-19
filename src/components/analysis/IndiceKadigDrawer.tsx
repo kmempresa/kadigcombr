@@ -61,7 +61,7 @@ const GaugeChart = ({ value, label, colorType }: { value: number; label: string;
       case 'recomendacao':
         return 'from-gray-400 via-gray-300 to-gray-200';
       case 'kadig':
-        return 'from-cyan-600 via-cyan-400 to-teal-300';
+        return 'from-[hsl(210,100%,60%)] via-[hsl(185,80%,55%)] to-[hsl(210,100%,75%)]';
       default:
         return 'from-gray-400 to-gray-200';
     }
@@ -186,27 +186,27 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Hero Banner - Cyan/Teal Kadig Style */}
-          <div className="relative min-h-[420px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(200,60%,10%)] to-[hsl(180,50%,12%)] overflow-hidden">
+          {/* Hero Banner - Kadig Blue/Cyan Style */}
+          <div className="relative min-h-[420px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(var(--kadig-navy))] to-[hsl(220,55%,18%)] overflow-hidden">
             {/* Decorative glows */}
-            <div className="absolute top-20 left-10 w-48 h-48 bg-cyan-500/30 rounded-full blur-3xl" />
-            <div className="absolute top-40 right-10 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl" />
-            <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-cyan-400/20 rounded-full blur-xl" />
+            <div className="absolute top-20 left-10 w-48 h-48 bg-[hsl(210,100%,60%)]/20 rounded-full blur-3xl" />
+            <div className="absolute top-40 right-10 w-32 h-32 bg-[hsl(185,80%,55%)]/20 rounded-full blur-2xl" />
+            <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-[hsl(210,100%,75%)]/20 rounded-full blur-xl" />
             
             {/* Decorative lines */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent" />
-              <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+              <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(210,100%,60%)]/50 to-transparent" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(185,80%,55%)]/50 to-transparent" />
+              <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[hsl(210,100%,60%)]/50 to-transparent" />
             </div>
             
             <div className="relative z-10 p-6 pt-8">
               {/* Real-time indicator */}
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 rounded-full px-3 py-1">
-                  <Wifi className="w-3 h-3 text-green-400" />
-                  <span className="text-green-400 text-xs font-medium">Tempo Real</span>
-                  {isRefreshing && <RefreshCw className="w-3 h-3 text-green-400 animate-spin" />}
+                <div className="flex items-center gap-1.5 bg-[hsl(185,80%,55%)]/20 border border-[hsl(185,80%,55%)]/30 rounded-full px-3 py-1">
+                  <Wifi className="w-3 h-3 text-[hsl(185,80%,55%)]" />
+                  <span className="text-[hsl(185,80%,55%)] text-xs font-medium">Tempo Real</span>
+                  {isRefreshing && <RefreshCw className="w-3 h-3 text-[hsl(185,80%,55%)] animate-spin" />}
                 </div>
                 {lastUpdate && (
                   <span className="text-muted-foreground/60 text-xs">
@@ -215,7 +215,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                 )}
               </div>
               
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 mb-1" style={{ textShadow: '0 0 30px rgba(0, 212, 255, 0.3)' }}>
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] mb-1" style={{ textShadow: '0 0 30px hsla(210, 100%, 60%, 0.3)' }}>
                 Índice
               </h1>
               <h2 className="text-3xl font-bold text-foreground mb-4">Kadig</h2>
@@ -236,7 +236,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
 
               {/* Top Performers Section */}
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
+                <div className="w-1 h-6 bg-gradient-to-b from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] rounded-full" />
                 <h3 className="text-lg font-semibold text-foreground">Melhores ativos no Índice Kadig</h3>
               </div>
 
@@ -258,7 +258,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                     {/* Gauge visualization */}
                     <div className="relative h-20 flex items-end justify-center mb-2">
                       <div className="relative w-28 h-14 overflow-hidden">
-                        <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-teal-300" />
+                        <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-full bg-gradient-to-r from-[hsl(210,100%,60%)] via-[hsl(185,80%,55%)] to-[hsl(210,100%,75%)]" />
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-10 bg-card rounded-t-full" />
                         <div 
                           className="absolute bottom-0 left-1/2 w-1 h-12 bg-foreground origin-bottom transition-transform duration-500"
@@ -279,7 +279,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
 
           {/* Promotional Banner */}
           <div className="p-4">
-            <div className="relative bg-gradient-to-br from-cyan-500 via-cyan-400 to-teal-500 rounded-2xl p-6 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-[hsl(210,100%,60%)] via-[hsl(210,100%,55%)] to-[hsl(185,80%,55%)] rounded-2xl p-6 overflow-hidden">
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-1/4 w-16 h-16 bg-white/10 rounded-full translate-y-1/2" />
@@ -298,7 +298,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
           {/* Destaques do Índice Kadig */}
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
+              <div className="w-1 h-6 bg-gradient-to-b from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] rounded-full" />
               <h2 className="text-lg font-semibold text-foreground">Destaques do Índice Kadig</h2>
             </div>
             <p className="text-muted-foreground text-sm mb-4">Todos os ativos avaliados pelo Kadig</p>
@@ -340,7 +340,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                       onClick={() => { setSortBy(filter); setCurrentPage(1); }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         sortBy === filter
-                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
+                          ? 'bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] text-white shadow-lg shadow-[hsl(210,100%,60%)]/25'
                           : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                     >
@@ -354,7 +354,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
             {/* Stocks List */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mb-3" />
+                <Loader2 className="w-8 h-8 animate-spin text-[hsl(210,100%,60%)] mb-3" />
                 <p className="text-sm text-muted-foreground">Carregando dados em tempo real...</p>
               </div>
             ) : (
@@ -436,7 +436,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                     onClick={() => setCurrentPage(pageNum)}
                     className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
                       currentPage === pageNum
-                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
+                        ? 'bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] text-white shadow-lg shadow-[hsl(210,100%,60%)]/25'
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                     }`}
                   >
@@ -451,7 +451,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                       onClick={() => setCurrentPage(totalPages)}
                       className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
                         currentPage === totalPages
-                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
+                          ? 'bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] text-white shadow-lg shadow-[hsl(210,100%,60%)]/25'
                           : 'bg-secondary text-secondary-foreground'
                       }`}
                     >
