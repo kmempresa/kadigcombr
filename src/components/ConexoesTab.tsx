@@ -33,21 +33,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface PluggyItem {
+interface PluggyConnection {
   id: string;
-  connector: {
-    id: number;
-    name: string;
-    institutionUrl: string;
-    imageUrl: string;
-    primaryColor: string;
-    type: string;
-  };
-  status: string;
-  executionStatus: string;
-  createdAt: string;
-  updatedAt: string;
-  lastUpdatedAt: string;
+  item_id: string;
+  connector_id: number | null;
+  connector_name: string | null;
+  connector_image_url: string | null;
+  connector_primary_color: string | null;
+  status: string | null;
+  last_updated_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ConexoesTabProps {
@@ -55,27 +51,34 @@ interface ConexoesTabProps {
 }
 
 export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
-  const [items, setItems] = useState<PluggyItem[]>([]);
+  const [connections, setConnections] = useState<PluggyConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [showWidget, setShowWidget] = useState(false);
-  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<PluggyItem | null>(null);
+  const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<PluggyConnection | null>(null);
   const [itemDetails, setItemDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
 
-  const fetchItems = useCallback(async () => {
+  // Fetch connections from local database
+  const fetchConnections = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('pluggy', {
-        body: { action: 'list-items' }
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('pluggy_connections')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setItems(data?.results || []);
+      setConnections(data || []);
     } catch (err: any) {
-      console.error('Error fetching items:', err);
+      console.error('Error fetching connections:', err);
       toast.error('Erro ao carregar conexões');
     } finally {
       setLoading(false);
@@ -83,8 +86,8 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
   }, []);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchConnections();
+  }, [fetchConnections]);
 
   const handleConnect = async () => {
     try {
@@ -105,34 +108,133 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
     }
   };
 
-  const handleDeleteItem = async (itemId: string) => {
+  // Save connection to database when widget succeeds
+  const handleConnectionSuccess = async (itemData: any) => {
+    console.log("Pluggy connection successful:", itemData);
+    
     try {
-      const { error } = await supabase.functions.invoke('pluggy', {
-        body: { action: 'delete-item', itemId }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
+      const item = itemData.item;
+      const connector = item?.connector;
+
+      // Check if connection already exists
+      const { data: existing } = await supabase
+        .from('pluggy_connections')
+        .select('id')
+        .eq('item_id', item.id)
+        .single();
+
+      if (existing) {
+        // Update existing connection
+        await supabase
+          .from('pluggy_connections')
+          .update({
+            connector_name: connector?.name,
+            connector_image_url: connector?.imageUrl,
+            connector_primary_color: connector?.primaryColor,
+            status: item.status,
+            last_updated_at: item.lastUpdatedAt || item.updatedAt,
+          })
+          .eq('id', existing.id);
+      } else {
+        // Insert new connection
+        const { error: insertError } = await supabase
+          .from('pluggy_connections')
+          .insert({
+            user_id: user.id,
+            item_id: item.id,
+            connector_id: connector?.id,
+            connector_name: connector?.name,
+            connector_image_url: connector?.imageUrl,
+            connector_primary_color: connector?.primaryColor,
+            status: item.status || 'PENDING',
+            last_updated_at: item.lastUpdatedAt || item.updatedAt,
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      toast.success(`${connector?.name || 'Instituição'} conectada com sucesso!`);
+      fetchConnections();
+    } catch (err: any) {
+      console.error('Error saving connection:', err);
+      toast.error('Erro ao salvar conexão');
+    } finally {
+      setShowWidget(false);
+      setConnectToken(null);
+    }
+  };
+
+  // Sync connection status from Pluggy API
+  const handleSyncConnection = async (connection: PluggyConnection) => {
+    try {
+      setSyncingItemId(connection.item_id);
+      
+      const { data, error } = await supabase.functions.invoke('pluggy', {
+        body: { action: 'get-item', itemId: connection.item_id }
       });
+
+      if (error) throw error;
+
+      // Update local database with fresh status
+      await supabase
+        .from('pluggy_connections')
+        .update({
+          status: data.status,
+          last_updated_at: data.lastUpdatedAt || data.updatedAt,
+        })
+        .eq('id', connection.id);
+
+      toast.success('Conexão sincronizada!');
+      fetchConnections();
+    } catch (err: any) {
+      console.error('Error syncing connection:', err);
+      toast.error('Erro ao sincronizar conexão');
+    } finally {
+      setSyncingItemId(null);
+    }
+  };
+
+  const handleDeleteConnection = async (connection: PluggyConnection) => {
+    try {
+      // Delete from Pluggy API
+      await supabase.functions.invoke('pluggy', {
+        body: { action: 'delete-item', itemId: connection.item_id }
+      });
+
+      // Delete from local database
+      const { error } = await supabase
+        .from('pluggy_connections')
+        .delete()
+        .eq('id', connection.id);
 
       if (error) throw error;
       
       toast.success('Conexão removida com sucesso');
-      setDeletingItemId(null);
-      fetchItems();
+      setDeletingConnectionId(null);
+      fetchConnections();
     } catch (err: any) {
-      console.error('Error deleting item:', err);
+      console.error('Error deleting connection:', err);
       toast.error('Erro ao remover conexão');
     }
   };
 
-  const handleViewDetails = async (item: PluggyItem) => {
-    setSelectedItem(item);
+  const handleViewDetails = async (connection: PluggyConnection) => {
+    setSelectedConnection(connection);
     setLoadingDetails(true);
     
     try {
       const [accountsRes, investmentsRes] = await Promise.all([
         supabase.functions.invoke('pluggy', {
-          body: { action: 'get-accounts', itemId: item.id }
+          body: { action: 'get-accounts', itemId: connection.item_id }
         }),
         supabase.functions.invoke('pluggy', {
-          body: { action: 'get-investments', itemId: item.id }
+          body: { action: 'get-investments', itemId: connection.item_id }
         })
       ]);
 
@@ -148,7 +250,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | null) => {
     switch (status) {
       case 'UPDATED':
         return <CheckCircle className="w-4 h-4 text-emerald-500" />;
@@ -162,17 +264,19 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
     }
   };
 
-  const getStatusText = (status: string) => {
+  const getStatusText = (status: string | null) => {
     switch (status) {
       case 'UPDATED': return 'Atualizado';
       case 'UPDATING': return 'Atualizando...';
       case 'LOGIN_ERROR': return 'Erro de login';
       case 'OUTDATED': return 'Desatualizado';
-      default: return status;
+      case 'PENDING': return 'Pendente';
+      default: return status || 'Desconhecido';
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'short',
@@ -191,7 +295,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={fetchItems}
+            onClick={fetchConnections}
             disabled={loading}
             className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
           >
@@ -213,7 +317,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
       </div>
 
       {/* Loading */}
-      {loading && items.length === 0 && (
+      {loading && connections.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
           <p className="text-muted-foreground">Carregando conexões...</p>
@@ -221,7 +325,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
       )}
 
       {/* Empty State */}
-      {!loading && items.length === 0 && (
+      {!loading && connections.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -251,12 +355,12 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         </motion.div>
       )}
 
-      {/* Items List */}
-      {items.length > 0 && (
+      {/* Connections List */}
+      {connections.length > 0 && (
         <div className="space-y-3">
-          {items.map((item, index) => (
+          {connections.map((connection, index) => (
             <motion.div
-              key={item.id}
+              key={connection.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -266,12 +370,12 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 {/* Logo */}
                 <div 
                   className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: item.connector?.primaryColor || '#E5E7EB' }}
+                  style={{ backgroundColor: connection.connector_primary_color ? `#${connection.connector_primary_color}` : '#E5E7EB' }}
                 >
-                  {item.connector?.imageUrl ? (
+                  {connection.connector_image_url ? (
                     <img 
-                      src={item.connector.imageUrl} 
-                      alt={item.connector.name}
+                      src={connection.connector_image_url} 
+                      alt={connection.connector_name || 'Instituição'}
                       className="w-8 h-8 object-contain"
                     />
                   ) : (
@@ -282,15 +386,15 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">
-                    {item.connector?.name || 'Instituição'}
+                    {connection.connector_name || 'Instituição'}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
-                    {getStatusIcon(item.status)}
+                    {getStatusIcon(connection.status)}
                     <span className="text-xs text-muted-foreground">
-                      {getStatusText(item.status)}
+                      {getStatusText(connection.status)}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      • {formatDate(item.lastUpdatedAt || item.updatedAt)}
+                      • {formatDate(connection.last_updated_at || connection.updated_at)}
                     </span>
                   </div>
                 </div>
@@ -298,13 +402,20 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleViewDetails(item)}
+                    onClick={() => handleSyncConnection(connection)}
+                    disabled={syncingItemId === connection.item_id}
+                    className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    <RefreshCw className={`w-5 h-5 ${syncingItemId === connection.item_id ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => handleViewDetails(connection)}
                     className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setDeletingItemId(item.id)}
+                    onClick={() => setDeletingConnectionId(connection.id)}
                     className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -342,13 +453,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         <PluggyConnect
           connectToken={connectToken}
           includeSandbox={false}
-          onSuccess={(itemData) => {
-            console.log("Pluggy connection successful:", itemData);
-            toast.success(`${itemData.item?.connector?.name || 'Instituição'} conectada com sucesso!`);
-            setShowWidget(false);
-            setConnectToken(null);
-            fetchItems();
-          }}
+          onSuccess={handleConnectionSuccess}
           onError={(error) => {
             console.error("Pluggy connection error:", error);
             toast.error(error?.message || "Erro ao conectar instituição");
@@ -356,7 +461,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
           onClose={() => {
             setShowWidget(false);
             setConnectToken(null);
-            fetchItems();
+            fetchConnections();
           }}
           onEvent={(event) => {
             console.log("Pluggy event:", event);
@@ -365,23 +470,23 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
       )}
 
       {/* Details Drawer */}
-      <Drawer open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
+      <Drawer open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
         <DrawerContent className="max-h-[90vh]">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
-              {selectedItem?.connector?.imageUrl && (
+              {selectedConnection?.connector_image_url && (
                 <div 
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: selectedItem.connector.primaryColor }}
+                  style={{ backgroundColor: selectedConnection.connector_primary_color ? `#${selectedConnection.connector_primary_color}` : '#E5E7EB' }}
                 >
                   <img 
-                    src={selectedItem.connector.imageUrl} 
-                    alt={selectedItem.connector.name}
+                    src={selectedConnection.connector_image_url} 
+                    alt={selectedConnection.connector_name || 'Instituição'}
                     className="w-6 h-6 object-contain"
                   />
                 </div>
               )}
-              {selectedItem?.connector?.name || 'Detalhes'}
+              {selectedConnection?.connector_name || 'Detalhes'}
             </DrawerTitle>
           </DrawerHeader>
           
@@ -446,7 +551,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
       </Drawer>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deletingItemId} onOpenChange={() => setDeletingItemId(null)}>
+      <AlertDialog open={!!deletingConnectionId} onOpenChange={() => setDeletingConnectionId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover conexão?</AlertDialogTitle>
@@ -458,7 +563,10 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletingItemId && handleDeleteItem(deletingItemId)}
+              onClick={() => {
+                const conn = connections.find(c => c.id === deletingConnectionId);
+                if (conn) handleDeleteConnection(conn);
+              }}
               className="bg-red-500 hover:bg-red-600"
             >
               Remover

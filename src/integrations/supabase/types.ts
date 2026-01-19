@@ -293,6 +293,48 @@ export type Database = {
           },
         ]
       }
+      pluggy_connections: {
+        Row: {
+          connector_id: number | null
+          connector_image_url: string | null
+          connector_name: string | null
+          connector_primary_color: string | null
+          created_at: string
+          id: string
+          item_id: string
+          last_updated_at: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id?: number | null
+          connector_image_url?: string | null
+          connector_name?: string | null
+          connector_primary_color?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          last_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: number | null
+          connector_image_url?: string | null
+          connector_name?: string | null
+          connector_primary_color?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          last_updated_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       portfolio_history: {
         Row: {
           cdi_accumulated: number | null
