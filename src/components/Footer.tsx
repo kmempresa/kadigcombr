@@ -38,9 +38,22 @@ export const Footer = () => {
 
       {/* Footer content */}
       <div className="container mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-8 py-8 border-t border-border">
-          <img src={kadigLogo} alt="Kadig" className="h-6 opacity-60" />
+        <div className="flex flex-col items-center gap-8 py-8 border-t border-border">
+          {/* App Store Badge */}
+          <a 
+            href="https://apps.apple.com/app/kadig" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-80"
+          >
+            <img 
+              src="/app-store-badge.svg" 
+              alt="Disponível na App Store" 
+              className="h-10"
+            />
+          </a>
 
+          {/* Links */}
           <div className="flex gap-8">
             <Link
               to="/privacidade"
@@ -62,9 +75,13 @@ export const Footer = () => {
             </a>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Kadig
-          </p>
+          {/* Kadig Logo and Copyright */}
+          <div className="flex flex-col items-center gap-3">
+            <img src={kadigLogo} alt="Kadig" className="h-6 opacity-60" />
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Kadig
+            </p>
+          </div>
         </div>
       </div>
     </footer>
