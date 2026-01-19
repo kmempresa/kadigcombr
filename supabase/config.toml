@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.recommended-portfolios]
 verify_jwt = false
+
+[functions.market-reports]
+verify_jwt = false

@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
 import SimuladorDrawer from "@/components/analysis/SimuladorDrawer";
 import CarteirasRecomendadasDrawer from "@/components/analysis/CarteirasRecomendadasDrawer";
+import RelatoriosDrawer from "@/components/analysis/RelatoriosDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -93,6 +94,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [showAllKadig, setShowAllKadig] = useState(false);
   const [simuladorOpen, setSimuladorOpen] = useState(false);
   const [carteirasOpen, setCarteirasOpen] = useState(false);
+  const [relatoriosOpen, setRelatoriosOpen] = useState(false);
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -220,7 +222,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     { label: "Simulador de investimentos", gradient: "from-violet-500 to-purple-600", icon: Calculator, onClick: () => setSimuladorOpen(true) },
     { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => {} },
     { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
-    { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => {} },
+    { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => setRelatoriosOpen(true) },
     { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => {} },
   ];
 
