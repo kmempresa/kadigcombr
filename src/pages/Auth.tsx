@@ -127,7 +127,7 @@ const Auth = () => {
         duration: 0.5
       }} className="pt-8 sm:pt-12">
           {/* Kadig logo */}
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-kadig-navy flex items-center justify-center shadow-lg">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg bg-[#202e4b]">
             <img alt="Kadig" className="h-8 sm:h-10" src="/lovable-uploads/315c99b8-4f49-4939-8728-99274ca35547.png" />
           </div>
         </motion.header>
