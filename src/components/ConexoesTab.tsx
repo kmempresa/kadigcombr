@@ -287,12 +287,11 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
   return (
     <div className="flex-1 pb-24">
-      {/* Header Premium - Kadig Style */}
+      {/* Header - Kadig Style (same as Dashboard) */}
       <header className="relative overflow-hidden pt-safe">
         {/* Background gradient effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
         <div className="relative px-4 pb-4 pt-2">
           <div className="flex items-center justify-between">
@@ -303,14 +302,14 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
               animate={{ opacity: 1, x: 0 }}
             >
               <div className="relative">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
                   <Link2 className="w-5 h-5 text-white" />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">Open Finance</span>
-                <span className="font-bold text-lg text-foreground">Conexões</span>
+                <span className="font-semibold text-foreground text-base">Conexões</span>
               </div>
             </motion.div>
 
@@ -328,14 +327,14 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 onClick={handleConnect}
                 disabled={connecting}
                 whileTap={{ scale: 0.9 }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-medium shadow-lg shadow-cyan-500/20"
+                whileHover={{ scale: 1.05 }}
+                className="ml-1 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30"
               >
                 {connecting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
                 ) : (
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5 text-white" />
                 )}
-                <span className="text-sm">Conectar</span>
               </motion.button>
             </div>
           </div>
