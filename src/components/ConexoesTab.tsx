@@ -286,35 +286,61 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
   };
 
   return (
-    <div className="flex-1 p-4 pb-24">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Conexões</h2>
-          <p className="text-sm text-muted-foreground">Open Finance</p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={fetchConnections}
-            disabled={loading}
-            className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
-          >
-            {connecting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            Conectar
-          </button>
+    <div className="flex-1 pb-24">
+      {/* Hero Header - Kadig Style */}
+      <div className="relative overflow-hidden rounded-b-3xl mb-6">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
+        
+        {/* Decorative glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
+        
+        {/* Content */}
+        <div className="relative z-10 p-6 pt-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Link2 className="w-5 h-5 text-cyan-400" />
+                <span className="text-xs font-medium text-cyan-400 uppercase tracking-wider">Open Finance</span>
+              </div>
+              <h1 
+                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] mb-1"
+                style={{ textShadow: '0 0 30px hsla(210, 100%, 60%, 0.3)' }}
+              >
+                Conexões
+              </h1>
+              <p className="text-muted-foreground text-sm max-w-xs">
+                Conecte suas contas bancárias e corretoras
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={fetchConnections}
+                disabled={loading}
+                className="p-2.5 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-foreground hover:bg-white/10 transition-colors"
+              >
+                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={handleConnect}
+                disabled={connecting}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+              >
+                {connecting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                Conectar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+      
+      <div className="px-4">
 
       {/* Loading */}
       {loading && connections.length === 0 && (
@@ -447,6 +473,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
           </div>
         </div>
       </motion.div>
+      </div>
 
       {/* Pluggy Connect Widget */}
       {showWidget && connectToken && (
