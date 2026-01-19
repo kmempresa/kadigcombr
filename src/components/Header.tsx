@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import kadigLogo from "@/assets/kadig-logo.png";
 
 export const Header = () => {
@@ -50,13 +51,15 @@ export const Header = () => {
                 className="h-6 sm:h-9"
               />
             </a>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="px-4 sm:px-5 py-2 bg-primary text-primary-foreground rounded-xl text-xs sm:text-sm font-medium hover:bg-kadig-light transition-colors"
-            >
-              Entrar
-            </motion.button>
+            <Link to="/splash">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 sm:px-5 py-2 bg-primary text-primary-foreground rounded-xl text-xs sm:text-sm font-medium hover:bg-kadig-light transition-colors"
+              >
+                Entrar
+              </motion.button>
+            </Link>
             <button 
               className="md:hidden p-2 text-muted-foreground hover:text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
