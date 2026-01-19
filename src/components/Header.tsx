@@ -33,13 +33,27 @@ export const Header = () => {
             ))}
           </nav>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-kadig-light transition-colors"
-          >
-            Entrar
-          </motion.button>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://apps.apple.com/app/kadig" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden sm:block transition-opacity hover:opacity-80"
+            >
+              <img 
+                src="/app-store-badge.svg" 
+                alt="Disponível na App Store" 
+                className="h-9"
+              />
+            </a>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-5 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-kadig-light transition-colors"
+            >
+              Entrar
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.header>
