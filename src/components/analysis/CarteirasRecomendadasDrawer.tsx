@@ -6,8 +6,6 @@ import {
   Search,
   Sun,
   Moon,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 import {
   Drawer,
@@ -215,42 +213,45 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="h-[95vh] bg-[#1a1f2e]">
+        <DrawerContent className="h-[95vh] bg-background">
           {/* Header */}
-          <header className="flex items-center justify-between p-4 border-b border-gray-800">
-            <div className="flex items-center gap-2 text-white">
+          <header className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center gap-2 text-foreground">
               <button onClick={() => onOpenChange(false)}>
                 <span className="font-medium">Mercado</span>
               </button>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={toggleTheme} className="p-2 text-gray-400">
+              <button onClick={toggleTheme} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              <button onClick={() => onOpenChange(false)} className="p-2 text-gray-400">
+              <button onClick={() => onOpenChange(false)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button className="p-2 text-gray-400">
+              <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           </header>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Hero Banner */}
-            <div className="relative h-72 bg-gradient-to-br from-purple-900 via-violet-800 to-fuchsia-900 overflow-hidden">
+            {/* Hero Banner - Kadig Style */}
+            <div className="relative h-72 bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(var(--kadig-navy))] to-primary/20 overflow-hidden">
+              {/* Decorative glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
+              
               {/* Decorative lines */}
               <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent" />
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent" />
-                <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400 to-transparent" />
+                <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
+                <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
               </div>
               
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                <h1 className="text-4xl font-bold text-primary mb-2">Carteiras</h1>
-                <h2 className="text-3xl font-bold text-white mb-4">recomendadas</h2>
-                <p className="text-gray-300 text-sm max-w-xs">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 relative z-10">
+                <h1 className="text-4xl font-bold text-primary glow-text mb-2">Carteiras</h1>
+                <h2 className="text-3xl font-bold text-foreground mb-4">recomendadas</h2>
+                <p className="text-muted-foreground text-sm max-w-xs">
                   Descubra Carteiras Recomendadas e Ativos que entraram e saíram do Radar
                 </p>
               </div>
@@ -258,14 +259,14 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
 
             {/* Search */}
             <div className="px-4 -mt-6 relative z-10">
-              <div className="relative">
+              <div className="relative glass rounded-xl">
                 <Input
                   placeholder="Buscar ativos, índices, fundos de investim..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-14 bg-[#252b3d] border-0 text-white placeholder:text-gray-500 pr-12 rounded-xl"
+                  className="h-14 bg-transparent border-0 text-foreground placeholder:text-muted-foreground pr-12"
                 />
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               </div>
             </div>
 
@@ -273,30 +274,34 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
             <section className="p-4 mt-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-1 h-6 bg-primary rounded-full" />
-                <h2 className="text-lg font-semibold text-white">Últimas carteiras</h2>
+                <h2 className="text-lg font-semibold text-foreground">Últimas carteiras</h2>
               </div>
 
               <div className="space-y-4">
-                {filteredPortfolios.map((portfolio) => (
+                {filteredPortfolios.map((portfolio, index) => (
                   <motion.div
                     key={portfolio.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-[#252b3d] rounded-2xl overflow-hidden"
+                    transition={{ delay: index * 0.05 }}
+                    className="glass rounded-2xl overflow-hidden"
                   >
-                    {/* Card Header with gradient */}
-                    <div className="relative h-28 bg-gradient-to-br from-purple-900 via-violet-800 to-fuchsia-900 p-4 flex items-end overflow-hidden">
+                    {/* Card Header with gradient - Kadig style */}
+                    <div className="relative h-28 bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(var(--kadig-navy))] to-primary/30 p-4 flex items-end overflow-hidden">
+                      {/* Decorative glow */}
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
+                      
                       {/* Decorative lines */}
                       <div className="absolute inset-0 opacity-20">
-                        <div className="absolute top-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent" />
-                        <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent" />
+                        <div className="absolute top-1/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                        <div className="absolute top-2/3 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent/50 to-transparent" />
                       </div>
-                      <h3 className="text-xl font-bold text-white relative z-10">{portfolio.name}</h3>
+                      <h3 className="text-xl font-bold text-foreground relative z-10">{portfolio.name}</h3>
                     </div>
 
                     {/* Card Body */}
                     <div className="p-4">
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-3">
+                      <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
                         {portfolio.description}
                       </p>
 
@@ -306,7 +311,7 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
                           {portfolio.assetLogos.slice(0, 10).map((logo, i) => (
                             <div
                               key={i}
-                              className="w-7 h-7 rounded-full bg-white border-2 border-[#252b3d] flex items-center justify-center text-[8px] font-bold text-gray-700 overflow-hidden"
+                              className="w-7 h-7 rounded-full bg-card border-2 border-background flex items-center justify-center text-[8px] font-bold text-muted-foreground overflow-hidden"
                             >
                               {logo.slice(0, 4)}
                             </div>
@@ -318,24 +323,24 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-1 h-4 bg-primary rounded-full" />
-                          <span className="text-white font-medium">Rentabilidade</span>
+                          <span className="text-foreground font-medium">Rentabilidade</span>
                         </div>
                         <div className="space-y-1 pl-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-1 h-3 bg-violet-500 rounded-full" />
-                              <span className="text-gray-400 text-sm">Rentabilidade Anterior</span>
+                              <div className="w-1 h-3 bg-primary/60 rounded-full" />
+                              <span className="text-muted-foreground text-sm">Rentabilidade Anterior</span>
                             </div>
-                            <span className={`font-medium ${portfolio.rentabilidadeAnterior >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            <span className={`font-medium ${portfolio.rentabilidadeAnterior >= 0 ? "text-success" : "text-destructive"}`}>
                               {formatPercent(portfolio.rentabilidadeAnterior)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-1 h-3 bg-cyan-400 rounded-full" />
-                              <span className="text-gray-400 text-sm">Rentabilidade Acumulada</span>
+                              <div className="w-1 h-3 bg-accent rounded-full" />
+                              <span className="text-muted-foreground text-sm">Rentabilidade Acumulada</span>
                             </div>
-                            <span className={`font-medium ${portfolio.rentabilidadeAcumulada >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            <span className={`font-medium ${portfolio.rentabilidadeAcumulada >= 0 ? "text-success" : "text-destructive"}`}>
                               {formatPercent(portfolio.rentabilidadeAcumulada)}
                             </span>
                           </div>
@@ -346,35 +351,35 @@ const CarteirasRecomendadasDrawer = ({ open, onOpenChange }: CarteirasRecomendad
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
                           <div className="w-1 h-4 bg-primary rounded-full" />
-                          <span className="text-white font-medium">Benchmark</span>
-                          <span className="text-gray-400 text-sm ml-auto">{portfolio.benchmark}</span>
+                          <span className="text-foreground font-medium">Benchmark</span>
+                          <span className="text-muted-foreground text-sm ml-auto">{portfolio.benchmark}</span>
                         </div>
                         <div className="space-y-1 pl-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-1 h-3 bg-violet-500 rounded-full" />
-                              <span className="text-gray-400 text-sm">Rentabilidade Anterior</span>
+                              <div className="w-1 h-3 bg-primary/60 rounded-full" />
+                              <span className="text-muted-foreground text-sm">Rentabilidade Anterior</span>
                             </div>
-                            <span className={`font-medium ${portfolio.benchmarkRentAnterior >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            <span className={`font-medium ${portfolio.benchmarkRentAnterior >= 0 ? "text-success" : "text-destructive"}`}>
                               {formatPercent(portfolio.benchmarkRentAnterior)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div className="w-1 h-3 bg-cyan-400 rounded-full" />
-                              <span className="text-gray-400 text-sm">Rentabilidade Acumulada</span>
+                              <div className="w-1 h-3 bg-accent rounded-full" />
+                              <span className="text-muted-foreground text-sm">Rentabilidade Acumulada</span>
                             </div>
-                            <span className={`font-medium ${portfolio.benchmarkRentAcumulada >= 0 ? "text-green-500" : "text-red-500"}`}>
+                            <span className={`font-medium ${portfolio.benchmarkRentAcumulada >= 0 ? "text-success" : "text-destructive"}`}>
                               {formatPercent(portfolio.benchmarkRentAcumulada)}
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Ver Carteira Button */}
+                      {/* Ver Carteira Button - Kadig accent */}
                       <button
                         onClick={() => handleOpenDetail(portfolio)}
-                        className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-medium py-3 rounded-xl flex items-center justify-between px-4 transition-colors"
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-3 rounded-xl flex items-center justify-between px-4 transition-colors"
                       >
                         <span>Ver Carteira</span>
                         <ChevronRight className="w-5 h-5" />
