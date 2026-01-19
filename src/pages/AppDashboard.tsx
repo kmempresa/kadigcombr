@@ -66,6 +66,9 @@ interface UserData {
     risk_tolerance: string | null;
     monthly_income: number | null;
     investment_goal: string | null;
+    avatar_url: string | null;
+    phone: string | null;
+    birth_date: string | null;
   } | null;
   portfolios: {
     id: string;
@@ -352,6 +355,9 @@ const AppDashboard = () => {
           risk_tolerance: profile.risk_tolerance,
           monthly_income: profile.monthly_income,
           investment_goal: profile.investment_goal,
+          avatar_url: profile.avatar_url,
+          phone: profile.phone,
+          birth_date: profile.birth_date,
         } : null,
         portfolios: portfolios.map((p: any) => ({
           id: p.id,
