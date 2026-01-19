@@ -140,16 +140,16 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
       const margin = 15;
       let yPos = margin;
 
-      // Header with Kadig branding
+      // Header with Kadig branding - Cyan theme
       pdf.setFillColor(15, 23, 42);
       pdf.rect(0, 0, pageWidth, 50, 'F');
       
-      // Purple accent for reports
-      pdf.setFillColor(168, 85, 247);
+      // Cyan accent for reports
+      pdf.setFillColor(0, 212, 255);
       pdf.rect(0, 45, pageWidth, 2, 'F');
 
       // Logo
-      pdf.setTextColor(168, 85, 247);
+      pdf.setTextColor(0, 212, 255);
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       pdf.text('KADIG', margin, 22);
@@ -300,15 +300,16 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
           </div>
         ) : report ? (
           <div className="flex-1 overflow-y-auto">
-            {/* Hero Section - Purple theme for reports */}
-            <div className="relative min-h-[400px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(270,50%,15%)] to-[hsl(280,60%,20%)] p-6 overflow-hidden">
+            {/* Hero Section - Cyan/Teal Kadig theme */}
+            <div className="relative min-h-[400px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(200,60%,10%)] to-[hsl(180,50%,12%)] p-6 overflow-hidden">
               {/* Chart background pattern */}
               <div className="absolute inset-0 opacity-20">
                 <div className="absolute bottom-0 left-0 right-0 h-48 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')]" />
               </div>
               
               {/* Decorative glow */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+              <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-teal-500/10 rounded-full blur-2xl" />
 
               <div className="relative z-10">
                 <button 
@@ -391,7 +392,7 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
                 <button 
                   onClick={handleDownloadPDF}
                   disabled={downloadingPdf}
-                  className="glass hover:bg-card/80 text-foreground font-medium py-3 px-6 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
+                  className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium py-3 px-6 rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/25 disabled:opacity-50"
                 >
                   {downloadingPdf ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -408,7 +409,7 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
               <section className="p-4">
                 <div className="glass rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <div className="w-1 h-5 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
                     <h3 className="text-foreground font-semibold">Indicadores</h3>
                   </div>
 
@@ -452,7 +453,7 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
             <section className="px-4 pb-20">
               <div className="glass rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1 h-5 bg-primary rounded-full" />
+                  <div className="w-1 h-5 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
                   <h3 className="text-foreground font-semibold">Análise</h3>
                 </div>
 

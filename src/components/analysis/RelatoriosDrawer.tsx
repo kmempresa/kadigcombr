@@ -120,21 +120,21 @@ const RelatoriosDrawer = ({ open, onOpenChange }: RelatoriosDrawerProps) => {
           </header>
 
           <div className="flex-1 overflow-y-auto">
-            {/* Hero Banner - Kadig Style with Purple Accent */}
-            <div className="relative h-72 bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(270,50%,15%)] to-[hsl(280,60%,20%)] overflow-hidden">
+            {/* Hero Banner - Kadig Style with Cyan Accent */}
+            <div className="relative h-72 bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(200,60%,10%)] to-[hsl(180,50%,12%)] overflow-hidden">
               {/* Decorative glow */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
-              <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-fuchsia-500/10 rounded-full blur-2xl" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
+              <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-teal-500/10 rounded-full blur-2xl" />
               
               {/* Decorative lines */}
               <div className="absolute inset-0 opacity-30">
-                <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
-                <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/50 to-transparent" />
-                <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
+                <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+                <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent" />
+                <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
               </div>
               
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 relative z-10">
-                <h1 className="text-4xl font-bold text-purple-400 mb-2" style={{ textShadow: '0 0 30px rgba(168, 85, 247, 0.5)' }}>
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 mb-2" style={{ textShadow: '0 0 30px rgba(0, 212, 255, 0.3)' }}>
                   Relatórios
                 </h1>
                 <p className="text-muted-foreground text-sm max-w-xs">
@@ -159,7 +159,7 @@ const RelatoriosDrawer = ({ open, onOpenChange }: RelatoriosDrawerProps) => {
             {/* Últimos relatórios */}
             <section className="p-4 mt-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-6 bg-primary rounded-full" />
+                <div className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
                 <h2 className="text-lg font-semibold text-foreground">Últimos relatórios</h2>
               </div>
 
@@ -170,9 +170,9 @@ const RelatoriosDrawer = ({ open, onOpenChange }: RelatoriosDrawerProps) => {
                   <button
                     key={category}
                     onClick={() => handleCategoryChange(category)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                       selectedCategory === category
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                     }`}
                   >
@@ -230,7 +230,7 @@ const RelatoriosDrawer = ({ open, onOpenChange }: RelatoriosDrawerProps) => {
                       {/* Action Button */}
                       <button
                         onClick={() => handleOpenDetail(report.id)}
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-3 rounded-xl flex items-center justify-between px-4 transition-colors"
+                        className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-medium py-3 rounded-xl flex items-center justify-between px-4 transition-all shadow-lg shadow-cyan-500/25"
                       >
                         <span>Conferir relatório</span>
                         <ChevronRight className="w-5 h-5" />
@@ -263,9 +263,9 @@ const RelatoriosDrawer = ({ open, onOpenChange }: RelatoriosDrawerProps) => {
                       <button
                         key={pageNum}
                         onClick={() => setCurrentPage(pageNum)}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
                           currentPage === pageNum
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
                             : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                         }`}
                       >
