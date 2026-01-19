@@ -41,7 +41,7 @@ export const Footer = () => {
         <div className="flex flex-col items-center gap-6 sm:gap-8 py-6 sm:py-8 border-t border-border">
           {/* App Store Badge */}
           <a 
-            href="https://apps.apple.com/app/kadig" 
+            href="https://testflight.apple.com/join/rXBEzD6m" 
             target="_blank" 
             rel="noopener noreferrer"
             className="transition-opacity hover:opacity-80"
