@@ -287,58 +287,60 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
   return (
     <div className="flex-1 pb-24">
-      {/* Hero Header - Kadig Style */}
-      <div className="relative overflow-hidden rounded-b-3xl mb-6">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5" />
+      {/* Header Premium - Kadig Style */}
+      <header className="relative overflow-hidden pt-safe">
+        {/* Background gradient effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
         
-        {/* Decorative glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
-        
-        {/* Content */}
-        <div className="relative z-10 p-6 pt-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Link2 className="w-5 h-5 text-cyan-400" />
-                <span className="text-xs font-medium text-cyan-400 uppercase tracking-wider">Open Finance</span>
+        <div className="relative px-4 pb-4 pt-2">
+          <div className="flex items-center justify-between">
+            {/* Left side - Title with icon */}
+            <motion.div 
+              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+            >
+              <div className="relative">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                  <Link2 className="w-5 h-5 text-white" />
+                </div>
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
               </div>
-              <h1 
-                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] mb-1"
-                style={{ textShadow: '0 0 30px hsla(210, 100%, 60%, 0.3)' }}
-              >
-                Conexões
-              </h1>
-              <p className="text-muted-foreground text-sm max-w-xs">
-                Conecte suas contas bancárias e corretoras
-              </p>
-            </div>
-            
-            <div className="flex gap-2">
-              <button
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground">Open Finance</span>
+                <span className="font-bold text-lg text-foreground">Conexões</span>
+              </div>
+            </motion.div>
+
+            {/* Right side - Action buttons */}
+            <div className="flex items-center gap-1">
+              <motion.button 
                 onClick={fetchConnections}
                 disabled={loading}
-                className="p-2.5 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-foreground hover:bg-white/10 transition-colors"
+                whileTap={{ scale: 0.9 }}
+                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
               >
                 <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-              <button
+              </motion.button>
+              <motion.button 
                 onClick={handleConnect}
                 disabled={connecting}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[hsl(210,100%,60%)] to-[hsl(185,80%,55%)] text-white font-medium hover:opacity-90 transition-opacity shadow-lg shadow-primary/20"
+                whileTap={{ scale: 0.9 }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-medium shadow-lg shadow-cyan-500/20"
               >
                 {connecting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Plus className="w-4 h-4" />
                 )}
-                Conectar
-              </button>
+                <span className="text-sm">Conectar</span>
+              </motion.button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
       
       <div className="px-4">
 
