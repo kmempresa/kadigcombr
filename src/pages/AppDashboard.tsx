@@ -719,10 +719,18 @@ const AppDashboard = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="relative">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-                      <span className="text-white font-bold text-lg">
-                        {userName?.charAt(0)?.toUpperCase() || 'K'}
-                      </span>
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
+                      {userData?.profile?.avatar_url ? (
+                        <img 
+                          src={userData.profile.avatar_url} 
+                          alt="Avatar" 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-lg">
+                          {userName?.charAt(0)?.toUpperCase() || 'K'}
+                        </span>
+                      )}
                     </div>
                     <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
                   </div>
@@ -1992,10 +2000,18 @@ const AppDashboard = () => {
               whileTap={{ scale: 0.98 }}
             >
               <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <span className="text-white font-bold text-lg">
-                    {userData?.profile?.full_name?.charAt(0)?.toUpperCase() || userData?.email?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
+                  {userData?.profile?.avatar_url ? (
+                    <img 
+                      src={userData.profile.avatar_url} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-lg">
+                      {userData?.profile?.full_name?.charAt(0)?.toUpperCase() || userData?.email?.charAt(0)?.toUpperCase() || 'U'}
+                    </span>
+                  )}
                 </div>
                 {!userData?.profile?.full_name && (
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-background" />
