@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.market-reports]
 verify_jwt = false
+
+[functions.kadig-index]
+verify_jwt = false
