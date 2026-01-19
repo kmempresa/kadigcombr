@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
@@ -15,8 +15,11 @@ import {
   DrawerContent,
 } from "@/components/ui/drawer";
 import { useTheme } from "@/hooks/useTheme";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface CarteiraDetailDrawerProps {
   open: boolean;
@@ -36,6 +39,8 @@ interface Asset {
   evEbtida: number | null;
   pvp: number | null;
   dividendYield: number | null;
+  roe: number | null;
+  marginEbit: number | null;
   isNew: boolean;
   isRemoved: boolean;
 }
@@ -57,14 +62,15 @@ interface PortfolioDetail {
   newAssets: Asset[];
   sectorDistribution: { name: string; value: number }[];
   assetDistribution: { name: string; value: number }[];
+  lastUpdate: string;
 }
 
 // Kadig color palette for charts
 const COLORS = [
   "hsl(210, 100%, 60%)", // primary blue
-  "hsl(210, 100%, 75%)", // light blue
   "hsl(185, 80%, 55%)",  // cyan/accent
   "hsl(220, 65%, 25%)",  // navy
+  "hsl(210, 100%, 75%)", // light blue
   "hsl(220, 55%, 35%)",  // lighter navy
   "hsl(210, 100%, 50%)", // darker blue
   "hsl(185, 80%, 45%)",  // darker cyan
@@ -77,6 +83,8 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
   const { theme, toggleTheme } = useTheme();
   const [portfolio, setPortfolio] = useState<PortfolioDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const fetchPortfolioDetail = async () => {
     if (!portfolioId) return;
@@ -96,6 +104,7 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
       }
     } catch (error) {
       console.error("Error fetching portfolio detail:", error);
+      toast.error("Erro ao carregar carteira");
     } finally {
       setLoading(false);
     }
@@ -115,6 +124,292 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
   const formatNumber = (value: number | null) => {
     if (value === null || value === undefined) return "-";
     return value.toFixed(2).replace(".", ",");
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!portfolio || !contentRef.current) return;
+
+    setDownloadingPdf(true);
+    toast.info("Gerando PDF...");
+
+    try {
+      // Wait for all images to load
+      const images = contentRef.current.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      // Create PDF with Kadig branding
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPos = margin;
+
+      // Header with Kadig branding - dark blue gradient simulation
+      pdf.setFillColor(15, 23, 42); // Kadig deep color
+      pdf.rect(0, 0, pageWidth, 60, 'F');
+      
+      // Accent line
+      pdf.setFillColor(0, 212, 255); // Kadig accent cyan
+      pdf.rect(0, 55, pageWidth, 2, 'F');
+
+      // Logo text (Kadig)
+      pdf.setTextColor(0, 212, 255);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('KADIG', margin, 25);
+
+      // Portfolio name
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text(portfolio.name, margin, 42);
+
+      // Date info
+      pdf.setFontSize(10);
+      pdf.setTextColor(180, 180, 180);
+      pdf.text(`Válida até: ${portfolio.validUntil}`, margin, 52);
+
+      yPos = 70;
+
+      // Description section
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      const descLines = pdf.splitTextToSize(portfolio.description, pageWidth - margin * 2);
+      pdf.text(descLines, margin, yPos);
+      yPos += descLines.length * 5 + 10;
+
+      // Rentabilidade section
+      pdf.setFillColor(240, 240, 245);
+      pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 35, 3, 3, 'F');
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text('Rentabilidade Teórica', margin + 5, yPos + 8);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      
+      // Rentabilidade Anterior
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Rentabilidade Anterior:', margin + 5, yPos + 18);
+      const rentAnteriorColor = portfolio.rentabilidadeAnterior >= 0 ? [34, 197, 94] : [239, 68, 68];
+      pdf.setTextColor(rentAnteriorColor[0], rentAnteriorColor[1], rentAnteriorColor[2]);
+      pdf.text(formatPercent(portfolio.rentabilidadeAnterior), margin + 60, yPos + 18);
+
+      // Rentabilidade Acumulada
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Rentabilidade Acumulada:', margin + 5, yPos + 28);
+      const rentAcumColor = portfolio.rentabilidadeAcumulada >= 0 ? [34, 197, 94] : [239, 68, 68];
+      pdf.setTextColor(rentAcumColor[0], rentAcumColor[1], rentAcumColor[2]);
+      pdf.text(formatPercent(portfolio.rentabilidadeAcumulada), margin + 62, yPos + 28);
+
+      yPos += 45;
+
+      // Benchmark section
+      pdf.setFillColor(240, 240, 245);
+      pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 35, 3, 3, 'F');
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(`Benchmark: ${portfolio.benchmark}`, margin + 5, yPos + 8);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Rentabilidade Anterior:', margin + 5, yPos + 18);
+      const benchAnteriorColor = portfolio.benchmarkRentAnterior >= 0 ? [34, 197, 94] : [239, 68, 68];
+      pdf.setTextColor(benchAnteriorColor[0], benchAnteriorColor[1], benchAnteriorColor[2]);
+      pdf.text(formatPercent(portfolio.benchmarkRentAnterior), margin + 60, yPos + 18);
+
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Rentabilidade Acumulada:', margin + 5, yPos + 28);
+      const benchAcumColor = portfolio.benchmarkRentAcumulada >= 0 ? [34, 197, 94] : [239, 68, 68];
+      pdf.setTextColor(benchAcumColor[0], benchAcumColor[1], benchAcumColor[2]);
+      pdf.text(formatPercent(portfolio.benchmarkRentAcumulada), margin + 62, yPos + 28);
+
+      yPos += 45;
+
+      // Composição da carteira title
+      pdf.setFillColor(0, 212, 255);
+      pdf.rect(margin, yPos, 3, 8, 'F');
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text('Composição da Carteira', margin + 7, yPos + 6);
+      yPos += 15;
+
+      // Assets table header
+      const colWidths = [30, 55, 20, 22, 22, 22];
+      const headers = ['Ticker', 'Setor', 'Peso', 'P/L', 'EV/EBTIDA', 'P/VP'];
+      
+      pdf.setFillColor(15, 23, 42);
+      pdf.rect(margin, yPos, pageWidth - margin * 2, 8, 'F');
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(255, 255, 255);
+      
+      let xPos = margin + 2;
+      headers.forEach((header, i) => {
+        pdf.text(header, xPos, yPos + 5.5);
+        xPos += colWidths[i];
+      });
+      
+      yPos += 10;
+
+      // Assets rows
+      pdf.setFont('helvetica', 'normal');
+      portfolio.assets.forEach((asset, index) => {
+        // Check if we need a new page
+        if (yPos > pageHeight - 30) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        const bgColor = index % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+        pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+        pdf.rect(margin, yPos, pageWidth - margin * 2, 8, 'F');
+
+        pdf.setTextColor(30, 30, 30);
+        
+        xPos = margin + 2;
+        
+        // Ticker with status indicator
+        let tickerText = asset.ticker;
+        if (asset.isNew) {
+          pdf.setTextColor(34, 197, 94);
+          tickerText = `↓ ${asset.ticker}`;
+        }
+        pdf.text(tickerText, xPos, yPos + 5.5);
+        pdf.setTextColor(30, 30, 30);
+        xPos += colWidths[0];
+        
+        // Sector (truncate if needed)
+        const sectorText = asset.sector.length > 18 ? asset.sector.substring(0, 16) + '...' : asset.sector;
+        pdf.text(sectorText, xPos, yPos + 5.5);
+        xPos += colWidths[1];
+        
+        // Weight
+        pdf.text(`${asset.weight.toFixed(1)}%`, xPos, yPos + 5.5);
+        xPos += colWidths[2];
+        
+        // P/L
+        pdf.text(formatNumber(asset.pl), xPos, yPos + 5.5);
+        xPos += colWidths[3];
+        
+        // EV/EBTIDA
+        pdf.text(formatNumber(asset.evEbtida), xPos, yPos + 5.5);
+        xPos += colWidths[4];
+        
+        // P/VP
+        pdf.text(formatNumber(asset.pvp), xPos, yPos + 5.5);
+        
+        yPos += 8;
+      });
+
+      // Removed assets section if any
+      if (portfolio.removedAssets && portfolio.removedAssets.length > 0) {
+        yPos += 10;
+        
+        if (yPos > pageHeight - 50) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        pdf.setFillColor(239, 68, 68);
+        pdf.rect(margin, yPos, 3, 8, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(239, 68, 68);
+        pdf.text('Ativos que Saíram', margin + 7, yPos + 6);
+        yPos += 12;
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        
+        portfolio.removedAssets.forEach((asset) => {
+          if (yPos > pageHeight - 20) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.text(`↑ ${asset.ticker} - ${asset.name}`, margin + 5, yPos);
+          yPos += 6;
+        });
+      }
+
+      // New assets section if any
+      if (portfolio.newAssets && portfolio.newAssets.length > 0) {
+        yPos += 10;
+        
+        if (yPos > pageHeight - 50) {
+          pdf.addPage();
+          yPos = margin;
+        }
+
+        pdf.setFillColor(34, 197, 94);
+        pdf.rect(margin, yPos, 3, 8, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(34, 197, 94);
+        pdf.text('Ativos que Entraram', margin + 7, yPos + 6);
+        yPos += 12;
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        
+        portfolio.newAssets.forEach((asset) => {
+          if (yPos > pageHeight - 20) {
+            pdf.addPage();
+            yPos = margin;
+          }
+          pdf.text(`↓ ${asset.ticker} - ${asset.name}`, margin + 5, yPos);
+          yPos += 6;
+        });
+      }
+
+      // Footer
+      const totalPages = pdf.internal.pages.length - 1;
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFillColor(15, 23, 42);
+        pdf.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+        
+        pdf.setTextColor(150, 150, 150);
+        pdf.setFontSize(8);
+        pdf.text(`Gerado por KADIG • ${new Date().toLocaleDateString('pt-BR')}`, margin, pageHeight - 6);
+        pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 25, pageHeight - 6);
+      }
+
+      // Save PDF
+      const fileName = `Carteira_${portfolio.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      
+      toast.success("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast.error("Erro ao gerar PDF");
+    } finally {
+      setDownloadingPdf(false);
+    }
   };
 
   if (!portfolioId) return null;
@@ -149,7 +444,7 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
             <p className="text-sm text-muted-foreground">Carregando carteira...</p>
           </div>
         ) : portfolio ? (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" ref={contentRef}>
             {/* Hero Section - Kadig Style */}
             <div className="relative bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(var(--kadig-navy))] to-primary/20 p-6 overflow-hidden">
               {/* Decorative glow */}
@@ -176,9 +471,14 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                 <h2 className="text-3xl font-bold text-accent glow-text mb-4">
                   {portfolio.name}
                 </h2>
-                <p className="text-muted-foreground text-sm mb-4">
+                <p className="text-muted-foreground text-sm mb-2">
                   Criada em: {portfolio.createdAt} • Válida até: {portfolio.validUntil}
                 </p>
+                {portfolio.lastUpdate && (
+                  <p className="text-muted-foreground/60 text-xs mb-4">
+                    Dados atualizados: {new Date(portfolio.lastUpdate).toLocaleString('pt-BR')}
+                  </p>
+                )}
                 <p className="text-muted-foreground text-sm mb-6">
                   {portfolio.description}
                 </p>
@@ -198,9 +498,17 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                 </div>
 
                 {/* Download Button */}
-                <button className="glass hover:bg-card/80 text-foreground font-medium py-3 px-6 rounded-xl flex items-center gap-2 transition-colors">
-                  <Download className="w-5 h-5" />
-                  <span>Baixar Carteira</span>
+                <button 
+                  onClick={handleDownloadPDF}
+                  disabled={downloadingPdf}
+                  className="glass hover:bg-card/80 text-foreground font-medium py-3 px-6 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {downloadingPdf ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Download className="w-5 h-5" />
+                  )}
+                  <span>{downloadingPdf ? 'Gerando PDF...' : 'Baixar Carteira'}</span>
                 </button>
               </div>
             </div>
@@ -416,7 +724,19 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                         </div>
                       </div>
 
-                      <div className="space-y-1 text-sm">
+                      {/* Price info */}
+                      {asset.regularMarketPrice > 0 && (
+                        <div className="flex justify-between items-center mb-3 pb-3 border-b border-border">
+                          <span className="text-foreground font-semibold">
+                            {formatCurrency(asset.regularMarketPrice)}
+                          </span>
+                          <span className={`text-sm font-medium ${asset.regularMarketChangePercent >= 0 ? "text-success" : "text-destructive"}`}>
+                            {asset.regularMarketChangePercent >= 0 ? "+" : ""}{asset.regularMarketChangePercent.toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Peso:</span>
                           <span className="text-foreground font-medium">{asset.weight.toFixed(2).replace(".", ",")}%</span>
@@ -426,13 +746,25 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                           <span className="text-foreground">{formatNumber(asset.pl)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">EV/EBTIDA (12M)</span>
+                          <span className="text-muted-foreground">EV/EBTIDA</span>
                           <span className="text-foreground">{formatNumber(asset.evEbtida)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">P/VP (12M)</span>
+                          <span className="text-muted-foreground">P/VP</span>
                           <span className="text-foreground">{formatNumber(asset.pvp)}</span>
                         </div>
+                        {asset.dividendYield !== null && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Div. Yield</span>
+                            <span className="text-foreground">{formatNumber(asset.dividendYield)}%</span>
+                          </div>
+                        )}
+                        {asset.roe !== null && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">ROE</span>
+                            <span className="text-foreground">{formatNumber(asset.roe)}%</span>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}
@@ -484,17 +816,17 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                         </div>
                       </div>
 
-                      <div className="space-y-1 text-sm">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">P/L (12M)</span>
                           <span className="text-foreground">{formatNumber(asset.pl)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">EV/EBTIDA (12M)</span>
+                          <span className="text-muted-foreground">EV/EBTIDA</span>
                           <span className="text-foreground">{formatNumber(asset.evEbtida)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">P/VP (12M)</span>
+                          <span className="text-muted-foreground">P/VP</span>
                           <span className="text-foreground">{formatNumber(asset.pvp)}</span>
                         </div>
                       </div>
@@ -548,17 +880,17 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
                         </div>
                       </div>
 
-                      <div className="space-y-1 text-sm">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">P/L (12M)</span>
                           <span className="text-foreground">{formatNumber(asset.pl)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">EV/EBTIDA (12M)</span>
+                          <span className="text-muted-foreground">EV/EBTIDA</span>
                           <span className="text-foreground">{formatNumber(asset.evEbtida)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">P/VP (12M)</span>
+                          <span className="text-muted-foreground">P/VP</span>
                           <span className="text-foreground">{formatNumber(asset.pvp)}</span>
                         </div>
                       </div>

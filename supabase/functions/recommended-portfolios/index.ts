@@ -5,7 +5,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Carteiras recomendadas estáticas (podem ser movidas para banco de dados depois)
+// Mapeamento de setores em português
+const sectorMapping: Record<string, string> = {
+  'Financial Services': 'SERVIÇOS FINANCEIROS',
+  'Utilities': 'UTILIDADES',
+  'Technology': 'TECNOLOGIA',
+  'Consumer Cyclical': 'CONSUMO CÍCLICO',
+  'Consumer Defensive': 'CONSUMO NÃO CÍCLICO',
+  'Healthcare': 'SAÚDE',
+  'Industrials': 'INDUSTRIAL',
+  'Basic Materials': 'MATERIAIS BÁSICOS',
+  'Energy': 'ENERGIA',
+  'Real Estate': 'IMÓVEIS',
+  'Communication Services': 'COMUNICAÇÃO',
+};
+
+// Carteiras recomendadas (dados estáticos - podem ser movidos para banco de dados depois)
 const recommendedPortfolios = [
   {
     id: "dividendos",
@@ -124,6 +139,36 @@ const recommendedPortfolios = [
   },
 ];
 
+// Função para obter o setor traduzido
+function getSector(stock: any): string {
+  // Tentar obter do summaryProfile
+  if (stock.summaryProfile?.sector) {
+    const englishSector = stock.summaryProfile.sector;
+    return sectorMapping[englishSector] || englishSector.toUpperCase();
+  }
+  
+  // Detectar tipo de ativo pelo ticker
+  const ticker = stock.symbol || '';
+  
+  if (ticker.includes('11')) {
+    if (ticker.match(/^[A-Z]{4}11$/)) {
+      return 'FUNDOS IMOBILIÁRIOS';
+    }
+    return 'ETF / OUTROS';
+  }
+  
+  if (ticker.includes('34')) {
+    return 'BDR';
+  }
+  
+  // Usar setor padrão se disponível na resposta
+  if (stock.sector) {
+    return sectorMapping[stock.sector] || stock.sector.toUpperCase();
+  }
+  
+  return 'OUTROS';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -142,7 +187,7 @@ serve(async (req) => {
 
     // Lista básica das carteiras (sem dados de ativos detalhados)
     if (type === 'list') {
-      // Para a listagem, buscar apenas logos dos primeiros 5 ativos de cada carteira
+      // Para a listagem, buscar apenas logos dos primeiros 10 ativos de cada carteira
       const portfoliosWithLogos = await Promise.all(
         recommendedPortfolios.map(async (portfolio) => {
           const tickersToFetch = portfolio.tickers.slice(0, 10).join(',');
@@ -196,6 +241,7 @@ serve(async (req) => {
       console.log(`Fetching detailed data for ${allTickers.length} assets: ${tickersString}`);
 
       try {
+        // Usar fundamental=true para obter dados fundamentalistas completos
         const url = `https://brapi.dev/api/quote/${tickersString}?token=${BRAPI_TOKEN}&fundamental=true`;
         const response = await fetch(url);
         const data = await response.json();
@@ -210,15 +256,24 @@ serve(async (req) => {
           const activeAssets = portfolio.tickers.length;
           const weight = isRemoved ? 0 : (100 / activeAssets);
 
-          // Extrair setor do summaryProfile ou usar categoria padrão
-          let sector = "OUTROS";
-          if (stock.summaryProfile?.sector) {
-            sector = stock.summaryProfile.sector.toUpperCase();
-          } else if (stock.symbol?.includes('11')) {
-            sector = "FUNDOS IMOBILIÁRIOS";
-          } else if (stock.symbol?.includes('34')) {
-            sector = "BDR";
+          // Obter setor traduzido
+          const sector = getSector(stock);
+
+          // Extrair indicadores fundamentalistas de múltiplas fontes possíveis
+          const pl = stock.priceEarnings || stock.trailingPE || stock.forwardPE || null;
+          const evEbtida = stock.enterpriseToEbitda || stock.evToEbitda || null;
+          const pvp = stock.priceToBook || null;
+          
+          // Dividend yield em percentual
+          let dividendYield = null;
+          if (stock.dividendYield !== undefined && stock.dividendYield !== null) {
+            // BRAPI retorna como decimal (0.05 = 5%)
+            dividendYield = stock.dividendYield > 1 ? stock.dividendYield : stock.dividendYield * 100;
           }
+
+          // ROE e Margem EBIT
+          const roe = stock.returnOnEquity ? stock.returnOnEquity * 100 : null;
+          const marginEbit = stock.ebitMargin ? stock.ebitMargin * 100 : null;
 
           return {
             ticker: stock.symbol,
@@ -229,10 +284,12 @@ serve(async (req) => {
             regularMarketPrice: stock.regularMarketPrice || 0,
             regularMarketChangePercent: stock.regularMarketChangePercent || 0,
             // Indicadores fundamentalistas
-            pl: stock.priceEarnings || stock.trailingPE || null,
-            evEbtida: stock.enterpriseToEbitda || null,
-            pvp: stock.priceToBook || null,
-            dividendYield: stock.dividendYield ? (stock.dividendYield * 100) : null,
+            pl,
+            evEbtida,
+            pvp,
+            dividendYield,
+            roe,
+            marginEbit,
             // Status
             isNew,
             isRemoved,
@@ -244,8 +301,8 @@ serve(async (req) => {
         const removedAssets = assets.filter((a: any) => a.isRemoved);
         const newAssets = assets.filter((a: any) => a.isNew);
 
-        // Calcular distribuição por setor
-        const sectorDistribution = activeAssets.reduce((acc: any, asset: any) => {
+        // Calcular distribuição por setor (agregado)
+        const sectorDistribution = activeAssets.reduce((acc: any[], asset: any) => {
           const existing = acc.find((s: any) => s.name === asset.sector);
           if (existing) {
             existing.value += asset.weight;
@@ -254,6 +311,9 @@ serve(async (req) => {
           }
           return acc;
         }, []);
+
+        // Ordenar setores por valor
+        sectorDistribution.sort((a: any, b: any) => b.value - a.value);
 
         // Calcular distribuição por ativo
         const assetDistribution = activeAssets.map((asset: any) => ({
