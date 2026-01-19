@@ -55,6 +55,7 @@ import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
 import ProfileDrawer from "@/components/ProfileDrawer";
+import ConexoesTab from "@/components/ConexoesTab";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -2103,104 +2104,9 @@ const AppDashboard = () => {
         <MercadoTab showValues={showValues} />
       )}
 
-      {/* Conexoes Tab - Coming Soon with infinite loading */}
+      {/* Conexoes Tab - Open Finance via Pluggy */}
       {activeTab === "conexoes" && (
-        <div className="flex-1 flex flex-col items-center justify-center pb-20 relative overflow-hidden">
-          {/* Background particles */}
-          <div className="absolute inset-0 overflow-hidden">
-            {[...Array(12)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2 h-2 bg-primary/30 rounded-full"
-                initial={{
-                  x: `${Math.random() * 100}%`,
-                  y: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  y: [`${Math.random() * 100}%`, `${Math.random() * 100 - 50}%`],
-                  opacity: [0.3, 0],
-                }}
-                transition={{
-                  duration: Math.random() * 3 + 2,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Glow effect */}
-          <motion.div
-            className="absolute w-48 h-48 bg-primary/20 rounded-full blur-3xl"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.4, 0.2],
-            }}
-            transition={{
-              duration: 2.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-
-          {/* Spinning Kadig icon */}
-          <motion.div className="relative z-10 mb-6">
-            <motion.img
-              src={kadigIcon}
-              alt="Kadig"
-              className="w-24 h-24 object-contain drop-shadow-2xl rounded-2xl"
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-          </motion.div>
-
-          {/* Em breve text */}
-          <motion.div
-            className="relative z-10 text-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-xl font-bold text-foreground mb-2">Conexões</h3>
-            <p className="text-muted-foreground mb-4">Em breve...</p>
-            
-            {/* Loading dots */}
-            <div className="flex gap-2 justify-center">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-2 h-2 bg-primary rounded-full"
-                  animate={{
-                    y: [-4, 4, -4],
-                    opacity: [0.5, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 0.8,
-                    repeat: Infinity,
-                    delay: i * 0.15,
-                    ease: "easeInOut",
-                  }}
-                />
-              ))}
-            </div>
-          </motion.div>
-
-          {/* Info card */}
-          <motion.div
-            className="relative z-10 mt-8 mx-4 p-4 bg-card/50 backdrop-blur-sm border border-border rounded-2xl max-w-xs text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <p className="text-sm text-muted-foreground">
-              Estamos trabalhando para conectar suas corretoras e bancos automaticamente.
-            </p>
-          </motion.div>
-        </div>
+        <ConexoesTab />
       )}
 
       {/* Patrimonio Drawer */}
