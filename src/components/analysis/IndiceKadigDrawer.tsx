@@ -59,7 +59,7 @@ const GaugeChart = ({ value, label, colorType }: { value: number; label: string;
       case 'recomendacao':
         return 'from-gray-400 via-gray-300 to-gray-200';
       case 'kadig':
-        return 'from-purple-600 via-purple-400 to-purple-300';
+        return 'from-cyan-600 via-cyan-400 to-teal-300';
       default:
         return 'from-gray-400 to-gray-200';
     }
@@ -167,22 +167,22 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          {/* Hero Banner - Purple/Magenta Kadig Style */}
-          <div className="relative min-h-[420px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(280,50%,15%)] to-[hsl(300,60%,20%)] overflow-hidden">
+          {/* Hero Banner - Cyan/Teal Kadig Style */}
+          <div className="relative min-h-[420px] bg-gradient-to-br from-[hsl(var(--kadig-deep))] via-[hsl(200,60%,10%)] to-[hsl(180,50%,12%)] overflow-hidden">
             {/* Decorative glows */}
-            <div className="absolute top-20 left-10 w-48 h-48 bg-purple-500/30 rounded-full blur-3xl" />
-            <div className="absolute top-40 right-10 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-2xl" />
-            <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-purple-400/20 rounded-full blur-xl" />
+            <div className="absolute top-20 left-10 w-48 h-48 bg-cyan-500/30 rounded-full blur-3xl" />
+            <div className="absolute top-40 right-10 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl" />
+            <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-cyan-400/20 rounded-full blur-xl" />
             
             {/* Decorative lines */}
             <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
-              <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-400/50 to-transparent" />
-              <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent" />
+              <div className="absolute top-1/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+              <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-400/50 to-transparent" />
+              <div className="absolute top-3/4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
             </div>
             
             <div className="relative z-10 p-6 pt-8">
-              <h1 className="text-4xl font-bold text-purple-400 mb-1" style={{ textShadow: '0 0 30px rgba(168, 85, 247, 0.5)' }}>
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 mb-1" style={{ textShadow: '0 0 30px rgba(0, 212, 255, 0.3)' }}>
                 Índice
               </h1>
               <h2 className="text-3xl font-bold text-foreground mb-4">Kadig</h2>
@@ -203,7 +203,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
 
               {/* Top Performers Section */}
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-6 bg-primary rounded-full" />
+                <div className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
                 <h3 className="text-lg font-semibold text-foreground">Melhores ativos no Índice Kadig</h3>
               </div>
 
@@ -225,7 +225,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                     {/* Gauge visualization */}
                     <div className="relative h-20 flex items-end justify-center mb-2">
                       <div className="relative w-28 h-14 overflow-hidden">
-                        <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500" />
+                        <div className="absolute bottom-0 left-0 right-0 h-28 rounded-t-full bg-gradient-to-r from-cyan-600 via-cyan-400 to-teal-300" />
                         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-20 h-10 bg-card rounded-t-full" />
                         <div 
                           className="absolute bottom-0 left-1/2 w-1 h-12 bg-foreground origin-bottom transition-transform duration-500"
@@ -246,7 +246,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
 
           {/* Promotional Banner */}
           <div className="p-4">
-            <div className="relative bg-gradient-to-br from-purple-600 via-purple-500 to-fuchsia-500 rounded-2xl p-6 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-cyan-500 via-cyan-400 to-teal-500 rounded-2xl p-6 overflow-hidden">
               {/* Decorative elements */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="absolute bottom-0 left-1/4 w-16 h-16 bg-white/10 rounded-full translate-y-1/2" />
@@ -255,7 +255,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
               <p className="text-white/90 text-sm mb-4">
                 Uma ferramenta que avalia a saúde financeira, dividendos e recomendações de empresas. Saiba como tomar decisões financeiras mais informadas e explore o potencial de investimentos.
               </p>
-              <button className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+              <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors border border-white/20">
                 <span>Saiba mais</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -265,7 +265,7 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
           {/* Destaques do Índice Kadig */}
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-1 h-6 bg-primary rounded-full" />
+              <div className="w-1 h-6 bg-gradient-to-b from-cyan-400 to-teal-400 rounded-full" />
               <h2 className="text-lg font-semibold text-foreground">Destaques do Índice Kadig</h2>
             </div>
             <p className="text-muted-foreground text-sm mb-4">Todos os ativos avaliados pelo Kadig</p>
@@ -305,9 +305,9 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                     <button
                       key={filter}
                       onClick={() => { setSortBy(filter); setCurrentPage(1); }}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         sortBy === filter
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
                           : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                     >
@@ -398,9 +398,9 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
                       currentPage === pageNum
-                        ? 'bg-primary text-primary-foreground'
+                        ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
                         : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
                     }`}
                   >
@@ -413,9 +413,9 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                     <span className="text-muted-foreground">...</span>
                     <button
                       onClick={() => setCurrentPage(totalPages)}
-                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium transition-all ${
                         currentPage === totalPages
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/25'
                           : 'bg-secondary text-secondary-foreground'
                       }`}
                     >
