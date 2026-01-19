@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.portfolio-snapshot]
 verify_jwt = false
+
+[functions.recommended-portfolios]
+verify_jwt = false
