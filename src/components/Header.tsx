@@ -51,7 +51,7 @@ export const Header = () => {
                 className="h-6 sm:h-9"
               />
             </a>
-            <Link to="/splash">
+            <Link to="/welcome">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
