@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+import { PluggyConnect } from "react-pluggy-connect";
 import { 
   Link2, 
   Plus, 
@@ -11,8 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  ChevronRight,
-  X
+  ChevronRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -337,40 +337,31 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         </div>
       </motion.div>
 
-      {/* Pluggy Widget Modal */}
+      {/* Pluggy Connect Widget */}
       {showWidget && connectToken && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-background rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden"
-          >
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">Conectar Conta</h3>
-              <button
-                onClick={() => {
-                  setShowWidget(false);
-                  setConnectToken(null);
-                  fetchItems();
-                }}
-                className="p-2 rounded-lg hover:bg-secondary"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Use o token abaixo para conectar via Pluggy Connect Widget:
-              </p>
-              <div className="bg-muted rounded-xl p-3 font-mono text-xs break-all">
-                {connectToken}
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                Integração com widget em desenvolvimento. Por enquanto, copie o token e use no Pluggy Connect.
-              </p>
-            </div>
-          </motion.div>
-        </div>
+        <PluggyConnect
+          connectToken={connectToken}
+          includeSandbox={false}
+          onSuccess={(itemData) => {
+            console.log("Pluggy connection successful:", itemData);
+            toast.success(`${itemData.item?.connector?.name || 'Instituição'} conectada com sucesso!`);
+            setShowWidget(false);
+            setConnectToken(null);
+            fetchItems();
+          }}
+          onError={(error) => {
+            console.error("Pluggy connection error:", error);
+            toast.error(error?.message || "Erro ao conectar instituição");
+          }}
+          onClose={() => {
+            setShowWidget(false);
+            setConnectToken(null);
+            fetchItems();
+          }}
+          onEvent={(event) => {
+            console.log("Pluggy event:", event);
+          }}
+        />
       )}
 
       {/* Details Drawer */}
