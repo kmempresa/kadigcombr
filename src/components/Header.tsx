@@ -39,7 +39,7 @@ export const Header = () => {
 
           <div className="flex items-center gap-2 sm:gap-4">
             <a 
-              href="https://apps.apple.com/app/kadig" 
+              href="https://testflight.apple.com/join/rXBEzD6m" 
               target="_blank" 
               rel="noopener noreferrer"
               className="transition-opacity hover:opacity-80"
