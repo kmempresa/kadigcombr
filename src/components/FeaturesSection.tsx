@@ -1,28 +1,48 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { Shield, Zap, Eye, Lock } from "lucide-react";
+import { 
+  PieChart, 
+  TrendingUp, 
+  BarChart3, 
+  Wallet,
+  Calculator,
+  Shield,
+  Bell,
+  Target
+} from "lucide-react";
 
 const features = [
   {
-    icon: <Eye className="w-8 h-8" />,
-    title: "Visibilidade Total",
-    description: "Veja todos os seus ativos em um único lugar, atualizados automaticamente.",
+    icon: <Wallet className="w-8 h-8" />,
+    title: "Múltiplas Carteiras",
+    description: "Organize seus investimentos em carteiras separadas: aposentadoria, reserva, crescimento.",
   },
   {
-    icon: <Zap className="w-8 h-8" />,
-    title: "Decisões Rápidas",
-    description: "Insights inteligentes para agir no momento certo.",
+    icon: <PieChart className="w-8 h-8" />,
+    title: "Distribuição Visual",
+    description: "Veja a composição da sua carteira por classe de ativos com gráficos interativos.",
   },
   {
-    icon: <Shield className="w-8 h-8" />,
-    title: "Proteção Ativa",
-    description: "Alertas e estratégias para preservar seu patrimônio.",
+    icon: <TrendingUp className="w-8 h-8" />,
+    title: "Rentabilidade vs CDI",
+    description: "Compare sua performance com CDI e IPCA. Saiba se está ganhando do mercado.",
   },
   {
-    icon: <Lock className="w-8 h-8" />,
-    title: "Segurança Máxima",
-    description: "Seus dados criptografados com padrão bancário.",
+    icon: <Calculator className="w-8 h-8" />,
+    title: "Projeção 12 Meses",
+    description: "Simule o futuro do seu patrimônio com base na rentabilidade atual.",
   },
+];
+
+const analysisTools = [
+  { name: "Distribuição da Carteira", color: "from-orange-400 to-amber-500" },
+  { name: "Evolução Patrimonial", color: "from-rose-400 to-pink-500" },
+  { name: "Rentabilidade Real", color: "from-emerald-400 to-green-500" },
+  { name: "Proventos e Dividendos", color: "from-violet-400 to-purple-500" },
+  { name: "Ganho de Capital", color: "from-cyan-400 to-teal-500" },
+  { name: "Cobertura FGC", color: "from-blue-400 to-indigo-500" },
+  { name: "Risco x Retorno", color: "from-amber-400 to-orange-500" },
+  { name: "Comparador de Ativos", color: "from-pink-400 to-rose-500" },
 ];
 
 export const FeaturesSection = () => {
@@ -51,21 +71,38 @@ export const FeaturesSection = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
-              Construído para
+              Mais de 10 análises
               <br />
-              <span className="text-primary">quem pensa grande</span>
+              <span className="text-primary">na palma da mão</span>
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              Cada funcionalidade foi desenhada para dar a você controle absoluto
-              sobre seu futuro financeiro.
+              Do básico ao avançado: distribuição, rentabilidade real, proventos, 
+              risco x retorno e muito mais. Tudo automático.
             </p>
+
+            {/* Analysis tools grid */}
+            <div className="grid grid-cols-2 gap-3 mb-8">
+              {analysisTools.map((tool, i) => (
+                <motion.div
+                  key={tool.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-center gap-3 glass rounded-xl p-3"
+                >
+                  <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${tool.color}`} />
+                  <p className="text-sm text-foreground font-medium">{tool.name}</p>
+                </motion.div>
+              ))}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { label: "Ativos Suportados", value: "500+" },
-                { label: "Uptime", value: "99.9%" },
-                { label: "Clientes", value: "10K+" },
-                { label: "Processado", value: "R$50B+" },
+                { label: "Tipos de Ativos", value: "15+" },
+                { label: "Cotações", value: "Tempo Real" },
+                { label: "Análises", value: "10+" },
+                { label: "Criptografia", value: "256-bit" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}

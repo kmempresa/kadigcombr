@@ -19,17 +19,17 @@ export const Footer = () => {
 
           <div className="relative z-10">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Pronto para assumir o controle?
+              Comece a organizar seu patrimônio hoje
             </h2>
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-              Junte-se a milhares de pessoas que já transformaram sua gestão patrimonial.
+              Baixe grátis e consolide todos os seus investimentos em um só lugar.
             </p>
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="group px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium inline-flex items-center gap-2 glow-blue"
             >
-              Criar Conta Gratuita
+              Baixar Grátis na App Store
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
             </motion.button>
           </div>
