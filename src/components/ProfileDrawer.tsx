@@ -47,7 +47,7 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
         full_name: userData.profile.full_name || "",
         phone: userData.profile.phone || "",
         birth_date: userData.profile.birth_date || "",
-        avatar_url: (userData.profile as any).avatar_url || "",
+        avatar_url: userData.profile.avatar_url || "",
       });
     }
   }, [userData]);
