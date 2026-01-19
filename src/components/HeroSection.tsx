@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Activity } from "lucide-react";
+import { ArrowUpRight, Activity, PieChart, TrendingUp } from "lucide-react";
 
 export const HeroSection = () => {
   const [value, setValue] = useState(2847650);
@@ -30,21 +30,21 @@ export const HeroSection = () => {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-kadig-cyan"></span>
                 </span>
                 <span className="text-xs text-kadig-cyan font-medium tracking-wide">
-                  SINCRONIZANDO EM TEMPO REAL
+                  COTAÇÕES EM TEMPO REAL
                 </span>
               </div>
 
               <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] mb-6">
-                <span className="text-foreground">Seu</span>
+                <span className="text-foreground">Todo seu</span>
                 <br />
                 <span className="text-primary glow-text">Patrimônio</span>
                 <br />
-                <span className="text-foreground">Sob Controle</span>
+                <span className="text-foreground">em um só lugar</span>
               </h1>
 
               <p className="text-lg text-muted-foreground max-w-md mb-10 leading-relaxed">
-                Visualize, analise e proteja todos os seus ativos em uma 
-                experiência única e inteligente.
+                Ações, FIIs, Renda Fixa, Tesouro, Criptos e mais. 
+                Consolide tudo, analise sua rentabilidade e tome decisões com a Bianca, sua consultora com IA.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -53,7 +53,7 @@ export const HeroSection = () => {
                   whileTap={{ scale: 0.98 }}
                   className="group px-8 py-4 bg-primary text-primary-foreground rounded-2xl font-medium flex items-center gap-2 glow-blue"
                 >
-                  Começar Agora
+                  Baixar Grátis
                   <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </motion.button>
 
@@ -62,7 +62,7 @@ export const HeroSection = () => {
                   whileTap={{ scale: 0.98 }}
                   className="px-8 py-4 glass rounded-2xl font-medium text-foreground hover:bg-secondary/50 transition-colors"
                 >
-                  Ver Demo
+                  Ver Funcionalidades
                 </motion.button>
               </div>
             </motion.div>
@@ -100,7 +100,7 @@ export const HeroSection = () => {
 
                 <div className="flex items-center gap-2 text-kadig-cyan">
                   <ArrowUpRight className="w-4 h-4" />
-                  <span className="text-sm font-medium">+12.4% este mês</span>
+                  <span className="text-sm font-medium">+127% do CDI este mês</span>
                 </div>
 
                 {/* Mini chart visualization */}
@@ -123,8 +123,11 @@ export const HeroSection = () => {
                 transition={{ duration: 4, repeat: Infinity }}
                 className="absolute -top-4 -right-4 glass rounded-2xl p-4"
               >
-                <p className="text-xs text-muted-foreground mb-1">Investimentos</p>
-                <p className="text-lg font-bold text-foreground">R$ 1.8M</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <PieChart className="w-4 h-4 text-primary" />
+                  <p className="text-xs text-muted-foreground">Carteiras</p>
+                </div>
+                <p className="text-lg font-bold text-foreground">5 ativas</p>
               </motion.div>
 
               <motion.div
@@ -132,8 +135,11 @@ export const HeroSection = () => {
                 transition={{ duration: 5, repeat: Infinity }}
                 className="absolute -bottom-4 -left-4 glass rounded-2xl p-4"
               >
-                <p className="text-xs text-muted-foreground mb-1">Ativos</p>
-                <p className="text-lg font-bold text-kadig-cyan">156</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp className="w-4 h-4 text-kadig-cyan" />
+                  <p className="text-xs text-muted-foreground">Ativos</p>
+                </div>
+                <p className="text-lg font-bold text-kadig-cyan">47 ativos</p>
               </motion.div>
             </div>
           </motion.div>

@@ -1,27 +1,28 @@
 import { motion } from "framer-motion";
-import { Brain, Zap, TrendingUp, Clock, Target, Shield } from "lucide-react";
+import { Brain, Zap, TrendingUp, Clock, Target, MessageSquare, Sparkles, BarChart3 } from "lucide-react";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 export const AIAgentSection = () => {
   const features = [
     {
-      icon: Brain,
-      title: "Análise Preditiva",
-      description: "IA analisa milhares de dados de mercado para prever tendências"
+      icon: MessageSquare,
+      title: "Converse Naturalmente",
+      description: "Pergunte sobre seus investimentos como se fosse com um consultor real"
     },
     {
-      icon: Zap,
-      title: "Decisões Instantâneas",
-      description: "Receba alertas e sugestões em milissegundos"
+      icon: BarChart3,
+      title: "Análise de Carteira",
+      description: "Bianca analisa sua carteira e sugere melhorias baseadas no seu perfil"
     },
     {
       icon: TrendingUp,
-      title: "Otimização Contínua",
-      description: "Aprende com o mercado e melhora suas recomendações"
+      title: "Insights de Mercado",
+      description: "Receba análises sobre ações, FIIs e oportunidades do momento"
     },
     {
-      icon: Shield,
-      title: "Gestão de Riscos",
-      description: "Protege seu patrimônio identificando riscos antes que aconteçam"
+      icon: Target,
+      title: "Metas Personalizadas",
+      description: "Defina metas e acompanhe seu progresso com ajuda da IA"
     }
   ];
 
@@ -42,25 +43,25 @@ export const AIAgentSection = () => {
         >
           <div className="inline-flex items-center gap-2 bg-primary/20 border border-primary/30 rounded-full px-4 py-2 mb-6">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-primary text-sm font-medium">Consultor Kadig Ativo 24/7</span>
+            <span className="text-primary text-sm font-medium">Bianca está Online</span>
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
-            Seu Consultor Kadig{" "}
+            Conheça a{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-400 to-primary">
-              em Tempo Real
+              Bianca
             </span>
           </h2>
           
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Um agente inteligente que monitora o mercado 24 horas por dia, 
-            prevê movimentos e te ajuda a tomar as melhores decisões de investimento instantaneamente.
+            Sua consultora financeira com inteligência artificial. 
+            Tire dúvidas, peça análises e receba recomendações personalizadas 24 horas por dia.
           </p>
         </motion.div>
 
         {/* Main showcase */}
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          {/* Left side - AI visualization */}
+          {/* Left side - Bianca visualization */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -72,69 +73,54 @@ export const AIAgentSection = () => {
               {/* Animated background */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/10" />
               
-              {/* AI Brain visualization */}
+              {/* Bianca Avatar */}
               <div className="relative flex flex-col items-center">
                 <motion.div
                   animate={{ 
-                    scale: [1, 1.05, 1],
-                    rotate: [0, 5, -5, 0]
+                    scale: [1, 1.02, 1],
                   }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                  className="relative mb-8"
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="relative mb-6"
                 >
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-cyan-400 flex items-center justify-center shadow-[0_0_60px_rgba(99,102,241,0.5)]">
-                    <Brain className="w-16 h-16 text-white" />
+                  <div className="w-32 h-32 rounded-full overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.4)] border-4 border-primary/30">
+                    <img 
+                      src={biancaConsultora} 
+                      alt="Bianca - Consultora IA" 
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   
-                  {/* Orbiting elements */}
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0"
-                  >
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 bg-green-400 rounded-full shadow-[0_0_20px_rgba(74,222,128,0.8)]" />
-                  </motion.div>
-                  
-                  <motion.div
-                    animate={{ rotate: -360 }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                    className="absolute inset-0"
-                  >
-                    <div className="absolute top-1/2 -right-3 -translate-y-1/2 w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_15px_rgba(34,211,238,0.8)]" />
-                  </motion.div>
+                  {/* Online indicator */}
+                  <div className="absolute bottom-2 right-2 w-5 h-5 bg-green-500 rounded-full border-2 border-background shadow-[0_0_10px_rgba(74,222,128,0.8)]" />
                 </motion.div>
 
-                {/* Live status */}
-                <div className="bg-background/80 backdrop-blur border border-border/50 rounded-2xl p-6 w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-primary" />
-                      <span className="text-sm text-muted-foreground">Última análise</span>
+                {/* Chat preview */}
+                <div className="bg-background/80 backdrop-blur border border-border/50 rounded-2xl p-6 w-full space-y-4">
+                  {/* User message */}
+                  <div className="flex justify-end">
+                    <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2 max-w-[80%]">
+                      <p className="text-sm">Como está minha carteira esse mês?</p>
                     </div>
-                    <span className="text-sm text-green-400 font-medium">Agora mesmo</span>
                   </div>
                   
-                  <div className="space-y-3">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: "85%" }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.3 }}
-                      className="h-2 bg-gradient-to-r from-primary to-cyan-400 rounded-full"
-                    />
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Confiança da previsão</span>
-                      <span className="text-primary font-semibold">85%</span>
+                  {/* Bianca response */}
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0">
+                      <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3 max-w-[85%]">
+                      <p className="text-sm text-foreground">
+                        Sua carteira rendeu <span className="text-primary font-semibold">+2.3%</span> este mês, 
+                        superando o CDI em <span className="text-green-500 font-semibold">127%</span>! 
+                        Seus FIIs foram os destaques. 🚀
+                      </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-4 h-4 text-green-400" />
-                      <span className="text-sm text-green-400 font-medium">
-                        Oportunidade detectada: PETR4
-                      </span>
-                    </div>
+                  {/* Typing indicator */}
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                    <span className="text-xs">Bianca pode te ajudar com muito mais...</span>
                   </div>
                 </div>
               </div>
@@ -185,15 +171,15 @@ export const AIAgentSection = () => {
           <div className="inline-flex flex-col sm:flex-row items-center gap-4 bg-card/50 backdrop-blur border border-primary/20 rounded-2xl p-6">
             <div className="text-left">
               <p className="text-foreground font-semibold">
-                Mais de 10.000 análises por segundo
+                Tecnologia GPT integrada
               </p>
               <p className="text-sm text-muted-foreground">
-                Processando dados do mercado global em tempo real
+                Bianca usa IA avançada para entender suas necessidades
               </p>
             </div>
             <div className="flex items-center gap-2 bg-primary/20 px-4 py-2 rounded-full">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-primary text-sm font-medium">Online</span>
+              <span className="text-primary text-sm font-medium">Disponível 24/7</span>
             </div>
           </div>
         </motion.div>
