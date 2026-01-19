@@ -42,12 +42,12 @@ export const Header = () => {
               href="https://apps.apple.com/app/kadig" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="hidden sm:block transition-opacity hover:opacity-80"
+              className="transition-opacity hover:opacity-80"
             >
               <img 
                 src="/app-store-badge.svg" 
                 alt="Disponível na App Store" 
-                className="h-8 sm:h-9"
+                className="h-6 sm:h-9"
               />
             </a>
             <motion.button
