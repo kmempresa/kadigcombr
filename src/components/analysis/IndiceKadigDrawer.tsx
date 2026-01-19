@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
@@ -10,6 +10,8 @@ import {
   Filter,
   SlidersHorizontal,
   ChevronDown,
+  RefreshCw,
+  Wifi,
 } from "lucide-react";
 import {
   Drawer,
@@ -95,9 +97,16 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
   const [totalPages, setTotalPages] = useState(1);
   const [sortBy, setSortBy] = useState<'kadig' | 'financeiro' | 'dividendos' | 'recomendacao'>('kadig');
   const [showFilters, setShowFilters] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchKadigIndex = async () => {
-    setLoading(true);
+  const fetchKadigIndex = async (isAutoRefresh = false) => {
+    if (isAutoRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
       console.log(`Fetching Kadig Index: page=${currentPage}, sortBy=${sortBy}`);
       const { data, error } = await supabase.functions.invoke('kadig-index', {
@@ -116,17 +125,27 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
         setStocks(data.stocks || []);
         setTopPerformers(data.topPerformers || []);
         setTotalPages(data.totalPages || 1);
+        setLastUpdate(data.lastUpdate || new Date().toISOString());
       }
     } catch (error) {
       console.error("Error fetching Kadig Index:", error);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
+  // Initial fetch and auto-refresh every 60 seconds
   useEffect(() => {
     if (open) {
       fetchKadigIndex();
+      
+      // Auto-refresh every 60 seconds
+      const interval = setInterval(() => {
+        fetchKadigIndex(true);
+      }, 60000);
+      
+      return () => clearInterval(interval);
     }
   }, [open, currentPage, sortBy]);
 
@@ -182,6 +201,20 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
             </div>
             
             <div className="relative z-10 p-6 pt-8">
+              {/* Real-time indicator */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 rounded-full px-3 py-1">
+                  <Wifi className="w-3 h-3 text-green-400" />
+                  <span className="text-green-400 text-xs font-medium">Tempo Real</span>
+                  {isRefreshing && <RefreshCw className="w-3 h-3 text-green-400 animate-spin" />}
+                </div>
+                {lastUpdate && (
+                  <span className="text-muted-foreground/60 text-xs">
+                    Atualizado: {new Date(lastUpdate).toLocaleTimeString('pt-BR')}
+                  </span>
+                )}
+              </div>
+              
               <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-teal-400 mb-1" style={{ textShadow: '0 0 30px rgba(0, 212, 255, 0.3)' }}>
                 Índice
               </h1>
@@ -321,8 +354,8 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
             {/* Stocks List */}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-                <p className="text-sm text-muted-foreground">Calculando índices...</p>
+                <Loader2 className="w-8 h-8 animate-spin text-cyan-400 mb-3" />
+                <p className="text-sm text-muted-foreground">Carregando dados em tempo real...</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -364,7 +397,10 @@ const IndiceKadigDrawer = ({ open, onOpenChange }: IndiceKadigDrawerProps) => {
                         <p className="text-muted-foreground text-xs truncate">{stock.sector}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-muted-foreground text-xs">RESULTADO</p>
+                        <div className="flex items-center gap-1 justify-end mb-1">
+                          <p className="text-muted-foreground text-xs">RESULTADO</p>
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        </div>
                         <p className={`text-xl font-bold ${getScoreColor(stock.scores.kadig)}`}>
                           {stock.scores.kadig.toFixed(2).replace('.', ',')}
                         </p>
