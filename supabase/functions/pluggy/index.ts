@@ -12,6 +12,13 @@ async function getAccessToken(): Promise<string> {
   const clientId = Deno.env.get('PLUGGY_CLIENT_ID');
   const clientSecret = Deno.env.get('PLUGGY_CLIENT_SECRET');
 
+  console.log('Checking credentials...', { 
+    hasClientId: !!clientId, 
+    hasClientSecret: !!clientSecret,
+    clientIdLength: clientId?.length,
+    clientSecretLength: clientSecret?.length
+  });
+
   if (!clientId || !clientSecret) {
     throw new Error('Pluggy credentials not configured');
   }
@@ -29,14 +36,17 @@ async function getAccessToken(): Promise<string> {
     }),
   });
 
+  const responseText = await response.text();
+  console.log('Auth response status:', response.status);
+  console.log('Auth response body:', responseText);
+
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to get access token:', error);
-    throw new Error(`Failed to authenticate with Pluggy: ${error}`);
+    console.error('Failed to get access token:', responseText);
+    throw new Error(`Failed to authenticate with Pluggy: ${responseText}`);
   }
 
-  const data = await response.json();
-  console.log('Got Pluggy access token successfully');
+  const data = JSON.parse(responseText);
+  console.log('Got Pluggy access token successfully, apiKey length:', data.apiKey?.length);
   return data.apiKey;
 }
 
@@ -71,7 +81,7 @@ async function createConnectToken(accessToken: string, itemId?: string): Promise
 
 // List all items (connected accounts) for a user
 async function listItems(accessToken: string): Promise<any> {
-  console.log('Listing items...');
+  console.log('Listing items with token length:', accessToken?.length);
 
   const response = await fetch(`${PLUGGY_API_URL}/items`, {
     method: 'GET',
@@ -80,13 +90,16 @@ async function listItems(accessToken: string): Promise<any> {
     },
   });
 
+  const responseText = await response.text();
+  console.log('List items response status:', response.status);
+  console.log('List items response body:', responseText);
+
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to list items:', error);
-    throw new Error(`Failed to list items: ${error}`);
+    console.error('Failed to list items:', responseText);
+    throw new Error(`Failed to list items: ${responseText}`);
   }
 
-  const data = await response.json();
+  const data = JSON.parse(responseText);
   console.log(`Found ${data.results?.length || 0} items`);
   return data;
 }
