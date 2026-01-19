@@ -27,6 +27,7 @@ import StockDetailDrawer from "@/components/StockDetailDrawer";
 import SimuladorDrawer from "@/components/analysis/SimuladorDrawer";
 import CarteirasRecomendadasDrawer from "@/components/analysis/CarteirasRecomendadasDrawer";
 import RelatoriosDrawer from "@/components/analysis/RelatoriosDrawer";
+import IndiceKadigDrawer from "@/components/analysis/IndiceKadigDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -95,6 +96,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [simuladorOpen, setSimuladorOpen] = useState(false);
   const [carteirasOpen, setCarteirasOpen] = useState(false);
   const [relatoriosOpen, setRelatoriosOpen] = useState(false);
+  const [indiceKadigOpen, setIndiceKadigOpen] = useState(false);
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -223,7 +225,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => {} },
     { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
     { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => setRelatoriosOpen(true) },
-    { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => {} },
+    { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => setIndiceKadigOpen(true) },
   ];
 
   return (
@@ -769,6 +771,18 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       <CarteirasRecomendadasDrawer
         open={carteirasOpen}
         onOpenChange={setCarteirasOpen}
+      />
+
+      {/* Relatórios Drawer */}
+      <RelatoriosDrawer
+        open={relatoriosOpen}
+        onOpenChange={setRelatoriosOpen}
+      />
+
+      {/* Índice Kadig Drawer */}
+      <IndiceKadigDrawer
+        open={indiceKadigOpen}
+        onOpenChange={setIndiceKadigOpen}
       />
     </div>
   );
