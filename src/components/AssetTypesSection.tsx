@@ -11,7 +11,12 @@ import {
   BadgeDollarSign,
   BarChart3,
   CircleDollarSign,
-  Banknote
+  Banknote,
+  Home,
+  Car,
+  DollarSign,
+  Building,
+  Plane
 } from "lucide-react";
 
 const assetTypes = [
@@ -101,6 +106,34 @@ const assetTypes = [
   },
 ];
 
+const globalAssets = [
+  {
+    icon: Home,
+    name: "Imóveis",
+    color: "from-amber-600 to-orange-500"
+  },
+  {
+    icon: Car,
+    name: "Veículos",
+    color: "from-slate-600 to-gray-500"
+  },
+  {
+    icon: DollarSign,
+    name: "Moedas (USD, EUR)",
+    color: "from-green-600 to-emerald-500"
+  },
+  {
+    icon: Building,
+    name: "Bancos Internacionais",
+    color: "from-blue-600 to-indigo-500"
+  },
+  {
+    icon: Plane,
+    name: "Investimentos no Exterior",
+    color: "from-violet-600 to-purple-500"
+  },
+];
+
 export const AssetTypesSection = () => {
   return (
     <section className="py-24 relative overflow-hidden">
@@ -123,7 +156,7 @@ export const AssetTypesSection = () => {
         </motion.div>
 
         {/* Asset Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
           {assetTypes.map((asset, index) => (
             <motion.div
               key={asset.name}
@@ -145,22 +178,59 @@ export const AssetTypesSection = () => {
           ))}
         </div>
 
-        {/* Bottom note */}
+        {/* Global Patrimony Section */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mt-12"
+          className="glass-strong rounded-3xl p-8 relative overflow-hidden"
         >
-          <div className="inline-flex items-center gap-3 glass rounded-full px-6 py-3">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
-              <div className="w-2 h-2 rounded-full bg-purple-500" />
+          {/* Background glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px]" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-cyan-500 flex items-center justify-center">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-foreground">Patrimônio Global</h3>
+                <p className="text-muted-foreground">Consolide todo seu patrimônio, não só investimentos</p>
+              </div>
             </div>
-            <span className="text-sm text-muted-foreground">
-              + Patrimônio global: imóveis, veículos, moedas estrangeiras
-            </span>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {globalAssets.map((asset, index) => (
+                <motion.div
+                  key={asset.name}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  className="flex items-center gap-3 bg-background/50 rounded-xl p-3"
+                >
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${asset.color} flex items-center justify-center shrink-0`}>
+                    <asset.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{asset.name}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full px-4 py-2">
+                <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+                <span className="text-emerald-400 text-sm font-medium">Conversão automática de moedas</span>
+              </div>
+              <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 rounded-full px-4 py-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full" />
+                <span className="text-blue-400 text-sm font-medium">Suporte a USD, EUR, GBP e mais</span>
+              </div>
+              <div className="inline-flex items-center gap-2 bg-purple-500/20 border border-purple-500/30 rounded-full px-4 py-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full" />
+                <span className="text-purple-400 text-sm font-medium">Interactive Brokers, Avenue, Charles Schwab</span>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
