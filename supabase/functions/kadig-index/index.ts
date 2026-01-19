@@ -150,23 +150,89 @@ serve(async (req) => {
 
     console.log(`Kadig Index request: type=${type}, page=${page}, sortBy=${sortBy}`);
 
-    // Listar todos os ativos com scores
-    if (type === 'list') {
-      const tickersToFetch = KADIG_TICKERS.slice(0, 30).join(',');
+    // Função auxiliar para buscar em batches
+    async function fetchInBatches(tickers: string[], batchSize: number = 10): Promise<any[]> {
+      const results: any[] = [];
       
-      console.log(`Fetching data for ${KADIG_TICKERS.length} tickers...`);
-      
-      const url = `https://brapi.dev/api/quote/${tickersToFetch}?token=${BRAPI_TOKEN}&fundamental=true`;
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      if (!data.results) {
-        throw new Error('No results from BRAPI');
+      for (let i = 0; i < tickers.length; i += batchSize) {
+        const batch = tickers.slice(i, i + batchSize);
+        const tickersStr = batch.join(',');
+        
+        try {
+          console.log(`Fetching batch ${Math.floor(i / batchSize) + 1}: ${batch.length} tickers`);
+          const url = `https://brapi.dev/api/quote/${tickersStr}?token=${BRAPI_TOKEN}&fundamental=true`;
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          if (data.results && Array.isArray(data.results)) {
+            results.push(...data.results);
+            console.log(`Batch successful: ${data.results.length} stocks`);
+          } else {
+            console.log(`Batch returned no results, trying individually...`);
+            // Tentar individualmente se o batch falhar
+            for (const t of batch) {
+              try {
+                const singleUrl = `https://brapi.dev/api/quote/${t}?token=${BRAPI_TOKEN}&fundamental=true`;
+                const singleResponse = await fetch(singleUrl);
+                const singleData = await singleResponse.json();
+                if (singleData.results?.[0]) {
+                  results.push(singleData.results[0]);
+                }
+              } catch (e) {
+                console.log(`Failed to fetch ${t}: ${e}`);
+              }
+            }
+          }
+          
+          // Pequeno delay entre batches para evitar rate limiting
+          if (i + batchSize < tickers.length) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+        } catch (err) {
+          console.log(`Batch error: ${err}, trying individually...`);
+          for (const t of batch) {
+            try {
+              const singleUrl = `https://brapi.dev/api/quote/${t}?token=${BRAPI_TOKEN}&fundamental=true`;
+              const singleResponse = await fetch(singleUrl);
+              const singleData = await singleResponse.json();
+              if (singleData.results?.[0]) {
+                results.push(singleData.results[0]);
+              }
+            } catch (e) {
+              console.log(`Failed to fetch ${t}: ${e}`);
+            }
+          }
+        }
       }
       
-      console.log(`BRAPI returned ${data.results.length} stocks`);
+      return results;
+    }
+
+    // Listar todos os ativos com scores
+    if (type === 'list') {
+      console.log(`Fetching data for ${KADIG_TICKERS.length} tickers in batches...`);
       
-      const stocks = data.results.map((stock: any) => {
+      const allResults = await fetchInBatches(KADIG_TICKERS, 8);
+      
+      if (allResults.length === 0) {
+        console.error('No results from any BRAPI request');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Unable to fetch stock data',
+            stocks: [],
+            topPerformers: [],
+            totalStocks: 0,
+            currentPage: 1,
+            totalPages: 0,
+            lastUpdate: new Date().toISOString(),
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log(`BRAPI returned ${allResults.length} stocks total`);
+      
+      const stocks = allResults.map((stock: any) => {
         const financialScore = calculateFinancialScore(stock);
         const dividendScore = calculateDividendScore(stock);
         const recommendationScore = calculateRecommendationScore(stock);
