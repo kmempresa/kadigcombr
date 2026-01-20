@@ -67,14 +67,38 @@ export const useApplePurchase = (): UsePurchaseResult => {
   const purchasePremium = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
 
+    const platform = Capacitor.getPlatform();
+    console.log('[IAP] Purchase initiated');
+    console.log('[IAP] Platform:', platform);
+    console.log('[IAP] isNative:', isNative);
+    console.log('[IAP] CdvPurchase available:', !!window.CdvPurchase);
+    console.log('[IAP] CdvPurchase.store available:', !!window.CdvPurchase?.store);
+
     try {
       // Check if running on native iOS with cordova-plugin-purchase
-      if (isNative && Capacitor.getPlatform() === 'ios' && window.CdvPurchase?.store) {
+      const isIOS = isNative && platform === 'ios';
+      
+      if (isIOS) {
+        // Wait a moment for plugin to be available
+        let attempts = 0;
+        while (!window.CdvPurchase?.store && attempts < 10) {
+          console.log('[IAP] Waiting for CdvPurchase plugin... attempt', attempts + 1);
+          await new Promise(resolve => setTimeout(resolve, 200));
+          attempts++;
+        }
+
+        if (!window.CdvPurchase?.store) {
+          console.error('[IAP] CdvPurchase plugin not available after waiting');
+          toast.error("Plugin de compras não disponível");
+          setIsProcessing(false);
+          return false;
+        }
+
         const store = window.CdvPurchase.store;
         const ProductType = window.CdvPurchase.ProductType;
         const Platform = window.CdvPurchase.Platform;
 
-        console.log('[IAP] Registering product:', PREMIUM_PRODUCT_ID);
+        console.log('[IAP] Plugin ready, registering product:', PREMIUM_PRODUCT_ID);
 
         // Register the product
         store.register([{
@@ -117,22 +141,25 @@ export const useApplePurchase = (): UsePurchaseResult => {
         });
 
         // Initialize store
+        console.log('[IAP] Initializing store...');
         await store.initialize([Platform.APPLE_APPSTORE]);
         
         // Refresh products
+        console.log('[IAP] Updating products...');
         await store.update();
 
         // Get the product
         const product = store.get(PREMIUM_PRODUCT_ID, Platform.APPLE_APPSTORE);
+        console.log('[IAP] Product retrieved:', product);
         
         if (!product) {
-          console.error('[IAP] Product not found');
-          toast.error("Produto não encontrado");
+          console.error('[IAP] Product not found after update');
+          toast.error("Produto não encontrado na App Store");
           setIsProcessing(false);
           return false;
         }
 
-        console.log('[IAP] Ordering product:', product);
+        console.log('[IAP] Ordering product - this should open StoreKit...');
         
         // Order the product - this opens Apple's payment sheet
         await store.order(product);
@@ -140,7 +167,7 @@ export const useApplePurchase = (): UsePurchaseResult => {
         return true;
       } else {
         // Web fallback - direct subscription (for testing/web version)
-        console.log('[IAP] Web fallback - activating subscription directly');
+        console.log('[IAP] Web fallback - platform:', platform, 'isNative:', isNative);
         const activated = await activateSubscription();
         if (activated) {
           toast.success("🎉 Bem-vindo ao Kadig Premium!");
