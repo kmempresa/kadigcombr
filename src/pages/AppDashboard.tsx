@@ -1773,11 +1773,11 @@ const AppDashboard = () => {
                 
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20">
-                      <Sparkles className="w-7 h-7 text-white" />
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg border border-white/20">
+                      <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-lg">Bianca IA</h3>
+                      <h3 className="font-bold text-white text-lg">Bianca Consultora</h3>
                       <p className="text-sm text-white/70">Sua consultora pessoal</p>
                     </div>
                   </div>

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Wallet, Link2, User, BarChart3, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Wallet, Link2, User, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 const PrimeirosPassos = () => {
   const navigate = useNavigate();
@@ -54,9 +55,10 @@ const PrimeirosPassos = () => {
       ]
     },
     {
-      icon: Sparkles,
+      icon: null,
+      image: true,
       title: "5. Converse com a Bianca",
-      description: "Nossa consultora de IA está disponível 24/7 para analisar sua carteira e tirar suas dúvidas.",
+      description: "Nossa consultora está disponível 24/7 para analisar sua carteira e tirar suas dúvidas.",
       details: [
         "Acesse o ícone de chat no dashboard",
         "Peça análises personalizadas da sua carteira",
@@ -106,9 +108,15 @@ const PrimeirosPassos = () => {
               className="bg-card rounded-xl p-4 border border-border"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <step.icon className="w-5 h-5 text-primary" />
-                </div>
+                {step.image ? (
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                    <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    {step.icon && <step.icon className="w-5 h-5 text-primary" />}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-semibold text-foreground">{step.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
