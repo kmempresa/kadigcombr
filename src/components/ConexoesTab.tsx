@@ -464,86 +464,104 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-card border border-border rounded-2xl p-4"
+              className="relative overflow-hidden bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4"
             >
-              <div className="flex items-center gap-4">
+              {/* Glow effect */}
+              <div 
+                className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-30"
+                style={{ 
+                  backgroundColor: connection.connector_primary_color 
+                    ? (connection.connector_primary_color.startsWith('#') 
+                        ? connection.connector_primary_color 
+                        : `#${connection.connector_primary_color}`)
+                    : 'hsl(var(--primary))' 
+                }}
+              />
+              
+              <div className="relative flex items-center gap-3">
                 {/* Logo */}
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-muted"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg"
                   style={{ 
                     backgroundColor: connection.connector_primary_color 
                       ? (connection.connector_primary_color.startsWith('#') 
                           ? connection.connector_primary_color 
                           : `#${connection.connector_primary_color}`)
-                      : undefined 
+                      : 'hsl(var(--muted))' 
                   }}
                 >
                   {connection.connector_image_url ? (
                     <img 
                       src={connection.connector_image_url} 
                       alt={connection.connector_name || 'Instituição'}
-                      className="w-full h-full object-contain p-1"
+                      className="w-full h-full object-contain p-1.5"
                       onError={(e) => {
-                        // Hide broken image and show fallback
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.parentElement?.classList.add('fallback-icon');
                       }}
                     />
                   ) : (
-                    <Building2 className="w-6 h-6 text-muted-foreground" />
+                    <Building2 className="w-6 h-6 text-white/80" />
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground truncate">
+                  <h3 className="font-semibold text-foreground truncate text-sm">
                     {connection.connector_name || 'Instituição'}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    {getStatusIcon(connection.status)}
+                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                    <div className="flex items-center gap-1">
+                      {getStatusIcon(connection.status)}
+                      <span className="text-xs text-muted-foreground">
+                        {getStatusText(connection.status)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-muted-foreground/60">•</span>
                     <span className="text-xs text-muted-foreground">
-                      {getStatusText(connection.status)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      • {formatDate(connection.last_updated_at || connection.updated_at)}
+                      {formatDate(connection.last_updated_at || connection.updated_at)}
                     </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5">
-                  <button
+                {/* Actions - Mobile optimized */}
+                <div className="flex items-center gap-1">
+                  <motion.button
                     onClick={() => {
                       setSelectedConnection(connection);
                       setShowImportDrawer(true);
                     }}
-                    className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    title="Importar para carteira"
+                    whileTap={{ scale: 0.9 }}
+                    className="w-9 h-9 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
+                    title="Importar"
                   >
                     <Download className="w-4 h-4" />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     onClick={() => handleSyncConnection(connection)}
                     disabled={syncingItemId === connection.item_id}
-                    className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                    whileTap={{ scale: 0.9 }}
+                    className="w-9 h-9 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-colors flex items-center justify-center"
                     title="Sincronizar"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncingItemId === connection.item_id ? 'animate-spin' : ''}`} />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     onClick={() => handleViewDetails(connection)}
-                    className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
-                    title="Ver detalhes"
+                    whileTap={{ scale: 0.9 }}
+                    className="w-9 h-9 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-colors flex items-center justify-center"
+                    title="Detalhes"
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     onClick={() => setDeletingConnectionId(connection.id)}
-                    className="p-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
-                    title="Remover conexão"
+                    whileTap={{ scale: 0.9 }}
+                    className="w-9 h-9 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors flex items-center justify-center"
+                    title="Remover"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
