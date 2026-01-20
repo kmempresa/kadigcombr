@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { notifyInvestmentDeleted } from "@/lib/notifications";
 
 interface Investment {
   id: string;
@@ -175,6 +176,9 @@ const InvestmentEditDrawer = ({
 
       // Recalculate portfolio totals
       await recalculatePortfolioTotals(invData.user_id, invData.portfolio_id);
+
+      // Create notification
+      await notifyInvestmentDeleted(investment.asset_name);
 
       toast.success("Investimento excluído com sucesso!");
       onSuccess();

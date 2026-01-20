@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { usePluggySync } from "@/hooks/usePluggySync";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
+import { notifyConnectionAdded, notifyConnectionRemoved } from "@/lib/notifications";
 import {
   Drawer,
   DrawerContent,
@@ -161,6 +162,9 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
       }
 
       toast.success(`${connector?.name || 'Instituição'} conectada com sucesso!`);
+      
+      // Create notification for connection
+      await notifyConnectionAdded(connector?.name || 'Instituição');
       
       // Auto-sync investments after connection
       toast.loading('Sincronizando investimentos...', { id: 'sync-toast' });
@@ -327,6 +331,9 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         .eq('id', connection.id);
 
       if (error) throw error;
+      
+      // Create notification for disconnection
+      await notifyConnectionRemoved(connection.connector_name || 'Instituição');
       
       toast.success('Conexão e investimentos removidos');
       setDeletingConnectionId(null);
