@@ -515,21 +515,17 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                       : 'hsl(var(--muted))' 
                   }}
                 >
-                  {connection.connector_image_url && (
+                  {connection.connector_image_url ? (
                     <img 
                       src={connection.connector_image_url} 
                       alt={connection.connector_name || 'Instituição'}
-                      className="w-full h-full object-contain p-2 relative z-10"
-                      style={{ filter: 'brightness(0) invert(1)' }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
+                      className="w-8 h-8 object-contain"
                     />
+                  ) : (
+                    <span className="text-white font-bold text-lg">
+                      {(connection.connector_name || 'B').charAt(0).toUpperCase()}
+                    </span>
                   )}
-                  {/* Fallback - first letter of bank name */}
-                  <span className="text-white font-bold text-lg absolute">
-                    {(connection.connector_name || 'B').charAt(0).toUpperCase()}
-                  </span>
                 </div>
 
                 {/* Info */}
