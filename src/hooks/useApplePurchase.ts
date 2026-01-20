@@ -151,6 +151,8 @@ export const useApplePurchase = (): UsePurchaseResult => {
         // Get the product
         const product = store.get(PREMIUM_PRODUCT_ID, Platform.APPLE_APPSTORE);
         console.log('[IAP] Product retrieved:', product);
+        console.log('[IAP] Product canPurchase:', product?.canPurchase);
+        console.log('[IAP] Product offers:', product?.offers);
         
         if (!product) {
           console.error('[IAP] Product not found after update');
@@ -159,10 +161,21 @@ export const useApplePurchase = (): UsePurchaseResult => {
           return false;
         }
 
-        console.log('[IAP] Ordering product - this should open StoreKit...');
+        // Get the first available offer
+        const offer = product.getOffer();
+        console.log('[IAP] Offer retrieved:', offer);
+
+        if (!offer) {
+          console.error('[IAP] No offer available for product');
+          toast.error("Oferta não disponível");
+          setIsProcessing(false);
+          return false;
+        }
+
+        console.log('[IAP] Ordering via offer.order() - this should open StoreKit...');
         
-        // Order the product - this opens Apple's payment sheet
-        await store.order(product);
+        // Order the product via offer - this is the correct way to open Apple's payment sheet
+        await offer.order();
         
         return true;
       } else {
