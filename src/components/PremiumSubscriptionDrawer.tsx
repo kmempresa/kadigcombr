@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, 
@@ -13,7 +12,6 @@ import {
   Zap,
   Star,
   ArrowRight,
-  Sparkles,
   BarChart3,
   Globe,
   Target,
@@ -28,11 +26,11 @@ import {
   DollarSign,
   Scale,
   Umbrella,
-  Coins
+  Coins,
+  RotateCcw
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import biancaConsultora from "@/assets/bianca-consultora.png";
+import { useApplePurchase } from "@/hooks/useApplePurchase";
 
 interface PremiumSubscriptionDrawerProps {
   isOpen: boolean;
@@ -41,48 +39,21 @@ interface PremiumSubscriptionDrawerProps {
 }
 
 const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubscriptionDrawerProps) => {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { purchasePremium, isProcessing, restorePurchases } = useApplePurchase();
 
   const handleSubscribe = async () => {
-    setIsProcessing(true);
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast.error("Você precisa estar logado para assinar");
-        setIsProcessing(false);
-        return;
-      }
-
-      // For now, create a subscription directly (will integrate with Stripe later)
-      const { error } = await supabase
-        .from("subscriptions")
-        .upsert({
-          user_id: session.user.id,
-          status: "active",
-          plan: "premium",
-          price_monthly: 39.90,
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        }, {
-          onConflict: "user_id",
-        });
-
-      if (error) {
-        console.error("Error creating subscription:", error);
-        toast.error("Erro ao processar assinatura");
-        return;
-      }
-
-      toast.success("🎉 Bem-vindo ao Kadig Premium!");
+    const success = await purchasePremium();
+    if (success) {
       onSubscribe?.();
       onClose();
-    } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error("Erro ao processar assinatura");
-    } finally {
-      setIsProcessing(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    const success = await restorePurchases();
+    if (success) {
+      onSubscribe?.();
+      onClose();
     }
   };
 
@@ -377,6 +348,16 @@ const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubs
                         Começar Agora por R$ 39,90/mês
                       </>
                     )}
+                  </motion.button>
+                  
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleRestore}
+                    disabled={isProcessing}
+                    className="w-full mt-3 py-3 text-muted-foreground font-medium flex items-center justify-center gap-2 hover:text-foreground transition-all disabled:opacity-70"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Restaurar compra anterior
                   </motion.button>
                   
                   <p className="text-center text-muted-foreground text-sm mt-4">
