@@ -26,6 +26,9 @@ import Sobre from "./pages/Sobre";
 import TermosDeUso from "./pages/TermosDeUso";
 import PoliticaPrivacidade from "./pages/PoliticaPrivacidade";
 import CentralAjuda from "./pages/CentralAjuda";
+import PrimeirosPassos from "./pages/PrimeirosPassos";
+import PerguntasFrequentes from "./pages/PerguntasFrequentes";
+import BiancaIAHelp from "./pages/BiancaIAHelp";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +63,9 @@ const App = () => (
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
               <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
               <Route path="/central-ajuda" element={<CentralAjuda />} />
+              <Route path="/primeiros-passos" element={<PrimeirosPassos />} />
+              <Route path="/perguntas-frequentes" element={<PerguntasFrequentes />} />
+              <Route path="/bianca-ia-help" element={<BiancaIAHelp />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
