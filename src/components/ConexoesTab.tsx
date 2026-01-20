@@ -638,7 +638,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Details Drawer */}
       <Drawer open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
-        <DrawerContent className="max-h-[90vh]">
+        <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
               {selectedConnection?.connector_image_url && (
@@ -719,7 +719,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingConnectionId} onOpenChange={() => setDeletingConnectionId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className={theme === "light" ? "light-theme" : ""}>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover conexão?</AlertDialogTitle>
             <AlertDialogDescription>
