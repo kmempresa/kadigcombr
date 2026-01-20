@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, HelpCircle, MessageSquare, BookOpen, Mail, ChevronRight } from "lucide-react";
+import { ArrowLeft, HelpCircle, BookOpen, Mail, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 const CentralAjuda = () => {
   const navigate = useNavigate();
@@ -23,9 +24,10 @@ const CentralAjuda = () => {
       path: "/perguntas-frequentes"
     },
     {
-      icon: MessageSquare,
-      title: "Bianca IA",
-      description: "Como usar a consultora virtual",
+      icon: null,
+      image: true,
+      title: "Bianca Consultora",
+      description: "Como usar a consultora financeira",
       articles: 10,
       path: "/bianca-ia-help"
     }
@@ -85,9 +87,15 @@ const CentralAjuda = () => {
                 onClick={() => navigate(category.path)}
                 className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-3 hover:bg-muted/50 transition-colors text-left"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <category.icon className="w-5 h-5 text-primary" />
-                </div>
+                {category.image ? (
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+                    <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    {category.icon && <category.icon className="w-5 h-5 text-primary" />}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-foreground">{category.title}</h3>
                   <p className="text-xs text-muted-foreground">{category.description}</p>

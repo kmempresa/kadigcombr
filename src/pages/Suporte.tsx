@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 const supportCategories = [
   { value: "carteira", label: "Minha Carteira" },
   { value: "investimentos", label: "Investimentos" },
-  { value: "bianca", label: "Bianca (IA)" },
+  { value: "bianca", label: "Bianca Consultora" },
   { value: "conta", label: "Minha Conta" },
   { value: "pagamentos", label: "Pagamentos e Assinatura" },
   { value: "bug", label: "Reportar um Bug" },

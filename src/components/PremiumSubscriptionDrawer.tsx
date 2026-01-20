@@ -22,11 +22,11 @@ import {
   Newspaper,
   Clock,
   Brain,
-  ChartLine,
   Lock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 interface PremiumSubscriptionDrawerProps {
   isOpen: boolean;
@@ -233,8 +233,8 @@ const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubs
                   transition={{ delay: 0.2 }}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center shadow-lg shadow-primary/20">
-                      <Sparkles className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-primary/20">
+                      <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <h3 className="font-bold text-lg text-foreground">Bianca Consultora</h3>

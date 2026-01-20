@@ -262,8 +262,8 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
           <div className="flex flex-wrap gap-2">
             {type !== "bianca" && (
               <div className="flex items-center gap-2 bg-card/50 rounded-lg px-3 py-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center shadow-md">
-                  <Bot className="w-3.5 h-3.5 text-white" />
+                <div className="w-7 h-7 rounded-lg overflow-hidden shadow-md">
+                  <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <p className="text-foreground font-semibold text-xs">Bianca Consultora</p>
