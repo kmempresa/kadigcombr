@@ -4,7 +4,7 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealTimePrices } from "@/hooks/useRealTimePrices";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 // Lucide icons
 import { 
   Bell, 
@@ -154,11 +154,16 @@ const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: nu
 
 const AppDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme } = useTheme();
   const { selectedPortfolioId, setSelectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">("carteira");
+  const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">(() => {
+    // Check if we're returning from another page with a specific tab
+    const state = location.state as { returnToTab?: string } | null;
+    return (state?.returnToTab as any) || "carteira";
+  });
   const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
   const [showValues, setShowValues] = useState(true);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // 0 = current month (first slide)

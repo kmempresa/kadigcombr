@@ -88,7 +88,7 @@ const Suporte = () => {
     <div className={`min-h-screen bg-background ${theme === "light" ? "light-theme" : ""}`}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-        <button onClick={() => navigate(-1)} className="p-2">
+        <button onClick={() => navigate("/app", { state: { returnToTab: "conta" } })} className="p-2">
           <ArrowLeft className="w-6 h-6 text-foreground" />
         </button>
         <span className="text-lg font-semibold text-foreground">Abrir chamado</span>
@@ -101,7 +101,7 @@ const Suporte = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-foreground">Fale Conosco</h2>
             <button 
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/app", { state: { returnToTab: "conta" } })}
               type="button"
               className="text-primary font-medium hover:underline"
             >
