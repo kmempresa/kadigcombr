@@ -33,16 +33,16 @@ interface PremiumPaywallProps {
 const paywallConfig = {
   bianca: {
     icon: null,
-    title: "Bianca IA",
+    title: "Bianca Consultora",
     subtitle: "Sua Consultora Financeira Pessoal",
-    description: "Análises personalizadas com inteligência artificial",
+    description: "Análises personalizadas e tomada de decisão estratégica",
     accentColor: "from-emerald-500 to-teal-400",
     glowColor: "shadow-emerald-500/30",
     features: [
-      { icon: Bot, title: "Consultora 24/7", description: "Sempre disponível" },
-      { icon: Target, title: "Recomendações", description: "Baseadas no seu perfil" },
-      { icon: MessageSquare, title: "Chat Ilimitado", description: "Tire suas dúvidas" },
-      { icon: Zap, title: "Análises em Tempo Real", description: "Insights da carteira" },
+      { icon: Target, title: "Tomada de Decisão", description: "Estratégias assertivas" },
+      { icon: TrendingUp, title: "Análise de Mercado", description: "Visão completa do cenário" },
+      { icon: LineChart, title: "Ações Futuras", description: "Projeções e tendências" },
+      { icon: MessageSquare, title: "Consultoria 24/7", description: "Sempre disponível" },
     ] as PaywallFeature[],
   },
   trade: {
@@ -272,7 +272,7 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-foreground font-semibold text-sm">Bianca IA</p>
+                  <p className="text-foreground font-semibold text-sm">Bianca Consultora</p>
                   <p className="text-muted-foreground text-xs">Consultora Pessoal</p>
                 </div>
               </div>
