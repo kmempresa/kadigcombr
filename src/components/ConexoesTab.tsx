@@ -181,12 +181,17 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
       if (error) throw error;
 
-      // Update local database with fresh status
+      const connector = data.connector;
+
+      // Update local database with fresh status and connector info
       await supabase
         .from('pluggy_connections')
         .update({
           status: data.status,
           last_updated_at: data.lastUpdatedAt || data.updatedAt,
+          connector_name: connector?.name || connection.connector_name,
+          connector_image_url: connector?.imageUrl || connection.connector_image_url,
+          connector_primary_color: connector?.primaryColor || connection.connector_primary_color,
         })
         .eq('id', connection.id);
 
@@ -396,17 +401,28 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
               <div className="flex items-center gap-4">
                 {/* Logo */}
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden"
-                  style={{ backgroundColor: connection.connector_primary_color ? `#${connection.connector_primary_color}` : '#E5E7EB' }}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden bg-muted"
+                  style={{ 
+                    backgroundColor: connection.connector_primary_color 
+                      ? (connection.connector_primary_color.startsWith('#') 
+                          ? connection.connector_primary_color 
+                          : `#${connection.connector_primary_color}`)
+                      : undefined 
+                  }}
                 >
                   {connection.connector_image_url ? (
                     <img 
                       src={connection.connector_image_url} 
                       alt={connection.connector_name || 'Instituição'}
-                      className="w-8 h-8 object-contain"
+                      className="w-full h-full object-contain p-1"
+                      onError={(e) => {
+                        // Hide broken image and show fallback
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement?.classList.add('fallback-icon');
+                      }}
                     />
                   ) : (
-                    <Building2 className="w-6 h-6 text-white" />
+                    <Building2 className="w-6 h-6 text-muted-foreground" />
                   )}
                 </div>
 
