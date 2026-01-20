@@ -59,13 +59,27 @@ export const useApplePurchase = (): UsePurchaseResult => {
     try {
       if (isIOS) {
         // Import dynamically to avoid issues on web
-        const { NativePurchases } = await import('@capgo/native-purchases');
+        const { NativePurchases, PURCHASE_TYPE } = await import('@capgo/native-purchases');
         
+        // First, fetch the product from StoreKit
+        console.log('[IAP] Fetching product from StoreKit:', PREMIUM_PRODUCT_ID);
+        
+        try {
+          const { product } = await NativePurchases.getProduct({
+            productIdentifier: PREMIUM_PRODUCT_ID,
+            productType: PURCHASE_TYPE.SUBS,
+          });
+          console.log('[IAP] Product loaded:', product);
+        } catch (fetchError) {
+          console.warn('[IAP] Could not fetch product details, proceeding anyway:', fetchError);
+        }
+        
+        // Now attempt the purchase
         console.log('[IAP] Calling NativePurchases.purchaseProduct with ID:', PREMIUM_PRODUCT_ID);
         
-        // Simple one-line call to open StoreKit
         const result = await NativePurchases.purchaseProduct({
-          productIdentifier: PREMIUM_PRODUCT_ID
+          productIdentifier: PREMIUM_PRODUCT_ID,
+          productType: PURCHASE_TYPE.SUBS,
         });
         
         console.log('[IAP] Purchase result:', result);
