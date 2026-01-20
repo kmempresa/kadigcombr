@@ -103,12 +103,18 @@ export const useApplePurchase = (): UsePurchaseResult => {
             console.log('[IAP] Transaction finished:', transaction);
             toast.success("🎉 Bem-vindo ao Kadig Premium!");
             setIsProcessing(false);
-          })
-          .cancelled(() => {
-            console.log('[IAP] Purchase cancelled');
-            toast.info("Compra cancelada");
-            setIsProcessing(false);
           });
+
+        // Handle cancelled state separately using error callback
+        store.error((error: any) => {
+          console.log('[IAP] Store error:', error);
+          if (error.code === 6777001 || error.message?.includes('cancelled')) {
+            toast.info("Compra cancelada");
+          } else {
+            toast.error("Erro na compra: " + (error.message || 'Erro desconhecido'));
+          }
+          setIsProcessing(false);
+        });
 
         // Initialize store
         await store.initialize([Platform.APPLE_APPSTORE]);
