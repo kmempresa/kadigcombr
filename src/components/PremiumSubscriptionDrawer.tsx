@@ -22,7 +22,13 @@ import {
   Newspaper,
   Clock,
   Brain,
-  Lock
+  Lock,
+  Calculator,
+  Award,
+  DollarSign,
+  Scale,
+  Umbrella,
+  Coins
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -102,11 +108,17 @@ const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubs
   ];
 
   const exclusiveFeatures = [
-    { icon: Briefcase, title: "Carteiras Personalizadas", description: "Portfólios baseados no seu perfil" },
+    { icon: Calculator, title: "Simulador de Investimentos", description: "Projeções com juros compostos" },
+    { icon: Scale, title: "Comparador de Ativos", description: "Análise comparativa de papéis" },
+    { icon: Award, title: "Índice Kadig", description: "Score exclusivo de performance" },
+    { icon: Briefcase, title: "Carteiras Recomendadas", description: "Portfólios de especialistas" },
     { icon: FileText, title: "Relatórios em PDF", description: "Exporte análises detalhadas" },
     { icon: Brain, title: "Análises Fundamentalistas", description: "P/L, DY, ROE, P/VP e mais" },
-    { icon: Clock, title: "Mercado em Tempo Real", description: "Dados atualizados a cada minuto" },
-    { icon: Shield, title: "Segurança Total", description: "Dados criptografados e protegidos" },
+    { icon: Coins, title: "Proventos e Dividendos", description: "Acompanhe seus recebimentos" },
+    { icon: DollarSign, title: "Ganho de Capital", description: "Imposto de renda simplificado" },
+    { icon: Umbrella, title: "Cobertura FGC", description: "Proteção dos seus investimentos" },
+    { icon: Clock, title: "Risco x Retorno", description: "Análise de volatilidade" },
+    { icon: Shield, title: "Segurança Total", description: "Dados criptografados" },
     { icon: Zap, title: "Suporte Prioritário", description: "Atendimento exclusivo Premium" },
   ];
 
