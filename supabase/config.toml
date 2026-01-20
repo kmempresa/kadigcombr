@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.pluggy]
 verify_jwt = false
+
+[functions.sync-pluggy-investments]
+verify_jwt = false
