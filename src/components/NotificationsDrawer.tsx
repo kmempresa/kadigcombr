@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bell, Check, Trash2, CheckCheck, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Bell, Check, Trash2, CheckCheck, Info, AlertTriangle, CheckCircle, AlertCircle, ChevronLeft } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Notification } from "@/hooks/useNotifications";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NotificationsDrawerProps {
   isOpen: boolean;
@@ -53,29 +54,45 @@ export const NotificationsDrawer = ({
   onDelete,
   onClearAll,
 }: NotificationsDrawerProps) => {
+  const isMobile = useIsMobile();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={onClose}
-          />
+          {/* Backdrop - hidden on mobile for full screen effect */}
+          {!isMobile && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={onClose}
+            />
+          )}
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-background z-50 shadow-xl flex flex-col"
+            className={`fixed right-0 top-0 h-full bg-background z-50 shadow-xl flex flex-col ${
+              isMobile ? 'w-full' : 'w-full max-w-md'
+            }`}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            {/* Header with safe area for iOS */}
+            <div className="flex items-center justify-between p-4 border-b border-border pt-safe"
+              style={{ paddingTop: isMobile ? 'max(1rem, env(safe-area-inset-top))' : '1rem' }}
+            >
               <div className="flex items-center gap-3">
+                {isMobile ? (
+                  <button
+                    onClick={onClose}
+                    className="p-2 -ml-2 rounded-xl hover:bg-muted transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                ) : null}
                 <Bell className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold">Notificações</h2>
                 {unreadCount > 0 && (
@@ -84,12 +101,14 @@ export const NotificationsDrawer = ({
                   </span>
                 )}
               </div>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl hover:bg-muted transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {!isMobile && (
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
             </div>
 
             {/* Actions */}
