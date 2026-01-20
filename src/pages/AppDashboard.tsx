@@ -61,6 +61,8 @@ import ProfileDrawer from "@/components/ProfileDrawer";
 import ConexoesTab from "@/components/ConexoesTab";
 import { ConnectedBanksCard } from "@/components/ConnectedBanksCard";
 import useEmblaCarousel from "embla-carousel-react";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationsDrawer } from "@/components/NotificationsDrawer";
 
 interface UserData {
   id: string;
@@ -198,9 +200,21 @@ const AppDashboard = () => {
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [premiumDrawerOpen, setPremiumDrawerOpen] = useState(false);
+  const [notificationsDrawerOpen, setNotificationsDrawerOpen] = useState(false);
 
   // Subscription hook
   const { isPremium, refetch: refetchSubscription } = useSubscription();
+
+  // Notifications hook
+  const { 
+    notifications, 
+    loading: notificationsLoading, 
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAllNotifications 
+  } = useNotifications();
 
   // Real-time price updates hook with callback to refresh data
   const handlePriceUpdate = useCallback(() => {
@@ -784,10 +798,13 @@ const AppDashboard = () => {
                   </motion.button>
                   <motion.button 
                     whileTap={{ scale: 0.9 }}
+                    onClick={() => setNotificationsDrawerOpen(true)}
                     className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all relative"
                   >
                     <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
+                    )}
                   </motion.button>
                   <motion.button 
                     whileTap={{ scale: 0.9 }}
@@ -2373,6 +2390,17 @@ const AppDashboard = () => {
         onSubscribe={() => {
           refetchSubscription();
         }}
+      />
+
+      <NotificationsDrawer
+        isOpen={notificationsDrawerOpen}
+        onClose={() => setNotificationsDrawerOpen(false)}
+        notifications={notifications}
+        loading={notificationsLoading}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDelete={deleteNotification}
+        onClearAll={clearAllNotifications}
       />
     </div>
   );
