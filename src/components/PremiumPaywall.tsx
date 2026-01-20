@@ -17,7 +17,6 @@ import {
   ArrowRight,
   Star
 } from "lucide-react";
-import biancaConsultora from "@/assets/bianca-consultora.png";
 
 interface PaywallFeature {
   icon: React.ElementType;
@@ -32,12 +31,12 @@ interface PremiumPaywallProps {
 
 const paywallConfig = {
   bianca: {
-    icon: null,
+    icon: Sparkles,
     title: "Bianca Consultora",
     subtitle: "Sua Consultora Financeira Pessoal",
     description: "Análises personalizadas e tomada de decisão estratégica",
-    accentColor: "from-emerald-500 to-teal-400",
-    glowColor: "shadow-emerald-500/30",
+    accentColor: "from-kadig-blue to-kadig-cyan",
+    glowColor: "shadow-kadig-blue/30",
     features: [
       { icon: Target, title: "Tomada de Decisão", description: "Estratégias assertivas" },
       { icon: TrendingUp, title: "Análise de Mercado", description: "Visão completa do cenário" },
@@ -120,20 +119,11 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
           className="flex justify-center mb-8"
         >
           <div className="relative">
-            {/* Glow Ring */}
             <div className={`absolute -inset-3 bg-gradient-to-br ${config.accentColor} rounded-[2rem] opacity-30 dark:opacity-40 blur-xl`} />
-            
-            {type === "bianca" ? (
-              <div className="relative w-32 h-32 rounded-[1.5rem] overflow-hidden ring-2 ring-foreground/10 shadow-2xl">
-                <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
-                {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-              </div>
-            ) : (
-              <div className={`relative w-32 h-32 rounded-[1.5rem] bg-gradient-to-br ${config.accentColor} flex items-center justify-center shadow-2xl ring-2 ring-foreground/10`}>
-                {Icon && <Icon className="w-16 h-16 text-white" />}
-              </div>
-            )}
+
+            <div className={`relative w-32 h-32 rounded-[1.5rem] bg-gradient-to-br ${config.accentColor} flex items-center justify-center shadow-2xl ring-2 ring-foreground/10`}>
+              {Icon && <Icon className="w-16 h-16 text-white" />}
+            </div>
             
             {/* Sparkle Badge */}
             <motion.div 
