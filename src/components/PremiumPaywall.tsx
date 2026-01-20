@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import { 
-  Crown, 
-  Sparkles, 
-  TrendingUp, 
-  Store, 
+import {
+  Crown,
+  Sparkles,
+  TrendingUp,
+  Store,
   Bot,
   Wallet,
   PieChart,
@@ -17,6 +17,7 @@ import {
   ArrowRight,
   Star
 } from "lucide-react";
+import biancaConsultora from "@/assets/bianca-consultora.png";
 
 interface PaywallFeature {
   icon: React.ElementType;
@@ -31,7 +32,7 @@ interface PremiumPaywallProps {
 
 const paywallConfig = {
   bianca: {
-    icon: Sparkles,
+    icon: null,
     title: "Bianca Consultora",
     subtitle: "Sua Consultora Financeira Pessoal",
     description: "Análises personalizadas e tomada de decisão estratégica",
@@ -63,8 +64,8 @@ const paywallConfig = {
     title: "Mercado",
     subtitle: "Dados em Tempo Real",
     description: "Acompanhe o mercado financeiro ao vivo",
-    accentColor: "from-violet-500 to-purple-400",
-    glowColor: "shadow-violet-500/30",
+    accentColor: "from-kadig-blue to-kadig-cyan",
+    glowColor: "shadow-kadig-blue/30",
     features: [
       { icon: BarChart3, title: "Cotações em Tempo Real", description: "Preços ao vivo" },
       { icon: TrendingUp, title: "Maiores Altas/Baixas", description: "Oportunidades" },
@@ -121,9 +122,16 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
           <div className="relative">
             <div className={`absolute -inset-3 bg-gradient-to-br ${config.accentColor} rounded-[2rem] opacity-30 dark:opacity-40 blur-xl`} />
 
-            <div className={`relative w-32 h-32 rounded-[1.5rem] bg-gradient-to-br ${config.accentColor} flex items-center justify-center shadow-2xl ring-2 ring-foreground/10`}>
-              {Icon && <Icon className="w-16 h-16 text-white" />}
-            </div>
+            {type === "bianca" ? (
+              <div className="relative w-32 h-32 rounded-[1.5rem] overflow-hidden ring-2 ring-foreground/10 shadow-2xl">
+                <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+              </div>
+            ) : (
+              <div className={`relative w-32 h-32 rounded-[1.5rem] bg-gradient-to-br ${config.accentColor} flex items-center justify-center shadow-2xl ring-2 ring-foreground/10`}>
+                {Icon && <Icon className="w-16 h-16 text-white" />}
+              </div>
+            )}
             
             {/* Sparkle Badge */}
             <motion.div 
