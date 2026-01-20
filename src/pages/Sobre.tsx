@@ -83,7 +83,7 @@ const Sobre = () => {
             © 2026 Kadig. Todos os direitos reservados.
           </p>
           <p className="text-xs text-muted-foreground/60 mt-2">
-            Tecnologia Israelense
+            Swiss-made technology
           </p>
         </motion.div>
       </div>
