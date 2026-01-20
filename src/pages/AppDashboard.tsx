@@ -2060,18 +2060,18 @@ const AppDashboard = () => {
           </header>
 
           <div className="p-4">
-            <div className="bg-gradient-to-br from-primary to-cyan-500 rounded-2xl p-5">
+            <div className="bg-gradient-to-br from-kadig-blue to-kadig-cyan rounded-2xl p-5">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1 text-primary-foreground">Assine Kadig Premium</h3>
-                  <p className="text-primary-foreground/80 text-sm mb-4">
+                  <h3 className="font-bold text-lg mb-1 text-white">Assine Kadig Premium</h3>
+                  <p className="text-white/80 text-sm mb-4">
                     Análises avançadas e recomendações exclusivas
                   </p>
-                  <button className="bg-background text-primary font-semibold px-4 py-2 rounded-full text-sm hover:bg-background/90 transition-colors">
+                  <button className="bg-white text-kadig-blue font-semibold px-4 py-2 rounded-full text-sm hover:bg-white/90 transition-colors">
                     Assinatura Única Grátis
                   </button>
                 </div>
-                <Sparkles className="w-8 h-8 text-primary-foreground/80" />
+                <Sparkles className="w-8 h-8 text-white/80" />
               </div>
             </div>
           </div>
