@@ -1,35 +1,47 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Capacitor } from '@capacitor/core';
 
-declare global {
-  interface Window {
-    webkit?: {
-      messageHandlers?: {
-        kadigPurchase?: {
-          postMessage: (message: { action: string; productId: string }) => void;
-        };
-      };
-    };
-  }
-}
-
-// Product ID for Apple In-App Purchase
+// Product ID for Apple/Google In-App Purchase
 const PREMIUM_PRODUCT_ID = 'kadig.premium';
 
 interface UsePurchaseResult {
   purchasePremium: () => Promise<boolean>;
   isProcessing: boolean;
   restorePurchases: () => Promise<boolean>;
+  isNative: boolean;
 }
+
+// Dynamic import type for the plugin
+type CapacitorPurchasesType = typeof import('@capgo/capacitor-purchases').CapacitorPurchases;
+let CapacitorPurchases: CapacitorPurchasesType | null = null;
+
+const loadPurchasesPlugin = async (): Promise<boolean> => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const module = await import('@capgo/capacitor-purchases');
+      CapacitorPurchases = module.CapacitorPurchases;
+      return true;
+    } catch (error) {
+      console.warn('Capacitor Purchases plugin not available:', error);
+      return false;
+    }
+  }
+  return false;
+};
 
 export const useApplePurchase = (): UsePurchaseResult => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pluginLoaded, setPluginLoaded] = useState(false);
 
-  const isNativeApp = useCallback(() => {
-    // Check if running in Capacitor iOS native app
-    return !!(window.webkit?.messageHandlers?.kadigPurchase);
-  }, []);
+  const isNative = Capacitor.isNativePlatform();
+
+  useEffect(() => {
+    if (isNative) {
+      loadPurchasesPlugin().then(setPluginLoaded);
+    }
+  }, [isNative]);
 
   const activateSubscription = useCallback(async () => {
     try {
@@ -69,47 +81,83 @@ export const useApplePurchase = (): UsePurchaseResult => {
     setIsProcessing(true);
 
     try {
-      if (isNativeApp()) {
-        // Native iOS - trigger Apple In-App Purchase
-        return new Promise((resolve) => {
-          // Set up listener for purchase result
-          const handlePurchaseResult = (event: CustomEvent) => {
-            window.removeEventListener('kadigPurchaseResult', handlePurchaseResult as EventListener);
-            
-            if (event.detail?.success) {
-              activateSubscription().then((activated) => {
-                if (activated) {
-                  toast.success("🎉 Bem-vindo ao Kadig Premium!");
-                  resolve(true);
-                } else {
-                  toast.error("Erro ao ativar assinatura. Contate o suporte.");
-                  resolve(false);
-                }
-              });
-            } else {
-              const errorMessage = event.detail?.error || "Compra cancelada ou falhou";
-              toast.error(errorMessage);
-              resolve(false);
-            }
-            
+      if (isNative && pluginLoaded && CapacitorPurchases) {
+        // Native iOS/Android - use Capacitor Purchases (RevenueCat)
+        try {
+          // Get available offerings from RevenueCat
+          const offeringsResult = await CapacitorPurchases.getOfferings();
+          const offerings = offeringsResult?.offerings;
+          console.log('Offerings:', offerings);
+          
+          // Find the current offering
+          const currentOffering = offerings?.current;
+          
+          if (!currentOffering) {
+            toast.error("Nenhuma oferta disponível");
             setIsProcessing(false);
-          };
+            return false;
+          }
 
-          window.addEventListener('kadigPurchaseResult', handlePurchaseResult as EventListener);
+          // Find the package to purchase (monthly or the first available)
+          let packageToPurchase = currentOffering.monthly || 
+                                   currentOffering.availablePackages?.[0];
 
-          // Trigger native purchase
-          window.webkit?.messageHandlers?.kadigPurchase?.postMessage({
-            action: 'purchase',
-            productId: PREMIUM_PRODUCT_ID
+          // Or find by product identifier
+          if (!packageToPurchase) {
+            packageToPurchase = currentOffering.availablePackages?.find(
+              pkg => pkg.product?.identifier === PREMIUM_PRODUCT_ID
+            ) || null;
+          }
+
+          if (!packageToPurchase) {
+            toast.error("Produto não encontrado");
+            setIsProcessing(false);
+            return false;
+          }
+
+          // Make the purchase
+          const result = await CapacitorPurchases.purchasePackage({
+            identifier: packageToPurchase.identifier,
+            offeringIdentifier: currentOffering.identifier,
           });
 
-          // Timeout after 2 minutes
-          setTimeout(() => {
-            window.removeEventListener('kadigPurchaseResult', handlePurchaseResult as EventListener);
+          console.log('Purchase successful:', result);
+          
+          // Activate subscription in Supabase
+          const activated = await activateSubscription();
+          if (activated) {
+            toast.success("🎉 Bem-vindo ao Kadig Premium!");
             setIsProcessing(false);
-            resolve(false);
-          }, 120000);
-        });
+            return true;
+          }
+
+          toast.error("Erro ao ativar assinatura");
+          setIsProcessing(false);
+          return false;
+        } catch (purchaseError: any) {
+          console.error('Purchase error:', purchaseError);
+          
+          // Handle common error cases
+          const errorMessage = purchaseError?.message || '';
+          const errorCode = purchaseError?.code;
+          
+          if (errorMessage.includes('cancelled') || errorMessage.includes('canceled') || errorCode === 1) {
+            toast.info("Compra cancelada");
+          } else if (errorMessage.includes('already owned') || errorCode === 6) {
+            // User already has the subscription - activate it
+            const activated = await activateSubscription();
+            if (activated) {
+              toast.success("Assinatura ativada!");
+              setIsProcessing(false);
+              return true;
+            }
+          } else {
+            toast.error(errorMessage || "Erro na compra");
+          }
+          
+          setIsProcessing(false);
+          return false;
+        }
       } else {
         // Web fallback - direct subscription (for testing/web version)
         const activated = await activateSubscription();
@@ -127,47 +175,40 @@ export const useApplePurchase = (): UsePurchaseResult => {
       setIsProcessing(false);
       return false;
     }
-  }, [isNativeApp, activateSubscription]);
+  }, [isNative, pluginLoaded, activateSubscription]);
 
   const restorePurchases = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
 
     try {
-      if (isNativeApp()) {
-        return new Promise((resolve) => {
-          const handleRestoreResult = (event: CustomEvent) => {
-            window.removeEventListener('kadigRestoreResult', handleRestoreResult as EventListener);
-            
-            if (event.detail?.success) {
-              activateSubscription().then((activated) => {
-                if (activated) {
-                  toast.success("Assinatura restaurada com sucesso!");
-                  resolve(true);
-                } else {
-                  resolve(false);
-                }
-              });
-            } else {
-              toast.info("Nenhuma compra anterior encontrada");
-              resolve(false);
+      if (isNative && pluginLoaded && CapacitorPurchases) {
+        try {
+          const result = await CapacitorPurchases.restorePurchases();
+          console.log('Restore result:', result);
+
+          // Check if user has active entitlements
+          const customerInfo = result?.customerInfo;
+          const activeEntitlements = customerInfo?.entitlements?.active;
+          
+          if (activeEntitlements && Object.keys(activeEntitlements).length > 0) {
+            const activated = await activateSubscription();
+            if (activated) {
+              toast.success("Assinatura restaurada com sucesso!");
+              setIsProcessing(false);
+              return true;
             }
-            
-            setIsProcessing(false);
-          };
-
-          window.addEventListener('kadigRestoreResult', handleRestoreResult as EventListener);
-
-          window.webkit?.messageHandlers?.kadigPurchase?.postMessage({
-            action: 'restore',
-            productId: PREMIUM_PRODUCT_ID
-          });
-
-          setTimeout(() => {
-            window.removeEventListener('kadigRestoreResult', handleRestoreResult as EventListener);
-            setIsProcessing(false);
-            resolve(false);
-          }, 60000);
-        });
+          } else {
+            toast.info("Nenhuma compra anterior encontrada");
+          }
+          
+          setIsProcessing(false);
+          return false;
+        } catch (restoreError: any) {
+          console.error('Restore error:', restoreError);
+          toast.error(restoreError.message || "Erro ao restaurar");
+          setIsProcessing(false);
+          return false;
+        }
       } else {
         toast.info("Restauração disponível apenas no app nativo");
         setIsProcessing(false);
@@ -179,11 +220,12 @@ export const useApplePurchase = (): UsePurchaseResult => {
       setIsProcessing(false);
       return false;
     }
-  }, [isNativeApp, activateSubscription]);
+  }, [isNative, pluginLoaded, activateSubscription]);
 
   return {
     purchasePremium,
     isProcessing,
-    restorePurchases
+    restorePurchases,
+    isNative
   };
 };
