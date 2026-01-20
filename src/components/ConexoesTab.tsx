@@ -12,10 +12,14 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Download,
+  Zap
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePortfolio } from "@/contexts/PortfolioContext";
+import { usePluggySync } from "@/hooks/usePluggySync";
 import {
   Drawer,
   DrawerContent,
@@ -32,6 +36,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PluggyConnection {
   id: string;
@@ -61,6 +72,12 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
   const [itemDetails, setItemDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
+  const [showImportDrawer, setShowImportDrawer] = useState(false);
+  const [selectedPortfolioForImport, setSelectedPortfolioForImport] = useState<string>("");
+  const [importingConnectionId, setImportingConnectionId] = useState<string | null>(null);
+  
+  const { portfolios, refreshPortfolios } = usePortfolio();
+  const { syncing, syncAllConnections, syncConnection } = usePluggySync();
 
   // Fetch connections from local database
   const fetchConnections = useCallback(async () => {
@@ -108,7 +125,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
     }
   };
 
-  // Save connection to database when widget succeeds
+  // Save connection to database when widget succeeds and auto-sync investments
   const handleConnectionSuccess = async (itemData: any) => {
     console.log("Pluggy connection successful:", itemData);
     
@@ -127,7 +144,9 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         .from('pluggy_connections')
         .select('id')
         .eq('item_id', item.id)
-        .single();
+        .maybeSingle();
+
+      let connectionId: string;
 
       if (existing) {
         // Update existing connection
@@ -141,9 +160,10 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
             last_updated_at: item.lastUpdatedAt || item.updatedAt,
           })
           .eq('id', existing.id);
+        connectionId = existing.id;
       } else {
         // Insert new connection
-        const { error: insertError } = await supabase
+        const { data: newConnection, error: insertError } = await supabase
           .from('pluggy_connections')
           .insert({
             user_id: user.id,
@@ -154,19 +174,55 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
             connector_primary_color: connector?.primaryColor,
             status: item.status || 'PENDING',
             last_updated_at: item.lastUpdatedAt || item.updatedAt,
-          });
+          })
+          .select('id')
+          .single();
 
         if (insertError) throw insertError;
+        connectionId = newConnection.id;
       }
 
       toast.success(`${connector?.name || 'Instituição'} conectada com sucesso!`);
+      
+      // Auto-sync investments after connection
+      toast.loading('Sincronizando investimentos...', { id: 'sync-toast' });
+      
+      try {
+        await syncAllConnections(false);
+        toast.success('Investimentos sincronizados automaticamente!', { id: 'sync-toast' });
+      } catch (syncErr) {
+        console.error('Auto-sync failed:', syncErr);
+        toast.error('Conexão salva, mas erro ao sincronizar investimentos', { id: 'sync-toast' });
+      }
+      
       fetchConnections();
+      await refreshPortfolios();
     } catch (err: any) {
       console.error('Error saving connection:', err);
       toast.error('Erro ao salvar conexão');
     } finally {
       setShowWidget(false);
       setConnectToken(null);
+    }
+  };
+
+  // Import investments from a specific connection to a portfolio
+  const handleImportToPortfolio = async (connection: PluggyConnection) => {
+    if (!selectedPortfolioForImport) {
+      toast.error('Selecione uma carteira');
+      return;
+    }
+    
+    try {
+      setImportingConnectionId(connection.id);
+      await syncConnection(connection.id, selectedPortfolioForImport);
+      setShowImportDrawer(false);
+      setSelectedPortfolioForImport("");
+      await refreshPortfolios();
+    } catch (err) {
+      console.error('Import error:', err);
+    } finally {
+      setImportingConnectionId(null);
     }
   };
 
@@ -320,6 +376,18 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
             {/* Right side - Action buttons */}
             <div className="flex items-center gap-1">
+              {/* Sync All Button */}
+              {connections.length > 0 && (
+                <motion.button 
+                  onClick={() => syncAllConnections()}
+                  disabled={syncing}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2.5 rounded-xl text-primary hover:bg-primary/10 transition-all"
+                  title="Sincronizar todos os investimentos"
+                >
+                  <Zap className={`w-5 h-5 ${syncing ? 'animate-pulse' : ''}`} />
+                </motion.button>
+              )}
               <motion.button 
                 onClick={fetchConnections}
                 disabled={loading}
@@ -336,9 +404,9 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 className="ml-1 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30"
               >
                 {connecting ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
                 ) : (
-                  <Plus className="w-5 h-5 text-white" />
+                  <Plus className="w-5 h-5 text-primary-foreground" />
                 )}
               </motion.button>
             </div>
@@ -443,25 +511,38 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setSelectedConnection(connection);
+                      setShowImportDrawer(true);
+                    }}
+                    className="p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    title="Importar para carteira"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={() => handleSyncConnection(connection)}
                     disabled={syncingItemId === connection.item_id}
                     className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                    title="Sincronizar"
                   >
-                    <RefreshCw className={`w-5 h-5 ${syncingItemId === connection.item_id ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${syncingItemId === connection.item_id ? 'animate-spin' : ''}`} />
                   </button>
                   <button
                     onClick={() => handleViewDetails(connection)}
                     className="p-2 rounded-xl bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+                    title="Ver detalhes"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setDeletingConnectionId(connection.id)}
-                    className="p-2 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                    className="p-2 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                    title="Remover conexão"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -611,13 +692,119 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                 const conn = connections.find(c => c.id === deletingConnectionId);
                 if (conn) handleDeleteConnection(conn);
               }}
-              className="bg-red-500 hover:bg-red-600"
+              className="bg-destructive hover:bg-destructive/90"
             >
               Remover
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import to Portfolio Drawer */}
+      <Drawer open={showImportDrawer} onOpenChange={setShowImportDrawer}>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader>
+            <DrawerTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Download className="w-5 h-5 text-primary" />
+              </div>
+              Importar Investimentos
+            </DrawerTitle>
+          </DrawerHeader>
+          
+          <div className="p-4 space-y-6">
+            {/* Connection Info */}
+            {selectedConnection && (
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
+                <div 
+                  className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-muted"
+                  style={{ 
+                    backgroundColor: selectedConnection.connector_primary_color 
+                      ? (selectedConnection.connector_primary_color.startsWith('#') 
+                          ? selectedConnection.connector_primary_color 
+                          : `#${selectedConnection.connector_primary_color}`)
+                      : undefined 
+                  }}
+                >
+                  {selectedConnection.connector_image_url ? (
+                    <img 
+                      src={selectedConnection.connector_image_url} 
+                      alt={selectedConnection.connector_name || 'Instituição'}
+                      className="w-full h-full object-contain p-1"
+                    />
+                  ) : (
+                    <Building2 className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">{selectedConnection.connector_name}</p>
+                  <p className="text-xs text-muted-foreground">Conexão selecionada</p>
+                </div>
+              </div>
+            )}
+
+            {/* Portfolio Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Selecione a carteira de destino
+              </label>
+              <Select 
+                value={selectedPortfolioForImport} 
+                onValueChange={setSelectedPortfolioForImport}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Escolha uma carteira" />
+                </SelectTrigger>
+                <SelectContent>
+                  {portfolios.map((portfolio) => (
+                    <SelectItem key={portfolio.id} value={portfolio.id}>
+                      {portfolio.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Info */}
+            <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl">
+              <p className="text-sm text-muted-foreground">
+                Os investimentos desta conexão serão sincronizados automaticamente com a carteira selecionada. 
+                Alterações futuras no banco serão refletidas na carteira em tempo real.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowImportDrawer(false);
+                  setSelectedPortfolioForImport("");
+                }}
+                className="flex-1 py-3 rounded-xl bg-secondary text-foreground font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => selectedConnection && handleImportToPortfolio(selectedConnection)}
+                disabled={!selectedPortfolioForImport || importingConnectionId === selectedConnection?.id}
+                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {importingConnectionId === selectedConnection?.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Importar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

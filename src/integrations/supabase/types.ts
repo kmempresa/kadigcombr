@@ -169,9 +169,11 @@ export type Database = {
           gain_percent: number | null
           id: string
           maturity_date: string | null
+          pluggy_investment_id: string | null
           portfolio_id: string
           purchase_price: number | null
           quantity: number | null
+          source: string | null
           ticker: string | null
           total_invested: number | null
           updated_at: string
@@ -186,9 +188,11 @@ export type Database = {
           gain_percent?: number | null
           id?: string
           maturity_date?: string | null
+          pluggy_investment_id?: string | null
           portfolio_id: string
           purchase_price?: number | null
           quantity?: number | null
+          source?: string | null
           ticker?: string | null
           total_invested?: number | null
           updated_at?: string
@@ -203,9 +207,11 @@ export type Database = {
           gain_percent?: number | null
           id?: string
           maturity_date?: string | null
+          pluggy_investment_id?: string | null
           portfolio_id?: string
           purchase_price?: number | null
           quantity?: number | null
+          source?: string | null
           ticker?: string | null
           total_invested?: number | null
           updated_at?: string
