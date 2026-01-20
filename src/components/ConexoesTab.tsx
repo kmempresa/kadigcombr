@@ -70,6 +70,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
   const [showWidget, setShowWidget] = useState(false);
   const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<PluggyConnection | null>(null);
+  const [showDetailsDrawer, setShowDetailsDrawer] = useState(false);
   const [itemDetails, setItemDetails] = useState<any>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [syncingItemId, setSyncingItemId] = useState<string | null>(null);
@@ -313,6 +314,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
   const handleViewDetails = async (connection: PluggyConnection) => {
     setSelectedConnection(connection);
+    setShowDetailsDrawer(true);
     setLoadingDetails(true);
     
     try {
@@ -637,7 +639,10 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
       )}
 
       {/* Details Drawer */}
-      <Drawer open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
+      <Drawer open={showDetailsDrawer} onOpenChange={(open) => {
+        setShowDetailsDrawer(open);
+        if (!open) setSelectedConnection(null);
+      }}>
         <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
