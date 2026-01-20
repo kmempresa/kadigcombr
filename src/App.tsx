@@ -22,6 +22,7 @@ import ExcluirAtivos from "./pages/ExcluirAtivos";
 import Preferencias from "./pages/Preferencias";
 import Suporte from "./pages/Suporte";
 import Privacidade from "./pages/Privacidade";
+import Sobre from "./pages/Sobre";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/preferencias" element={<Preferencias />} />
               <Route path="/suporte" element={<Suporte />} />
               <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="/sobre" element={<Sobre />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

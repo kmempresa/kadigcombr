@@ -2076,7 +2076,7 @@ const AppDashboard = () => {
               { icon: Shield, label: "Segurança", action: () => setSecurityDrawerOpen(true) },
               { icon: Settings, label: "Preferências", action: () => navigate("/preferencias") },
               { icon: MessageSquare, label: "Suporte", action: () => setSupportDrawerOpen(true) },
-              { icon: Info, label: "Sobre", action: () => {} },
+              { icon: Info, label: "Sobre", action: () => navigate("/sobre") },
             ].map((item, index) => (
               <button 
                 key={index} 
