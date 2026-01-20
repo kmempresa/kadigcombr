@@ -38,6 +38,8 @@ import kadigIcon from "@/assets/kadig-icon.png";
 import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 import AdicionarDrawer from "@/components/AdicionarDrawer";
 import TradeTab from "@/components/TradeTab";
+import PremiumSubscriptionDrawer from "@/components/PremiumSubscriptionDrawer";
+import { useSubscription } from "@/hooks/useSubscription";
 import MercadoTab from "@/components/MercadoTab";
 import InvestmentEditDrawer from "@/components/InvestmentEditDrawer";
 import DistribuicaoDrawer from "@/components/analysis/DistribuicaoDrawer";
@@ -194,6 +196,10 @@ const AppDashboard = () => {
   const [globalPatrimonioDrawerOpen, setGlobalPatrimonioDrawerOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+  const [premiumDrawerOpen, setPremiumDrawerOpen] = useState(false);
+
+  // Subscription hook
+  const { isPremium, refetch: refetchSubscription } = useSubscription();
 
   // Real-time price updates hook with callback to refresh data
   const handlePriceUpdate = useCallback(() => {
@@ -1754,24 +1760,34 @@ const AppDashboard = () => {
                 <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
                 <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
                 
+                {/* Premium Lock Overlay */}
+                {!isPremium && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-yellow-300" />
+                      <span className="text-white text-sm font-semibold">Premium</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="relative">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20">
                       <Sparkles className="w-7 h-7 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-lg">Kadig AI</h3>
-                      <p className="text-sm text-white/70">Análise inteligente com IA</p>
+                      <h3 className="font-bold text-white text-lg">Bianca IA</h3>
+                      <p className="text-sm text-white/70">Sua consultora pessoal</p>
                     </div>
                   </div>
                   <p className="text-sm text-white/80 mb-4 leading-relaxed">
                     Use a inteligência artificial para análises personalizadas e recomendações para sua carteira.
                   </p>
                   <button 
-                    onClick={() => navigate("/consultor-ia")}
+                    onClick={() => isPremium ? navigate("/consultor-ia") : setPremiumDrawerOpen(true)}
                     className="w-full bg-white text-primary py-3 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-shadow"
                   >
-                    Falar com Kadig AI
+                    {isPremium ? "Falar com Bianca" : "Desbloquear Bianca"}
                   </button>
                 </div>
               </motion.div>
@@ -2054,26 +2070,49 @@ const AppDashboard = () => {
               </div>
               <div>
                 <span className="text-xs text-muted-foreground">Plano</span>
-                <p className="font-medium text-foreground">Gratuito</p>
+                <p className={`font-medium ${isPremium ? "text-kadig-blue" : "text-foreground"}`}>
+                  {isPremium ? "Premium ✨" : "Gratuito"}
+                </p>
               </div>
             </div>
           </header>
 
           <div className="p-4">
-            <div className="bg-gradient-to-br from-kadig-blue to-kadig-cyan rounded-2xl p-5">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1 text-white">Assine Kadig Premium</h3>
-                  <p className="text-white/80 text-sm mb-4">
-                    Análises avançadas e recomendações exclusivas
-                  </p>
-                  <button className="bg-white text-kadig-blue font-semibold px-4 py-2 rounded-full text-sm hover:bg-white/90 transition-colors">
-                    Assinatura Única Grátis
-                  </button>
+            {isPremium ? (
+              <div className="bg-gradient-to-br from-kadig-blue to-kadig-cyan rounded-2xl p-5">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 text-white">Kadig Premium ✨</h3>
+                    <p className="text-white/80 text-sm mb-2">
+                      Você tem acesso a todos os recursos exclusivos!
+                    </p>
+                    <div className="flex items-center gap-2 text-white/70 text-sm">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Bianca, Trade e Mercado desbloqueados</span>
+                    </div>
+                  </div>
+                  <Sparkles className="w-8 h-8 text-white/80" />
                 </div>
-                <Sparkles className="w-8 h-8 text-white/80" />
               </div>
-            </div>
+            ) : (
+              <button 
+                onClick={() => setPremiumDrawerOpen(true)}
+                className="w-full bg-gradient-to-br from-kadig-blue to-kadig-cyan rounded-2xl p-5"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 text-left">
+                    <h3 className="font-bold text-lg mb-1 text-white">Assine Kadig Premium</h3>
+                    <p className="text-white/80 text-sm mb-4">
+                      Desbloqueie Bianca IA, Trade e Mercado
+                    </p>
+                    <span className="bg-white text-kadig-blue font-semibold px-4 py-2 rounded-full text-sm">
+                      R$ 39,90/mês
+                    </span>
+                  </div>
+                  <Sparkles className="w-8 h-8 text-white/80" />
+                </div>
+              </button>
+            )}
           </div>
 
           <div className="px-4">
@@ -2103,19 +2142,57 @@ const AppDashboard = () => {
 
       {/* Trade Tab */}
       {activeTab === "trade" && (
-        <TradeTab 
-          showValues={showValues} 
-          userName={selectedPortfolio?.name || userName}
-          userAssets={filteredInvestments}
-          onToggleValues={() => setShowValues(!showValues)}
-          onAddAsset={() => setAdicionarDrawerOpen(true)}
-          onAddConnection={() => navigate("/conexoes")}
-        />
+        isPremium ? (
+          <TradeTab 
+            showValues={showValues} 
+            userName={selectedPortfolio?.name || userName}
+            userAssets={filteredInvestments}
+            onToggleValues={() => setShowValues(!showValues)}
+            onAddAsset={() => setAdicionarDrawerOpen(true)}
+            onAddConnection={() => navigate("/conexoes")}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center mb-6 shadow-lg">
+              <TrendingUp className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Trade Premium</h2>
+            <p className="text-muted-foreground mb-6 max-w-sm">
+              Gerencie seus ativos, acompanhe ações, FIIs e criptomoedas com análises detalhadas.
+            </p>
+            <button
+              onClick={() => setPremiumDrawerOpen(true)}
+              className="bg-gradient-to-r from-kadig-blue to-kadig-cyan text-white font-semibold px-8 py-3 rounded-full flex items-center gap-2 hover:shadow-lg transition-shadow"
+            >
+              <Sparkles className="w-5 h-5" />
+              Desbloquear por R$ 39,90/mês
+            </button>
+          </div>
+        )
       )}
 
       {/* Mercado Tab */}
       {activeTab === "mercado" && (
-        <MercadoTab showValues={showValues} />
+        isPremium ? (
+          <MercadoTab showValues={showValues} />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center mb-6 shadow-lg">
+              <Store className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Mercado Premium</h2>
+            <p className="text-muted-foreground mb-6 max-w-sm">
+              Acompanhe cotações em tempo real, maiores altas e baixas, e índices globais.
+            </p>
+            <button
+              onClick={() => setPremiumDrawerOpen(true)}
+              className="bg-gradient-to-r from-kadig-blue to-kadig-cyan text-white font-semibold px-8 py-3 rounded-full flex items-center gap-2 hover:shadow-lg transition-shadow"
+            >
+              <Sparkles className="w-5 h-5" />
+              Desbloquear por R$ 39,90/mês
+            </button>
+          </div>
+        )
       )}
 
       {/* Conexoes Tab - Open Finance via Pluggy */}
@@ -2316,6 +2393,15 @@ const AppDashboard = () => {
         onOpenChange={setProfileDrawerOpen}
         userData={userData}
         onProfileUpdate={fetchUserData}
+      />
+
+      {/* Premium Subscription Drawer */}
+      <PremiumSubscriptionDrawer
+        isOpen={premiumDrawerOpen}
+        onClose={() => setPremiumDrawerOpen(false)}
+        onSubscribe={() => {
+          refetchSubscription();
+        }}
       />
     </div>
   );
