@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
-import kadigLogo from "@/assets/kadig-logo.png";
+import kadigIcon from "@/assets/kadig-icon-new.png";
 
 const Sobre = () => {
   const navigate = useNavigate();
@@ -28,8 +28,8 @@ const Sobre = () => {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center text-center"
         >
-          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-cyan-500/20 flex items-center justify-center mb-4 shadow-lg">
-            <img src={kadigLogo} alt="Kadig" className="w-16 h-16 object-contain" />
+          <div className="w-24 h-24 rounded-2xl overflow-hidden flex items-center justify-center mb-4 shadow-lg">
+            <img src={kadigIcon} alt="Kadig" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">Kadig</h2>
           <p className="text-muted-foreground">Versão 1.0.0</p>
