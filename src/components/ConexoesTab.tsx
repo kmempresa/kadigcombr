@@ -506,7 +506,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
               <div className="relative flex items-center gap-3">
                 {/* Logo */}
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg relative"
                   style={{ 
                     backgroundColor: connection.connector_primary_color 
                       ? (connection.connector_primary_color.startsWith('#') 
@@ -515,19 +515,21 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
                       : 'hsl(var(--muted))' 
                   }}
                 >
-                  {connection.connector_image_url ? (
+                  {connection.connector_image_url && (
                     <img 
                       src={connection.connector_image_url} 
                       alt={connection.connector_name || 'Instituição'}
-                      className="w-full h-full object-contain p-1.5"
+                      className="w-full h-full object-contain p-2 relative z-10"
+                      style={{ filter: 'brightness(0) invert(1)' }}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement?.classList.add('fallback-icon');
                       }}
                     />
-                  ) : (
-                    <Building2 className="w-6 h-6 text-white/80" />
                   )}
+                  {/* Fallback - first letter of bank name */}
+                  <span className="text-white font-bold text-lg absolute">
+                    {(connection.connector_name || 'B').charAt(0).toUpperCase()}
+                  </span>
                 </div>
 
                 {/* Info */}
