@@ -291,7 +291,7 @@ const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubs
                   transition={{ delay: 0.4 }}
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center shadow-lg shadow-primary/20">
                       <BarChart3 className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -303,7 +303,7 @@ const PremiumSubscriptionDrawer = ({ isOpen, onClose, onSubscribe }: PremiumSubs
                   <div className="grid grid-cols-2 gap-3">
                     {mercadoFeatures.map((feature, index) => (
                       <div key={index} className="bg-card/50 backdrop-blur-xl border border-border rounded-xl p-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-400 flex items-center justify-center mb-2 shadow-md shadow-violet-500/20">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center mb-2 shadow-md shadow-primary/20">
                           <feature.icon className="w-4 h-4 text-white" />
                         </div>
                         <h4 className="font-semibold text-foreground text-sm">{feature.title}</h4>
