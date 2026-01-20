@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, HelpCircle, MessageSquare, BookOpen, Video, Mail, ChevronRight } from "lucide-react";
+import { ArrowLeft, HelpCircle, MessageSquare, BookOpen, Mail, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -12,25 +12,22 @@ const CentralAjuda = () => {
       icon: BookOpen,
       title: "Primeiros Passos",
       description: "Aprenda a configurar sua conta e adicionar investimentos",
-      articles: 5
+      articles: 5,
+      path: "/primeiros-passos"
     },
     {
       icon: HelpCircle,
       title: "Perguntas Frequentes",
       description: "Respostas para as dúvidas mais comuns",
-      articles: 12
-    },
-    {
-      icon: Video,
-      title: "Tutoriais em Vídeo",
-      description: "Aprenda visualmente como usar o Kadig",
-      articles: 8
+      articles: 24,
+      path: "/perguntas-frequentes"
     },
     {
       icon: MessageSquare,
       title: "Bianca IA",
       description: "Como usar a consultora virtual",
-      articles: 4
+      articles: 10,
+      path: "/bianca-ia-help"
     }
   ];
 
@@ -85,6 +82,7 @@ const CentralAjuda = () => {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
+                onClick={() => navigate(category.path)}
                 className="w-full bg-card rounded-xl p-4 border border-border flex items-center gap-3 hover:bg-muted/50 transition-colors text-left"
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
