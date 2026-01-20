@@ -91,7 +91,7 @@ export function ConnectedBanksCard({
             >
               {/* Bank Logo */}
               <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-md"
+                className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-md relative"
                 style={{ 
                   backgroundColor: connection.connector_primary_color 
                     ? (connection.connector_primary_color.startsWith('#') 
@@ -100,15 +100,21 @@ export function ConnectedBanksCard({
                     : 'hsl(var(--muted))' 
                 }}
               >
-                {connection.connector_image_url ? (
+                {connection.connector_image_url && (
                   <img 
                     src={connection.connector_image_url} 
                     alt={connection.connector_name || 'Banco'} 
-                    className="w-6 h-6 object-contain"
+                    className="w-full h-full object-contain p-1.5 relative z-10"
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
-                ) : (
-                  <Building2 className="w-5 h-5 text-white" />
                 )}
+                {/* Fallback - first letter of bank name */}
+                <span className="text-white font-bold text-sm absolute">
+                  {(connection.connector_name || 'B').charAt(0).toUpperCase()}
+                </span>
               </div>
               
               {/* Bank Info */}
