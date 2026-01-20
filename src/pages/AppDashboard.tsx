@@ -39,6 +39,7 @@ import PatrimonioDrawer from "@/components/PatrimonioDrawer";
 import AdicionarDrawer from "@/components/AdicionarDrawer";
 import TradeTab from "@/components/TradeTab";
 import PremiumSubscriptionDrawer from "@/components/PremiumSubscriptionDrawer";
+import PremiumPaywall from "@/components/PremiumPaywall";
 import { useSubscription } from "@/hooks/useSubscription";
 import MercadoTab from "@/components/MercadoTab";
 import InvestmentEditDrawer from "@/components/InvestmentEditDrawer";
@@ -2152,22 +2153,7 @@ const AppDashboard = () => {
             onAddConnection={() => navigate("/conexoes")}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center mb-6 shadow-lg">
-              <TrendingUp className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Trade Premium</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Gerencie seus ativos, acompanhe ações, FIIs e criptomoedas com análises detalhadas.
-            </p>
-            <button
-              onClick={() => setPremiumDrawerOpen(true)}
-              className="bg-gradient-to-r from-kadig-blue to-kadig-cyan text-white font-semibold px-8 py-3 rounded-full flex items-center gap-2 hover:shadow-lg transition-shadow"
-            >
-              <Sparkles className="w-5 h-5" />
-              Desbloquear por R$ 39,90/mês
-            </button>
-          </div>
+          <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
         )
       )}
 
@@ -2176,22 +2162,7 @@ const AppDashboard = () => {
         isPremium ? (
           <MercadoTab showValues={showValues} />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center mb-6 shadow-lg">
-              <Store className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Mercado Premium</h2>
-            <p className="text-muted-foreground mb-6 max-w-sm">
-              Acompanhe cotações em tempo real, maiores altas e baixas, e índices globais.
-            </p>
-            <button
-              onClick={() => setPremiumDrawerOpen(true)}
-              className="bg-gradient-to-r from-kadig-blue to-kadig-cyan text-white font-semibold px-8 py-3 rounded-full flex items-center gap-2 hover:shadow-lg transition-shadow"
-            >
-              <Sparkles className="w-5 h-5" />
-              Desbloquear por R$ 39,90/mês
-            </button>
-          </div>
+          <PremiumPaywall type="mercado" onSubscribe={() => setPremiumDrawerOpen(true)} />
         )
       )}
 

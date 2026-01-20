@@ -8,6 +8,7 @@ import biancaConsultora from "@/assets/bianca-consultora.png";
 import { useTheme } from "@/hooks/useTheme";
 import { useSubscription } from "@/hooks/useSubscription";
 import PremiumSubscriptionDrawer from "@/components/PremiumSubscriptionDrawer";
+import PremiumPaywall from "@/components/PremiumPaywall";
 
 interface Message {
   id: string;
@@ -252,29 +253,7 @@ const ConsultorIA = () => {
           <div className="w-10" />
         </header>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-2xl mb-6">
-            <img src={biancaConsultora} alt="Bianca" className="w-full h-full object-cover" />
-          </div>
-          
-          <div className="flex items-center gap-2 mb-4">
-            <Crown className="w-5 h-5 text-yellow-500" />
-            <span className="text-sm font-medium text-muted-foreground">RECURSO PREMIUM</span>
-          </div>
-          
-          <h1 className="text-2xl font-bold text-foreground mb-2">Conheça a Bianca</h1>
-          <p className="text-muted-foreground mb-8 max-w-sm">
-            Sua consultora financeira pessoal com inteligência artificial para análises personalizadas da sua carteira.
-          </p>
-          
-          <button
-            onClick={() => setPremiumDrawerOpen(true)}
-            className="bg-gradient-to-r from-kadig-blue to-kadig-cyan text-white font-semibold px-8 py-4 rounded-2xl flex items-center gap-2 hover:shadow-lg transition-shadow"
-          >
-            <Sparkles className="w-5 h-5" />
-            Desbloquear por R$ 39,90/mês
-          </button>
-        </div>
+        <PremiumPaywall type="bianca" onSubscribe={() => setPremiumDrawerOpen(true)} />
 
         <PremiumSubscriptionDrawer
           isOpen={premiumDrawerOpen}
