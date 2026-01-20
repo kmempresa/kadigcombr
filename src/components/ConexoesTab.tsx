@@ -61,9 +61,10 @@ interface PluggyConnection {
 
 interface ConexoesTabProps {
   onImportInvestments?: (investments: any[]) => void;
+  theme?: "light" | "dark";
 }
 
-export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
+export default function ConexoesTab({ onImportInvestments, theme = "dark" }: ConexoesTabProps) {
   const [connecting, setConnecting] = useState(false);
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [showWidget, setShowWidget] = useState(false);
@@ -372,7 +373,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
   };
 
   return (
-    <div className="flex-1 pb-24">
+    <div className={`flex-1 pb-24 ${theme === "light" ? "light-theme" : ""}`}>
       {/* Header - Kadig Style (same as Dashboard) */}
       <header className="relative overflow-hidden pt-safe">
         {/* Background gradient effect */}
@@ -743,7 +744,7 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
       {/* Import to Portfolio Drawer */}
       <Drawer open={showImportDrawer} onOpenChange={setShowImportDrawer}>
-        <DrawerContent className="max-h-[85vh]">
+        <DrawerContent className={`max-h-[85vh] ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">

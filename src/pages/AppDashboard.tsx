@@ -2120,7 +2120,7 @@ const AppDashboard = () => {
 
       {/* Conexoes Tab - Open Finance via Pluggy */}
       {activeTab === "conexoes" && (
-        <ConexoesTab />
+        <ConexoesTab theme={theme} />
       )}
 
       {/* Patrimonio Drawer */}
