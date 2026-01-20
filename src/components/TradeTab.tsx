@@ -12,12 +12,15 @@ import {
   List,
   TrendingUp,
   Star,
-  Loader2
+  Loader2,
+  Bell
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationsDrawer } from "@/components/NotificationsDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -51,6 +54,16 @@ const TradeTab = ({
   onAddConnection
 }: TradeTabProps) => {
   const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
+  const { 
+    notifications, 
+    loading: notificationsLoading, 
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAllNotifications 
+  } = useNotifications();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
   const [stockDetailOpen, setStockDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
@@ -309,11 +322,16 @@ const TradeTab = ({
                 <span className="text-foreground font-medium">Patrimônio {userName}</span>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
-              <button className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center">
-                <List className="w-5 h-5 text-muted-foreground" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  1
-                </span>
+              <button 
+                onClick={() => setNotificationsOpen(true)}
+                className="relative w-12 h-12 bg-card border border-border rounded-xl flex items-center justify-center"
+              >
+                <Bell className="w-5 h-5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
             </div>
 
@@ -868,6 +886,17 @@ const TradeTab = ({
         showValues={showValues}
         onToggleFavorite={toggleFavorite}
         isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
+      />
+
+      <NotificationsDrawer
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        notifications={notifications}
+        loading={notificationsLoading}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDelete={deleteNotification}
+        onClearAll={clearAllNotifications}
       />
     </div>
   );
