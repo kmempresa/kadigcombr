@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/useTheme";
 import kadigLogo from "@/assets/kadig-logo.png";
 
 const Sobre = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${theme === "light" ? "light-theme" : ""}`}>
       {/* Header */}
       <header className="flex items-center gap-4 p-4 safe-area-inset-top">
         <button 
