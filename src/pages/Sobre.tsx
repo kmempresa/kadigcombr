@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/hooks/useTheme";
 import kadigIcon from "@/assets/kadig-icon-new.png";
@@ -7,6 +7,12 @@ import kadigIcon from "@/assets/kadig-icon-new.png";
 const Sobre = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
+
+  const links = [
+    { label: "Termos de Uso", path: "/termos-de-uso" },
+    { label: "Política de Privacidade", path: "/politica-privacidade" },
+    { label: "Central de Ajuda", path: "/central-ajuda" },
+  ];
 
   return (
     <div className={`min-h-screen bg-background ${theme === "light" ? "light-theme" : ""}`}>
@@ -56,19 +62,15 @@ const Sobre = () => {
           transition={{ delay: 0.2 }}
           className="space-y-3"
         >
-          {[
-            { label: "Termos de Uso", href: "#" },
-            { label: "Política de Privacidade", href: "/privacidade" },
-            { label: "Central de Ajuda", href: "#" },
-          ].map((link, index) => (
-            <a
+          {links.map((link, index) => (
+            <button
               key={index}
-              href={link.href}
-              className="flex items-center justify-between py-4 px-4 bg-card rounded-xl border border-border hover:bg-muted/50 transition-colors"
+              onClick={() => navigate(link.path)}
+              className="w-full flex items-center justify-between py-4 px-4 bg-card rounded-xl border border-border hover:bg-muted/50 transition-colors"
             >
               <span className="font-medium text-foreground">{link.label}</span>
-              <ExternalLink className="w-4 h-4 text-muted-foreground" />
-            </a>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </button>
           ))}
         </motion.div>
 
