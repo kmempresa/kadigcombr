@@ -13,22 +13,10 @@ interface UsePurchaseResult {
   isNative: boolean;
 }
 
-// Declare global for cordova-plugin-purchase store
-declare global {
-  interface Window {
-    CdvPurchase?: {
-      store: any;
-      ProductType: { PAID_SUBSCRIPTION: string };
-      Platform: { APPLE_APPSTORE: string };
-    };
-  }
-}
-
 export const useApplePurchase = (): UsePurchaseResult => {
-  console.log('[useApplePurchase] Hook called');
   const [isProcessing, setIsProcessing] = useState(false);
   const isNative = Capacitor.isNativePlatform();
-  console.log('[useApplePurchase] isNative:', isNative);
+  const isIOS = isNative && Capacitor.getPlatform() === 'ios';
 
   const activateSubscription = useCallback(async () => {
     try {
@@ -66,121 +54,33 @@ export const useApplePurchase = (): UsePurchaseResult => {
 
   const purchasePremium = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
-
-    const platform = Capacitor.getPlatform();
-    console.log('[IAP] Purchase initiated');
-    console.log('[IAP] Platform:', platform);
-    console.log('[IAP] isNative:', isNative);
-    console.log('[IAP] CdvPurchase available:', !!window.CdvPurchase);
-    console.log('[IAP] CdvPurchase.store available:', !!window.CdvPurchase?.store);
+    console.log('[IAP] Purchase initiated - isIOS:', isIOS);
 
     try {
-      // Check if running on native iOS with cordova-plugin-purchase
-      const isIOS = isNative && platform === 'ios';
-      
       if (isIOS) {
-        // Wait a moment for plugin to be available
-        let attempts = 0;
-        while (!window.CdvPurchase?.store && attempts < 10) {
-          console.log('[IAP] Waiting for CdvPurchase plugin... attempt', attempts + 1);
-          await new Promise(resolve => setTimeout(resolve, 200));
-          attempts++;
-        }
-
-        if (!window.CdvPurchase?.store) {
-          console.error('[IAP] CdvPurchase plugin not available after waiting');
-          toast.error("Plugin de compras não disponível");
-          setIsProcessing(false);
-          return false;
-        }
-
-        const store = window.CdvPurchase.store;
-        const ProductType = window.CdvPurchase.ProductType;
-        const Platform = window.CdvPurchase.Platform;
-
-        console.log('[IAP] Plugin ready, registering product:', PREMIUM_PRODUCT_ID);
-
-        // Register the product
-        store.register([{
-          id: PREMIUM_PRODUCT_ID,
-          type: ProductType.PAID_SUBSCRIPTION,
-          platform: Platform.APPLE_APPSTORE,
-        }]);
-
-        // Set up purchase handlers
-        store.when()
-          .productUpdated((product: any) => {
-            console.log('[IAP] Product updated:', product);
-          })
-          .approved(async (transaction: any) => {
-            console.log('[IAP] Transaction approved:', transaction);
-            const activated = await activateSubscription();
-            if (activated) {
-              transaction.verify();
-            }
-          })
-          .verified((receipt: any) => {
-            console.log('[IAP] Receipt verified:', receipt);
-            receipt.finish();
-          })
-          .finished((transaction: any) => {
-            console.log('[IAP] Transaction finished:', transaction);
-            toast.success("🎉 Bem-vindo ao Kadig Premium!");
-            setIsProcessing(false);
-          });
-
-        // Handle cancelled state separately using error callback
-        store.error((error: any) => {
-          console.log('[IAP] Store error:', error);
-          if (error.code === 6777001 || error.message?.includes('cancelled')) {
-            toast.info("Compra cancelada");
-          } else {
-            toast.error("Erro na compra: " + (error.message || 'Erro desconhecido'));
-          }
-          setIsProcessing(false);
+        // Import dynamically to avoid issues on web
+        const { NativePurchases } = await import('@capgo/native-purchases');
+        
+        console.log('[IAP] Calling NativePurchases.purchaseProduct with ID:', PREMIUM_PRODUCT_ID);
+        
+        // Simple one-line call to open StoreKit
+        const result = await NativePurchases.purchaseProduct({
+          productIdentifier: PREMIUM_PRODUCT_ID
         });
-
-        // Initialize store
-        console.log('[IAP] Initializing store...');
-        await store.initialize([Platform.APPLE_APPSTORE]);
         
-        // Refresh products
-        console.log('[IAP] Updating products...');
-        await store.update();
-
-        // Get the product
-        const product = store.get(PREMIUM_PRODUCT_ID, Platform.APPLE_APPSTORE);
-        console.log('[IAP] Product retrieved:', product);
-        console.log('[IAP] Product canPurchase:', product?.canPurchase);
-        console.log('[IAP] Product offers:', product?.offers);
+        console.log('[IAP] Purchase result:', result);
         
-        if (!product) {
-          console.error('[IAP] Product not found after update');
-          toast.error("Produto não encontrado na App Store");
-          setIsProcessing(false);
-          return false;
+        // Activate subscription in database
+        const activated = await activateSubscription();
+        if (activated) {
+          toast.success("🎉 Bem-vindo ao Kadig Premium!");
         }
-
-        // Get the first available offer
-        const offer = product.getOffer();
-        console.log('[IAP] Offer retrieved:', offer);
-
-        if (!offer) {
-          console.error('[IAP] No offer available for product');
-          toast.error("Oferta não disponível");
-          setIsProcessing(false);
-          return false;
-        }
-
-        console.log('[IAP] Ordering via offer.order() - this should open StoreKit...');
         
-        // Order the product via offer - this is the correct way to open Apple's payment sheet
-        await offer.order();
-        
-        return true;
+        setIsProcessing(false);
+        return activated;
       } else {
-        // Web fallback - direct subscription (for testing/web version)
-        console.log('[IAP] Web fallback - platform:', platform, 'isNative:', isNative);
+        // Web fallback for testing
+        console.log('[IAP] Web fallback - activating subscription directly');
         const activated = await activateSubscription();
         if (activated) {
           toast.success("🎉 Bem-vindo ao Kadig Premium!");
@@ -192,38 +92,38 @@ export const useApplePurchase = (): UsePurchaseResult => {
       }
     } catch (error: any) {
       console.error("[IAP] Purchase error:", error);
-      toast.error(error.message || "Erro ao processar compra");
+      
+      // Check if user cancelled
+      if (error.message?.includes('cancel') || error.code === 'E_USER_CANCELLED') {
+        toast.info("Compra cancelada");
+      } else {
+        toast.error(error.message || "Erro ao processar compra");
+      }
+      
       setIsProcessing(false);
       return false;
     }
-  }, [isNative, activateSubscription]);
+  }, [isIOS, activateSubscription]);
 
   const restorePurchases = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
+    console.log('[IAP] Restore initiated - isIOS:', isIOS);
 
     try {
-      if (isNative && Capacitor.getPlatform() === 'ios' && window.CdvPurchase?.store) {
-        const store = window.CdvPurchase.store;
-        const Platform = window.CdvPurchase.Platform;
-
-        console.log('[IAP] Restoring purchases...');
-
-        // Initialize if not already
-        await store.initialize([Platform.APPLE_APPSTORE]);
+      if (isIOS) {
+        const { NativePurchases } = await import('@capgo/native-purchases');
         
-        // Restore purchases
-        await store.restorePurchases();
-
-        // Check if product is owned
-        const product = store.get(PREMIUM_PRODUCT_ID, Platform.APPLE_APPSTORE);
+        console.log('[IAP] Calling NativePurchases.restorePurchases');
+        await NativePurchases.restorePurchases();
         
-        if (product?.owned) {
-          const activated = await activateSubscription();
-          if (activated) {
-            toast.success("Assinatura restaurada com sucesso!");
-            setIsProcessing(false);
-            return true;
-          }
+        console.log('[IAP] Restore completed');
+        
+        // Activate subscription after restore
+        const activated = await activateSubscription();
+        if (activated) {
+          toast.success("Assinatura restaurada com sucesso!");
+          setIsProcessing(false);
+          return true;
         } else {
           toast.info("Nenhuma compra anterior encontrada");
         }
@@ -241,7 +141,7 @@ export const useApplePurchase = (): UsePurchaseResult => {
       setIsProcessing(false);
       return false;
     }
-  }, [isNative, activateSubscription]);
+  }, [isIOS, activateSubscription]);
 
   return {
     purchasePremium,
