@@ -90,7 +90,7 @@ export const NotificationsDrawer = ({
                     onClick={onClose}
                     className="p-2 -ml-2 rounded-xl hover:bg-muted transition-colors"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-5 h-5 text-foreground" />
                   </button>
                 ) : null}
                 <Bell className="w-5 h-5 text-primary" />

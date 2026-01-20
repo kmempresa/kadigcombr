@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
+import { notifyInvestmentDeleted } from "@/lib/notifications";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -115,6 +116,14 @@ const ExcluirAtivos = () => {
         .in("id", idsToDelete);
 
       if (error) throw error;
+
+      // Create notification
+      const deletedNames = investments
+        .filter(inv => selectedIds.has(inv.id))
+        .map(inv => inv.asset_name)
+        .slice(0, 3)
+        .join(', ');
+      await notifyInvestmentDeleted(deletedNames, idsToDelete.length);
 
       toast.success(`${idsToDelete.length} ativo(s) excluído(s) com sucesso!`);
       setConfirmDialogOpen(false);

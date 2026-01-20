@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { notifyInvestmentAdded } from "@/lib/notifications";
 
 // Tipos de ativos disponíveis com fluxos específicos
 // Fluxos:
@@ -723,6 +724,9 @@ const AdicionarInvestimento = () => {
           }).eq('id', portfolioId);
           
           toast.success("Investimento adicionado com sucesso!");
+          
+          // Create notification
+          await notifyInvestmentAdded(assetName, portfolioData?.name || 'Minha Carteira', totalInvested);
           
           // Refresh portfolios in context
           await refreshPortfolios();
