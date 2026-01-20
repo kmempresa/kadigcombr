@@ -25,8 +25,10 @@ declare global {
 }
 
 export const useApplePurchase = (): UsePurchaseResult => {
+  console.log('[useApplePurchase] Hook called');
   const [isProcessing, setIsProcessing] = useState(false);
   const isNative = Capacitor.isNativePlatform();
+  console.log('[useApplePurchase] isNative:', isNative);
 
   const activateSubscription = useCallback(async () => {
     try {
