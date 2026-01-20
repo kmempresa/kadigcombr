@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { ArrowLeft, ChevronRight, Smartphone } from "lucide-react";
+import { ArrowLeft, ChevronRight, Smartphone, Trash2, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 interface SecurityDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-type View = "main" | "change-password" | "devices";
+type View = "main" | "change-password" | "devices" | "delete-account";
 
 const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [view, setView] = useState<View>("main");
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   
@@ -25,6 +28,10 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Delete account state
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   // Load biometric preference from localStorage
   useEffect(() => {
@@ -74,6 +81,45 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
     }
   };
 
+  // Handle delete account
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "EXCLUIR") {
+      toast.error("Digite EXCLUIR para confirmar");
+      return;
+    }
+
+    setDeletingAccount(true);
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não encontrado");
+
+      // Delete user data from all tables
+      await supabase.from('investments').delete().eq('user_id', user.id);
+      await supabase.from('movements').delete().eq('user_id', user.id);
+      await supabase.from('portfolio_history').delete().eq('user_id', user.id);
+      await supabase.from('portfolios').delete().eq('user_id', user.id);
+      await supabase.from('goals').delete().eq('user_id', user.id);
+      await supabase.from('global_assets').delete().eq('user_id', user.id);
+      await supabase.from('pluggy_connections').delete().eq('user_id', user.id);
+      await supabase.from('chat_messages').delete().eq('user_id', user.id);
+      await supabase.from('chat_conversations').delete().eq('user_id', user.id);
+      await supabase.from('profiles').delete().eq('user_id', user.id);
+
+      // Sign out user
+      await supabase.auth.signOut();
+      
+      toast.success("Conta excluída com sucesso");
+      onOpenChange(false);
+      navigate("/welcome");
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      toast.error(error.message || "Erro ao excluir conta");
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   const handleBack = () => {
     if (view === "main") {
       onOpenChange(false);
@@ -82,6 +128,7 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setDeleteConfirmText("");
     }
   };
 
@@ -153,6 +200,105 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
           </div>
         );
 
+      case "delete-account":
+        return (
+          <div className="flex-1 p-4 space-y-6">
+            {/* Warning Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 bg-destructive/10 border border-destructive/30 rounded-2xl"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-destructive" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-destructive mb-1">Atenção!</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Esta ação é <strong className="text-foreground">irreversível</strong>. 
+                    Todos os seus dados serão permanentemente excluídos, incluindo:
+                  </p>
+                  <ul className="mt-2 text-sm text-muted-foreground space-y-1">
+                    <li>• Carteiras e investimentos</li>
+                    <li>• Histórico de movimentações</li>
+                    <li>• Metas e patrimônio global</li>
+                    <li>• Conexões Open Finance</li>
+                    <li>• Conversas com a IA</li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Confirmation Input */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">
+                Digite <span className="text-destructive font-bold">EXCLUIR</span> para confirmar
+              </label>
+              <Input
+                type="text"
+                placeholder="EXCLUIR"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                className="bg-background border-border text-center text-lg font-mono tracking-widest"
+                maxLength={7}
+              />
+              {deleteConfirmText && deleteConfirmText !== "EXCLUIR" && (
+                <p className="text-xs text-destructive text-center">
+                  Digite exatamente "EXCLUIR"
+                </p>
+              )}
+              {deleteConfirmText === "EXCLUIR" && (
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-xs text-emerald-500 text-center"
+                >
+                  Confirmação válida
+                </motion.p>
+              )}
+            </div>
+
+            {/* Delete Button */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: deleteConfirmText === "EXCLUIR" ? 1 : 0.5 }}
+            >
+              <Button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "EXCLUIR" || deletingAccount}
+                variant="destructive"
+                className="w-full py-6 text-base font-semibold"
+              >
+                {deletingAccount ? (
+                  <span className="flex items-center gap-2">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </motion.div>
+                    Excluindo conta...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Trash2 className="w-5 h-5" />
+                    Excluir minha conta permanentemente
+                  </span>
+                )}
+              </Button>
+            </motion.div>
+
+            {/* Cancel */}
+            <button
+              onClick={() => setView("main")}
+              className="w-full py-3 text-muted-foreground text-sm hover:text-foreground transition-colors"
+            >
+              Cancelar e voltar
+            </button>
+          </div>
+        );
+
       default:
         return (
           <div className="flex-1">
@@ -167,7 +313,7 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
                   <span className="font-medium text-foreground block">
                     Gerenciador de dispositivos
                   </span>
-                  <span className="inline-block mt-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">
+                  <span className="inline-block mt-1 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">
                     Novidade
                   </span>
                 </div>
@@ -193,6 +339,20 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
                   onCheckedChange={handleBiometricToggle}
                 />
               </div>
+
+              {/* Excluir conta */}
+              <button
+                onClick={() => setView("delete-account")}
+                className="w-full flex items-center justify-between px-4 py-4 border-b border-border group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center group-hover:bg-destructive/20 transition-colors">
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </div>
+                  <span className="font-medium text-destructive">Excluir conta</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-destructive/50" />
+              </button>
             </div>
           </div>
         );
@@ -205,6 +365,8 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
         return "Alterar senha";
       case "devices":
         return "Gerenciador de dispositivos";
+      case "delete-account":
+        return "Excluir conta";
       default:
         return "Central de segurança";
     }
@@ -216,6 +378,8 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
         return "Crie uma nova senha segura para sua conta";
       case "devices":
         return "Gerencie os dispositivos conectados à sua conta";
+      case "delete-account":
+        return "Exclua permanentemente sua conta e todos os dados";
       default:
         return "Confira na lista seus recursos de segurança que estão ativos e aumente ainda mais sua proteção.";
     }
@@ -226,8 +390,8 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
       <DrawerContent
         className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}
       >
-        {/* Header with purple background */}
-        <div className="bg-primary text-primary-foreground p-4 pt-6">
+        {/* Header with primary background */}
+        <div className={`${view === "delete-account" ? "bg-destructive" : "bg-primary"} text-primary-foreground p-4 pt-6 transition-colors`}>
           <button
             onClick={handleBack}
             className="mb-4 p-1 -ml-1 hover:bg-primary-foreground/10 rounded-full transition-colors"
