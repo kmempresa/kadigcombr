@@ -56,6 +56,7 @@ import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import ConexoesTab from "@/components/ConexoesTab";
+import { ConnectedBanksCard } from "@/components/ConnectedBanksCard";
 import useEmblaCarousel from "embla-carousel-react";
 
 interface UserData {
@@ -87,6 +88,7 @@ interface UserData {
     current_value: number;
     total_invested: number;
     gain_percent: number;
+    source?: string;
   }[];
 }
 
@@ -376,6 +378,7 @@ const AppDashboard = () => {
           current_value: Number(inv.current_value) || 0,
           total_invested: Number(inv.total_invested) || 0,
           gain_percent: Number(inv.gain_percent) || 0,
+          source: inv.source || 'manual',
         })),
       });
 
@@ -1045,6 +1048,12 @@ const AppDashboard = () => {
                 </div>
               </div>
 
+              {/* Connected Banks Card */}
+              <ConnectedBanksCard 
+                investments={filteredInvestments}
+                showValues={showValues}
+                onViewConnections={() => setActiveTab("conexoes")}
+              />
 
               {/* Kadig AI Card */}
               <button

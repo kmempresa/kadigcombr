@@ -75,7 +75,45 @@ export const PortfolioProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Subscribe to realtime portfolio changes
+    const portfolioChannel = supabase
+      .channel('portfolios-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'portfolios',
+        },
+        (payload) => {
+          console.log('[PortfolioContext] Realtime update:', payload.eventType);
+          fetchPortfolios();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to realtime investment changes to update portfolio totals
+    const investmentChannel = supabase
+      .channel('investments-portfolio-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'investments',
+        },
+        (payload) => {
+          console.log('[PortfolioContext] Investment change, refreshing portfolios');
+          fetchPortfolios();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(portfolioChannel);
+      supabase.removeChannel(investmentChannel);
+    };
   }, []);
 
   const activePortfolio = portfolios.find(p => p.id === selectedPortfolioId) || null;

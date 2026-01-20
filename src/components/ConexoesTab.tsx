@@ -14,12 +14,14 @@ import {
   Loader2,
   ChevronRight,
   Download,
-  Zap
+  Zap,
+  Banknote
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { usePluggySync } from "@/hooks/usePluggySync";
+import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 import {
   Drawer,
   DrawerContent,
@@ -62,8 +64,6 @@ interface ConexoesTabProps {
 }
 
 export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
-  const [connections, setConnections] = useState<PluggyConnection[]>([]);
-  const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [showWidget, setShowWidget] = useState(false);
@@ -78,33 +78,9 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
   
   const { portfolios, refreshPortfolios } = usePortfolio();
   const { syncing, syncAllConnections, syncConnection } = usePluggySync();
-
-  // Fetch connections from local database
-  const fetchConnections = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('pluggy_connections')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setConnections(data || []);
-    } catch (err: any) {
-      console.error('Error fetching connections:', err);
-      toast.error('Erro ao carregar conexões');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchConnections();
-  }, [fetchConnections]);
+  
+  // Use realtime connections hook
+  const { connections, loading, refetch: fetchConnections } = useRealtimeConnections();
 
   const handleConnect = async () => {
     try {
@@ -268,7 +244,53 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
         body: { action: 'delete-item', itemId: connection.item_id }
       });
 
-      // Delete from local database
+      // Get user to filter investments
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Get all investments from this Pluggy connection (using item_id in pluggy_investment_id)
+      const { data: pluggyInvestments } = await supabase
+        .from('investments')
+        .select('id, portfolio_id')
+        .eq('user_id', user.id)
+        .eq('source', 'pluggy');
+
+      // Delete all investments that came from Pluggy for this user
+      // Since we don't have a direct link, delete by source
+      if (pluggyInvestments && pluggyInvestments.length > 0) {
+        const portfolioIds = [...new Set(pluggyInvestments.map(inv => inv.portfolio_id))];
+        
+        const { error: deleteInvError } = await supabase
+          .from('investments')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('source', 'pluggy');
+
+        if (deleteInvError) {
+          console.error('Error deleting investments:', deleteInvError);
+        }
+
+        // Update portfolio totals for affected portfolios
+        for (const portfolioId of portfolioIds) {
+          const { data: remainingInvestments } = await supabase
+            .from('investments')
+            .select('current_value, total_invested')
+            .eq('portfolio_id', portfolioId);
+
+          const totalValue = (remainingInvestments || []).reduce((sum, inv) => sum + Number(inv.current_value || 0), 0);
+          const totalInvested = (remainingInvestments || []).reduce((sum, inv) => sum + Number(inv.total_invested || 0), 0);
+
+          await supabase
+            .from('portfolios')
+            .update({
+              total_value: totalValue,
+              total_gain: totalValue - totalInvested,
+            })
+            .eq('id', portfolioId);
+        }
+      }
+
+      // Delete connection from local database
       const { error } = await supabase
         .from('pluggy_connections')
         .delete()
@@ -276,9 +298,12 @@ export default function ConexoesTab({ onImportInvestments }: ConexoesTabProps) {
 
       if (error) throw error;
       
-      toast.success('Conexão removida com sucesso');
+      toast.success('Conexão e investimentos removidos');
       setDeletingConnectionId(null);
       fetchConnections();
+      
+      // Refresh portfolios to update UI immediately
+      await refreshPortfolios();
     } catch (err: any) {
       console.error('Error deleting connection:', err);
       toast.error('Erro ao remover conexão');
