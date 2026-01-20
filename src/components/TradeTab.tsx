@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  HelpCircle,
+  Bell,
   Eye,
   EyeOff,
   Search,
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationsDrawer } from "@/components/NotificationsDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -51,6 +53,16 @@ const TradeTab = ({
   onAddConnection
 }: TradeTabProps) => {
   const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
+  const { 
+    notifications, 
+    loading: notificationsLoading, 
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAllNotifications 
+  } = useNotifications();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
   const [stockDetailOpen, setStockDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
@@ -228,10 +240,16 @@ const TradeTab = ({
             {/* Right side - Action buttons */}
             <div className="flex items-center gap-1">
               <motion.button 
+                onClick={() => setNotificationsOpen(true)}
                 whileTap={{ scale: 0.9 }}
-                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                className="relative p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
               >
-                <HelpCircle className="w-5 h-5" />
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </motion.button>
               <motion.button 
                 onClick={onToggleValues}
@@ -864,6 +882,16 @@ const TradeTab = ({
         isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
       />
 
+      <NotificationsDrawer
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        notifications={notifications}
+        loading={notificationsLoading}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDelete={deleteNotification}
+        onClearAll={clearAllNotifications}
+      />
     </div>
   );
 };
