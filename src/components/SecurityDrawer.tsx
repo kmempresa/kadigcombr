@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { ArrowLeft, ChevronRight, Smartphone, Trash2, AlertTriangle } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ChevronRight, 
+  Smartphone, 
+  Trash2, 
+  AlertTriangle,
+  Wallet,
+  TrendingUp,
+  Link2,
+  MessageSquare,
+  Loader2
+} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
@@ -202,100 +213,143 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
 
       case "delete-account":
         return (
-          <div className="flex-1 p-4 space-y-6">
-            {/* Warning Card */}
+          <div className="flex-1 p-4 space-y-5">
+            {/* Icon Header */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center text-center pt-2"
+            >
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/10 flex items-center justify-center shadow-lg shadow-red-500/10">
+                  <Trash2 className="w-10 h-10 text-red-500" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-background">
+                  <AlertTriangle className="w-3 h-3 text-white" />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-bold text-foreground">Excluir conta</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Esta ação não pode ser desfeita</p>
+            </motion.div>
+
+            {/* Warning Card - Kadig Style */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-4 bg-destructive/10 border border-destructive/30 rounded-2xl"
+              transition={{ delay: 0.1 }}
+              className="relative overflow-hidden p-4 bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl"
             >
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-destructive/20 flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-destructive mb-1">Atenção!</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Esta ação é <strong className="text-foreground">irreversível</strong>. 
-                    Todos os seus dados serão permanentemente excluídos, incluindo:
-                  </p>
-                  <ul className="mt-2 text-sm text-muted-foreground space-y-1">
-                    <li>• Carteiras e investimentos</li>
-                    <li>• Histórico de movimentações</li>
-                    <li>• Metas e patrimônio global</li>
-                    <li>• Conexões Open Finance</li>
-                    <li>• Conversas com a IA</li>
-                  </ul>
+              {/* Glow effect */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              
+              <div className="relative">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Ao excluir sua conta, você perderá permanentemente:
+                </p>
+                <div className="space-y-2">
+                  {[
+                    { icon: Wallet, text: "Carteiras e investimentos" },
+                    { icon: TrendingUp, text: "Histórico de rentabilidade" },
+                    { icon: Link2, text: "Conexões Open Finance" },
+                    { icon: MessageSquare, text: "Conversas com a Bianca IA" },
+                  ].map((item, index) => (
+                    <motion.div
+                      key={item.text}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15 + index * 0.05 }}
+                      className="flex items-center gap-3 p-2 bg-muted/30 rounded-xl"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+                        <item.icon className="w-4 h-4 text-red-400" />
+                      </div>
+                      <span className="text-sm text-foreground">{item.text}</span>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
             </motion.div>
 
-            {/* Confirmation Input */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium text-foreground">
-                Digite <span className="text-destructive font-bold">EXCLUIR</span> para confirmar
-              </label>
-              <Input
-                type="text"
-                placeholder="EXCLUIR"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
-                className="bg-background border-border text-center text-lg font-mono tracking-widest"
-                maxLength={7}
-              />
-              {deleteConfirmText && deleteConfirmText !== "EXCLUIR" && (
-                <p className="text-xs text-destructive text-center">
-                  Digite exatamente "EXCLUIR"
-                </p>
-              )}
-              {deleteConfirmText === "EXCLUIR" && (
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-xs text-emerald-500 text-center"
-                >
-                  Confirmação válida
-                </motion.p>
-              )}
-            </div>
-
-            {/* Delete Button */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: deleteConfirmText === "EXCLUIR" ? 1 : 0.5 }}
+            {/* Confirmation Input - Kadig Style */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="space-y-3"
             >
-              <Button
-                onClick={handleDeleteAccount}
-                disabled={deleteConfirmText !== "EXCLUIR" || deletingAccount}
-                variant="destructive"
-                className="w-full py-6 text-base font-semibold"
-              >
-                {deletingAccount ? (
-                  <span className="flex items-center gap-2">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </motion.div>
-                    Excluindo conta...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Trash2 className="w-5 h-5" />
-                    Excluir minha conta permanentemente
-                  </span>
+              <label className="text-sm font-medium text-foreground">
+                Digite <span className="text-red-500 font-bold">EXCLUIR</span> para confirmar
+              </label>
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="EXCLUIR"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  className={`bg-card/50 backdrop-blur-sm border-2 text-center text-lg font-mono tracking-[0.3em] py-6 transition-all duration-300 ${
+                    deleteConfirmText === "EXCLUIR" 
+                      ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10" 
+                      : deleteConfirmText 
+                        ? "border-red-500/30" 
+                        : "border-border/50"
+                  }`}
+                  maxLength={7}
+                />
+                {deleteConfirmText === "EXCLUIR" && (
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </motion.div>
                 )}
-              </Button>
+              </div>
             </motion.div>
 
-            {/* Cancel */}
-            <button
-              onClick={() => setView("main")}
-              className="w-full py-3 text-muted-foreground text-sm hover:text-foreground transition-colors"
+            {/* Action Buttons - Kadig Style */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="space-y-3 pt-2"
             >
-              Cancelar e voltar
-            </button>
+              <motion.button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== "EXCLUIR" || deletingAccount}
+                whileTap={{ scale: deleteConfirmText === "EXCLUIR" ? 0.98 : 1 }}
+                className={`w-full py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 ${
+                  deleteConfirmText === "EXCLUIR"
+                    ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg shadow-red-500/25"
+                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                }`}
+              >
+                {deletingAccount ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-5 h-5" />
+                    Excluir minha conta
+                  </>
+                )}
+              </motion.button>
+
+              <motion.button
+                onClick={() => {
+                  setView("main");
+                  setDeleteConfirmText("");
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-3 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 text-foreground font-medium hover:bg-muted/50 transition-colors"
+              >
+                Cancelar
+              </motion.button>
+            </motion.div>
           </div>
         );
 
