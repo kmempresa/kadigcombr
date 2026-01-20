@@ -228,7 +228,7 @@ const ConsultorIA = () => {
   if (!isPremium) {
     return (
       <div 
-        className="bg-[hsl(var(--kadig-deep))] flex flex-col"
+        className={`${themeClass} bg-background flex flex-col`}
         style={{ 
           position: 'fixed', 
           top: 0, 
@@ -241,12 +241,13 @@ const ConsultorIA = () => {
         }}
       >
         <header 
-          className="flex items-center justify-between px-5 py-4 safe-area-inset-top relative z-20"
+          className="flex items-center justify-between px-5 py-4 safe-area-inset-top relative z-20 bg-gradient-to-b from-background to-transparent"
           style={{ flexShrink: 0 }}
         >
           <button
             onClick={() => navigate("/app")}
-            className="w-10 h-10 rounded-full bg-[hsl(var(--kadig-glass))]/50 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white/70 hover:bg-[hsl(var(--kadig-glass))] hover:text-white transition-all"
+            className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-all"
+            aria-label="Voltar"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -265,7 +266,6 @@ const ConsultorIA = () => {
       </div>
     );
   }
-
   return (
     <div 
       className={`${themeClass} bg-gradient-to-b from-background to-card flex flex-col`}
