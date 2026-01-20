@@ -213,7 +213,20 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         body: { action: 'get-item', itemId: connection.item_id }
       });
 
-      if (error) throw error;
+      // Check if item no longer exists in Pluggy (404 error)
+      if (error || data?.error?.includes('item not found') || data?.error?.includes('ITEM_NOT_FOUND')) {
+        console.log('Item not found in Pluggy, removing local connection');
+        
+        // Remove the orphaned connection from local database
+        await supabase
+          .from('pluggy_connections')
+          .delete()
+          .eq('id', connection.id);
+        
+        toast.info('Conexão removida - não existe mais no banco');
+        fetchConnections();
+        return;
+      }
 
       const connector = data.connector;
 
@@ -233,6 +246,21 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
       fetchConnections();
     } catch (err: any) {
       console.error('Error syncing connection:', err);
+      
+      // Check for 404/item not found errors in the exception
+      const errorMessage = err?.message || err?.toString() || '';
+      if (errorMessage.includes('item not found') || errorMessage.includes('ITEM_NOT_FOUND') || errorMessage.includes('404')) {
+        // Remove orphaned connection
+        await supabase
+          .from('pluggy_connections')
+          .delete()
+          .eq('id', connection.id);
+        
+        toast.info('Conexão removida - não existe mais no banco');
+        fetchConnections();
+        return;
+      }
+      
       toast.error('Erro ao sincronizar conexão');
     } finally {
       setSyncingItemId(null);
@@ -327,12 +355,47 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         })
       ]);
 
+      // Check if item no longer exists in Pluggy
+      const hasItemNotFoundError = 
+        accountsRes.data?.error?.includes('item not found') ||
+        accountsRes.data?.error?.includes('ITEM_NOT_FOUND') ||
+        investmentsRes.data?.error?.includes('item not found') ||
+        investmentsRes.data?.error?.includes('ITEM_NOT_FOUND');
+
+      if (hasItemNotFoundError) {
+        // Remove orphaned connection
+        await supabase
+          .from('pluggy_connections')
+          .delete()
+          .eq('id', connection.id);
+        
+        toast.info('Conexão removida - não existe mais no banco');
+        setShowDetailsDrawer(false);
+        fetchConnections();
+        return;
+      }
+
       setItemDetails({
         accounts: accountsRes.data?.results || [],
         investments: investmentsRes.data?.results || []
       });
     } catch (err: any) {
       console.error('Error fetching details:', err);
+      
+      // Check for 404/item not found errors
+      const errorMessage = err?.message || err?.toString() || '';
+      if (errorMessage.includes('item not found') || errorMessage.includes('ITEM_NOT_FOUND') || errorMessage.includes('404')) {
+        await supabase
+          .from('pluggy_connections')
+          .delete()
+          .eq('id', connection.id);
+        
+        toast.info('Conexão removida - não existe mais no banco');
+        setShowDetailsDrawer(false);
+        fetchConnections();
+        return;
+      }
+      
       toast.error('Erro ao carregar detalhes');
     } finally {
       setLoadingDetails(false);
