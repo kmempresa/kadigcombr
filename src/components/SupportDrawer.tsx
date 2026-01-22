@@ -159,57 +159,6 @@ const SupportDrawerComponent = ({ open, onOpenChange, userEmail = "" }: SupportD
                 />
               </div>
 
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Anexo
-                </label>
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-                >
-                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground text-sm">
-                    Arraste para aqui seu(s) arquivo(s) ou clique para selecionar
-                  </p>
-                  <p className="text-muted-foreground text-xs mt-2">
-                    Caso deseje anexar múltiplos arquivos, selecione ou arraste todos de uma vez
-                  </p>
-                  <p className="text-muted-foreground text-xs mt-1">
-                    Formatos aceitos: jpeg, png, pdf
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    Tamanho máximo: 5mb
-                  </p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-
-                {/* File List */}
-                {files.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {files.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-foreground truncate max-w-[200px]">{file.name}</span>
-                        </div>
-                        <button onClick={() => removeFile(index)} className="p-1 hover:bg-destructive/10 rounded">
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               <p className="text-xs text-muted-foreground">* Campo obrigatório</p>
 
