@@ -115,36 +115,34 @@ const Auth = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col px-5 sm:px-6 md:items-center md:justify-center safe-area-inset-top safe-area-inset-bottom">
-        {/* Container for centered content on desktop/tablet */}
-        <div className="w-full md:max-w-md md:mx-auto">
-          {/* Header with logo */}
-          <motion.header initial={{
-          opacity: 0,
-          y: -20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.5
-        }} className="pt-8 sm:pt-12 md:pt-0 md:mb-8">
-            {/* Kadig logo */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg bg-[#202e4b]">
-              <img alt="Kadig" className="h-8 sm:h-10" src="/lovable-uploads/315c99b8-4f49-4939-8728-99274ca35547.png" />
-            </div>
-          </motion.header>
+      <div className="relative z-10 min-h-screen flex flex-col px-5 sm:px-6 safe-area-inset-top safe-area-inset-bottom">
+        {/* Header with logo */}
+        <motion.header initial={{
+        opacity: 0,
+        y: -20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5
+      }} className="pt-8 sm:pt-12">
+          {/* Kadig logo */}
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg bg-[#202e4b]">
+            <img alt="Kadig" className="h-8 sm:h-10" src="/lovable-uploads/315c99b8-4f49-4939-8728-99274ca35547.png" />
+          </div>
+        </motion.header>
 
-          {/* Main content */}
-          <motion.main initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.5,
-          delay: 0.2
-        }} className="flex-1 md:flex-initial flex flex-col pt-6 sm:pt-8 md:pt-0">
+        {/* Main content */}
+        <motion.main initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5,
+        delay: 0.2
+      }} className="flex-1 flex flex-col pt-6 sm:pt-8">
           {/* Title section */}
           <div className="space-y-2 mb-8 sm:mb-10">
             <p className="text-primary text-base sm:text-lg font-medium">
@@ -170,19 +168,19 @@ const Auth = () => {
               </button>
             </div>
           </div>
-          </motion.main>
+        </motion.main>
 
-          {/* Footer with buttons */}
-          <motion.footer initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          duration: 0.5,
-          delay: 0.4
-        }} className="pb-8 sm:pb-12 md:pb-0 md:mt-8 space-y-4">
+        {/* Footer with buttons */}
+        <motion.footer initial={{
+        opacity: 0,
+        y: 20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5,
+        delay: 0.4
+      }} className="pb-8 sm:pb-12 space-y-4">
           {/* Action buttons */}
           <div className="flex gap-3 sm:gap-4">
             {/* Signup button */}
@@ -209,9 +207,8 @@ const Auth = () => {
           {/* Forgot password */}
           <button className="w-full py-3 text-foreground hover:text-primary transition-colors text-sm sm:text-base font-medium">
             Esqueceu a senha?
-            </button>
-          </motion.footer>
-        </div>
+          </button>
+        </motion.footer>
       </div>
     </div>;
 };
