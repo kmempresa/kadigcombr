@@ -33,6 +33,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// App component with BrowserRouter wrapping all route-dependent components
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
