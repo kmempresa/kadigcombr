@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { X, Check, Search, ChevronLeft, ChevronRight, Hand, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -480,6 +480,7 @@ export default function ComparadorAtivosDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
+        <DrawerTitle className="sr-only">Comparador de Ativos</DrawerTitle>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
