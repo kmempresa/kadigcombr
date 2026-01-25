@@ -102,6 +102,7 @@ const AdicionarResgate = () => {
 
       const redeemQty = parseFloat(redeemQuantity) || selectedInvestment.quantity || 0;
       const redeemVal = parseFloat(redeemValue) || selectedInvestment.current_value;
+      const actualUnitPrice = redeemQty > 0 ? redeemVal / redeemQty : parseFloat(redeemPrice) || 0;
 
       if (redeemType === "total") {
         // Delete the investment completely
@@ -122,7 +123,9 @@ const AdicionarResgate = () => {
           ticker: selectedInvestment.ticker,
           asset_type: selectedInvestment.asset_type,
           quantity: selectedInvestment.quantity || 0,
-          unit_price: parseFloat(redeemPrice) || selectedInvestment.purchase_price || 0,
+          unit_price: selectedInvestment.quantity > 0 
+            ? selectedInvestment.current_value / selectedInvestment.quantity 
+            : parseFloat(redeemPrice) || 0,
           total_value: selectedInvestment.current_value,
           portfolio_name: portfolio.data?.name || "Carteira",
           notes: "Resgate total",
@@ -165,7 +168,7 @@ const AdicionarResgate = () => {
             ticker: selectedInvestment.ticker,
             asset_type: selectedInvestment.asset_type,
             quantity: redeemQty,
-            unit_price: parseFloat(redeemPrice) || 0,
+            unit_price: actualUnitPrice,
             total_value: redeemVal,
             portfolio_name: portfolio.data?.name || "Carteira",
             notes: "Resgate completo",
@@ -197,7 +200,7 @@ const AdicionarResgate = () => {
             ticker: selectedInvestment.ticker,
             asset_type: selectedInvestment.asset_type,
             quantity: redeemQty,
-            unit_price: parseFloat(redeemPrice) || 0,
+            unit_price: actualUnitPrice,
             total_value: redeemVal,
             portfolio_name: portfolio.data?.name || "Carteira",
             notes: "Resgate parcial",
