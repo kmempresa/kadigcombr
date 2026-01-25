@@ -759,7 +759,7 @@ const AdicionarInvestimento = () => {
       <header className="p-4 border-b border-border safe-area-inset-top">
         <div className="flex items-center justify-center relative">
           <button 
-            onClick={handleCancel}
+            onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
             className="absolute left-0 p-2 text-muted-foreground"
           >
             <ChevronLeft className="w-5 h-5" />
