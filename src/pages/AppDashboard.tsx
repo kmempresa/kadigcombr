@@ -1765,50 +1765,6 @@ const AppDashboard = () => {
                 </div>
               </motion.button>
 
-              {/* Kadig AI Card - Featured */}
-              <motion.div 
-                whileTap={{ scale: 0.98 }}
-                className="relative overflow-hidden rounded-3xl p-5 mt-4"
-              >
-                {/* Animated gradient background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary via-violet-500 to-fuchsia-500" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
-                
-                {/* Floating orbs */}
-                <div className="absolute top-4 right-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
-                <div className="absolute bottom-4 left-4 w-16 h-16 bg-white/10 rounded-full blur-xl" />
-                
-                {/* Premium Lock Overlay */}
-                {!isPremium && (
-                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-yellow-300" />
-                      <span className="text-white text-sm font-semibold">Premium</span>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="relative">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg border border-white/20">
-                      <img src={biancaConsultora} alt="Bianca Consultora" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-lg">Bianca Consultora</h3>
-                      <p className="text-sm text-white/70">Sua consultora pessoal</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-white/80 mb-4 leading-relaxed">
-                    Use a inteligência artificial para análises personalizadas e recomendações para sua carteira.
-                  </p>
-                  <button 
-                    onClick={() => isPremium ? navigate("/consultor-ia") : setPremiumDrawerOpen(true)}
-                    className="w-full bg-white text-primary py-3 rounded-2xl font-bold text-sm shadow-lg hover:shadow-xl transition-shadow"
-                  >
-                    {isPremium ? "Falar com Bianca" : "Desbloquear Bianca"}
-                  </button>
-                </div>
-              </motion.div>
             </div>
           )}
 
