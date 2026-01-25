@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronRight, Loader2 } from "lucide-react";
+import { X, ChevronRight, Loader2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface DistribuicaoDrawerProps {
   open: boolean;
@@ -63,6 +64,7 @@ export default function DistribuicaoDrawer({
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'classes' | 'estrategias' | 'instituicoes'>('classes');
+  const [helpOpen, setHelpOpen] = useState(false);
   
   // Real-time data
   const { 
@@ -179,11 +181,11 @@ export default function DistribuicaoDrawer({
             <div className="flex items-center gap-2">
               {isUpdating && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
               <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
-              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-muted-foreground" />
-              </button>
+              <HelpButton onClick={() => setHelpOpen(true)} />
             </div>
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="distribuicao" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">

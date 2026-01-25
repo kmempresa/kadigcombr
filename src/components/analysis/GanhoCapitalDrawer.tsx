@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronDown, Search, List, Loader2 } from "lucide-react";
+import { X, ChevronDown, Search, List, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface Investment {
   id: string;
@@ -76,6 +77,7 @@ export default function GanhoCapitalDrawer({
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const totalGain = totalPatrimonio - totalInvested;
 
@@ -231,10 +233,10 @@ export default function GanhoCapitalDrawer({
               </div>
               <h2 className="text-lg font-semibold text-foreground">Ganho de Capital</h2>
             </div>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="ganho-capital" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">

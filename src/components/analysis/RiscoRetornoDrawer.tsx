@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, Info, Loader2 } from "lucide-react";
+import { X, Info, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface MarketAnalysis {
   ticker: string;
@@ -99,6 +100,7 @@ export default function RiscoRetornoDrawer({
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativos'>('carteira');
   const [marketLoading, setMarketLoading] = useState(false);
   const [marketAnalysis, setMarketAnalysis] = useState<Map<string, MarketAnalysis>>(new Map());
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Real-time data
   const { 
@@ -260,11 +262,11 @@ export default function RiscoRetornoDrawer({
             <div className="flex items-center gap-2">
               {(isUpdating || marketLoading) && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
               <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
-              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-muted-foreground" />
-              </button>
+              <HelpButton onClick={() => setHelpOpen(true)} />
             </div>
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="risco-retorno" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronDown, Loader2 } from "lucide-react";
+import { X, ChevronDown, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface HistoryRecord {
   snapshot_date: string;
@@ -35,6 +36,7 @@ export default function RentabilidadeDrawer({
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
   const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Real-time data
   const { 
@@ -229,11 +231,11 @@ export default function RentabilidadeDrawer({
             <div className="flex items-center gap-2">
               {(isUpdating || historyLoading) && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
               <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
-              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-muted-foreground" />
-              </button>
+              <HelpButton onClick={() => setHelpOpen(true)} />
             </div>
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="rentabilidade" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">

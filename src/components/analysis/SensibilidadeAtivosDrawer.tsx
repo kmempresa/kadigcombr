@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { X, HelpCircle, Loader2, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
+import { X, Loader2, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealtimeInvestments } from "@/hooks/useRealtimeInvestments";
 import { useRealTimePrices } from "@/hooks/useRealTimePrices";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ export default function SensibilidadeAtivosDrawer({
   const [loading, setLoading] = useState(false);
   const [volatilityData, setVolatilityData] = useState<Map<string, number>>(new Map());
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
   
   // Real-time data hooks
   const { investments } = useRealtimeInvestments(portfolioId);
@@ -249,11 +251,11 @@ export default function SensibilidadeAtivosDrawer({
               <span className="text-xs text-muted-foreground">
                 {formatLastUpdate()}
               </span>
-              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                <HelpCircle className="w-5 h-5 text-muted-foreground" />
-              </button>
+              <HelpButton onClick={() => setHelpOpen(true)} />
             </div>
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="sensibilidade" />
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronLeft, ChevronRight, AlertCircle, Hand } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, AlertCircle, Hand } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface Investment {
   id: string;
@@ -36,6 +37,7 @@ export default function ProventosDrawer({
   const [selectedYear, setSelectedYear] = useState(2026);
   const [selectedMonth, setSelectedMonth] = useState(0); // January = 0
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // For now, we'll show empty states since we don't have real proventos data
   // In a real implementation, this would come from the database
@@ -109,10 +111,10 @@ export default function ProventosDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Proventos</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="proventos" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">
