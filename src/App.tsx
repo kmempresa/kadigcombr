@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,8 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { PortfolioProvider } from "@/contexts/PortfolioContext";
 import { ThemeProvider } from "@/hooks/useTheme";
-import { Capacitor } from "@capacitor/core";
-import { PushNotifications } from "@capacitor/push-notifications";
 import Index from "./pages/Index";
 import Splash from "./pages/Splash";
 import Welcome from "./pages/Welcome";
@@ -36,49 +33,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  useEffect(() => {
-    async function initPushNotifications() {
-      // Only run on native platforms (iOS/Android)
-      if (!Capacitor.isNativePlatform()) {
-        return;
-      }
-
-      try {
-        const permStatus = await PushNotifications.requestPermissions();
-
-        if (permStatus.receive === 'granted') {
-          await PushNotifications.register();
-        }
-
-        // Listen for registration success
-        PushNotifications.addListener('registration', (token) => {
-          console.log('[PushNotifications] Registration token:', token.value);
-        });
-
-        // Listen for registration errors
-        PushNotifications.addListener('registrationError', (error) => {
-          console.error('[PushNotifications] Registration error:', error);
-        });
-
-        // Listen for push notifications received
-        PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('[PushNotifications] Received:', notification);
-        });
-
-        // Listen for push notification action performed
-        PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('[PushNotifications] Action performed:', notification);
-        });
-      } catch (error) {
-        console.error('[PushNotifications] Init error:', error);
-      }
-    }
-
-    initPushNotifications();
-  }, []);
-
-  return (
+const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <ThemeProvider>
@@ -119,7 +74,6 @@ const App = () => {
       </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
-  );
-};
+);
 
 export default App;
