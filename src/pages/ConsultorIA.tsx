@@ -227,7 +227,7 @@ const ConsultorIA = () => {
   // Show premium gate if not subscribed
   if (!isPremium) {
     return (
-      <div className={`${themeClass} min-h-screen bg-background flex flex-col pb-20`}>
+      <div className={`${themeClass} min-h-screen bg-background flex flex-col`}>
         <header className="flex items-center justify-between px-5 py-4 safe-area-inset-top relative z-20 bg-gradient-to-b from-background to-transparent flex-shrink-0">
           <button
             onClick={() => navigate("/app")}
@@ -239,7 +239,9 @@ const ConsultorIA = () => {
           <div className="w-10" />
         </header>
 
-        <PremiumPaywall type="bianca" onSubscribe={() => setPremiumDrawerOpen(true)} />
+        <div className="flex-1 overflow-hidden">
+          <PremiumPaywall type="bianca" onSubscribe={() => setPremiumDrawerOpen(true)} />
+        </div>
 
         <PremiumSubscriptionDrawer
           isOpen={premiumDrawerOpen}
