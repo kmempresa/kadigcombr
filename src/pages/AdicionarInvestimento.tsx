@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { notifyInvestmentAdded } from "@/lib/notifications";
+import { useTheme } from "@/hooks/useTheme";
 
 // Tipos de ativos disponíveis com fluxos específicos
 // Fluxos:
@@ -255,6 +256,7 @@ const instituicoesFinanceiras = [
 
 const AdicionarInvestimento = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { selectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState(1);
   
@@ -753,10 +755,12 @@ const AdicionarInvestimento = () => {
   };
 
 
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   return (
-    <div className="light-theme min-h-screen bg-background flex flex-col fixed inset-0">
+    <div className={`${themeClass} min-h-screen bg-background flex flex-col fixed inset-0`}>
       {/* Header */}
-      <header className="p-4 border-b border-border safe-area-inset-top">
+      <header className="p-4 border-b border-border safe-area-inset-top bg-card">
         <div className="flex items-center justify-center relative">
           <button 
             onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
@@ -767,13 +771,13 @@ const AdicionarInvestimento = () => {
           <h1 className="text-lg font-semibold text-foreground">{step === 1 ? "Adicionar novo ativo" : getAssetTypeTitle()}</h1>
         </div>
         
-        {/* Progress Bar */}
+        {/* Progress Bar - Kadig gradient style */}
         <div className="flex gap-2 mt-4">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
               className={`flex-1 h-1 rounded-full transition-all ${
-                i < step ? "bg-primary" : "bg-muted"
+                i < step ? "bg-gradient-to-r from-kadig-blue to-kadig-cyan" : "bg-muted"
               }`}
             />
           ))}
