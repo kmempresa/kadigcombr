@@ -227,23 +227,8 @@ const ConsultorIA = () => {
   // Show premium gate if not subscribed
   if (!isPremium) {
     return (
-      <div 
-        className={`${themeClass} bg-background flex flex-col`}
-        style={{ 
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0, 
-          overflow: 'hidden',
-          height: '100%',
-          width: '100%'
-        }}
-      >
-        <header 
-          className="flex items-center justify-between px-5 py-4 safe-area-inset-top relative z-20 bg-gradient-to-b from-background to-transparent"
-          style={{ flexShrink: 0 }}
-        >
+      <div className={`${themeClass} min-h-screen bg-background flex flex-col pb-20`}>
+        <header className="flex items-center justify-between px-5 py-4 safe-area-inset-top relative z-20 bg-gradient-to-b from-background to-transparent flex-shrink-0">
           <button
             onClick={() => navigate("/app")}
             className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-all"
