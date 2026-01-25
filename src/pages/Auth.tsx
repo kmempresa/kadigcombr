@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -6,27 +6,9 @@ import { Eye, EyeOff, ArrowRight, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
-import OneSignal from 'onesignal-cordova-plugin';
 import { useSecureAuth } from "@/hooks/useSecureAuth";
 
-// Inicializa OneSignal e solicita permissão de notificações
-function initPush() {
-  try {
-    // @ts-ignore - OneSignal Cordova plugin types
-    OneSignal.setAppId("987f4a6e-8011-446c-9f4d-c575b7faf950");
-    // Isso faz aparecer o popup no iPhone
-    // @ts-ignore - OneSignal Cordova plugin types
-    OneSignal.promptForPushNotificationsWithUserResponse();
-  } catch (error) {
-    console.log("OneSignal não disponível (ambiente web):", error);
-  }
-}
-
 const Auth = () => {
-  // Inicializa push notifications ao carregar a página
-  useEffect(() => {
-    initPush();
-  }, []);
   
   const navigate = useNavigate();
   const { saveSession, biometricAvailable, setBiometricEnabled } = useSecureAuth();
