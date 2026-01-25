@@ -4,7 +4,6 @@ import {
   Sparkles,
   TrendingUp,
   Store,
-  Bot,
   Wallet,
   PieChart,
   LineChart,
@@ -12,7 +11,6 @@ import {
   Globe,
   Target,
   MessageSquare,
-  Zap,
   Lock,
   ArrowRight,
   Star
@@ -80,7 +78,10 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
   const Icon = config.icon;
 
   return (
-    <div className="flex-1 overflow-y-auto relative bg-background">
+    <div 
+      className="bg-background overflow-y-auto"
+      style={{ height: 'calc(100vh - 140px)' }}
+    >
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Grid Pattern */}
@@ -93,8 +94,8 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
         />
       </div>
 
-      {/* Content - more compact */}
-      <div className="relative z-10 px-4 pt-6 pb-32">
+      {/* Content with safe bottom spacing for nav bar */}
+      <div className="relative z-10 px-4 pt-6 pb-6">
         {/* Premium Badge */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
