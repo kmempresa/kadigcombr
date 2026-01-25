@@ -16,6 +16,7 @@ import AdicionarInvestimento from "./pages/AdicionarInvestimento";
 import AdicionarCarteira from "./pages/AdicionarCarteira";
 import AdicionarAplicacao from "./pages/AdicionarAplicacao";
 import AdicionarResgate from "./pages/AdicionarResgate";
+import AdicionarEvento from "./pages/AdicionarEvento";
 import AdicionarPatrimonioGlobal from "./pages/AdicionarPatrimonioGlobal";
 import TransferirAtivo from "./pages/TransferirAtivo";
 import ExcluirAtivos from "./pages/ExcluirAtivos";
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/adicionar-carteira" element={<AdicionarCarteira />} />
               <Route path="/adicionar-aplicacao" element={<AdicionarAplicacao />} />
               <Route path="/adicionar-resgate" element={<AdicionarResgate />} />
+              <Route path="/adicionar-evento" element={<AdicionarEvento />} />
               <Route path="/adicionar-patrimonio-global" element={<AdicionarPatrimonioGlobal />} />
               <Route path="/transferir-ativo" element={<TransferirAtivo />} />
               <Route path="/excluir-ativos" element={<ExcluirAtivos />} />
