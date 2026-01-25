@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { downloadPDF, isNativePlatform } from "@/lib/nativeDownload";
 
 interface CarteiraDetailDrawerProps {
   open: boolean;
@@ -399,11 +400,20 @@ const CarteiraDetailDrawer = ({ open, onOpenChange, portfolioId }: CarteiraDetai
         pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin - 25, pageHeight - 6);
       }
 
-      // Save PDF
+      // Generate file name
       const fileName = `Carteira_${portfolio.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
       
-      toast.success("PDF baixado com sucesso!");
+      // Check if we're on native platform
+      if (isNativePlatform()) {
+        // Get PDF as base64 for native download
+        const pdfBase64 = pdf.output('datauristring');
+        await downloadPDF(pdfBase64, fileName);
+        toast.success("PDF salvo com sucesso!");
+      } else {
+        // Web: use traditional download
+        pdf.save(fileName);
+        toast.success("PDF baixado com sucesso!");
+      }
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast.error("Erro ao gerar PDF");
