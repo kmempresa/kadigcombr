@@ -588,18 +588,8 @@ const ConsultorIA = () => {
           </div>
         </div>
 
-        {/* History Button */}
-        <button
-          onClick={() => setShowHistory(true)}
-          className="w-10 h-10 rounded-full bg-card shadow-sm border border-border flex items-center justify-center text-muted-foreground hover:bg-muted transition-all relative"
-        >
-          <History className="w-5 h-5" />
-          {conversations.length > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-              {conversations.length > 9 ? "9+" : conversations.length}
-            </span>
-          )}
-        </button>
+        {/* Spacer */}
+        <div className="w-10" />
       </header>
 
       {/* Messages Area - Scrollable */}
