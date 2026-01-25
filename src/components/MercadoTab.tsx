@@ -101,14 +101,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [userInvestments, setUserInvestments] = useState<any[]>([]);
   const [economicIndicators, setEconomicIndicators] = useState<any>(null);
-  // Mock dividends data
-  const [dividends] = useState<DividendItem[]>([
-    { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
-    { ticker: "CXAG11", companyName: "FI IMOBILIA", dataCom: "30/12/2025", value: 0.86, paymentDay: 19, paymentMonth: "JAN" },
-    { ticker: "IBCR11", companyName: "FII DE CRI INTEGRAL BREI RESP LIM", dataCom: "12/01/2026", value: 0.70, paymentDay: 19, paymentMonth: "JAN" },
-    { ticker: "IRIF11", companyName: "IRIDIUM INFRA FUN DE INV EM COTAS DE FUN INCENT", dataCom: "08/01/2026", value: 0.12, paymentDay: 19, paymentMonth: "JAN" },
-    { ticker: "IRIM11", companyName: "IRIDIUM FI -UNICA", dataCom: "12/01/2026", value: 0.89, paymentDay: 19, paymentMonth: "JAN" },
-  ]);
+  // Real dividends data from API
+  const [dividends, setDividends] = useState<DividendItem[]>([]);
+  const [loadingDividends, setLoadingDividends] = useState(false);
 
   // Mock best performance stocks
   const [bestPerformance] = useState([
@@ -207,11 +202,38 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     }
   };
 
+  // Fetch real dividends from API
+  const fetchDividends = async () => {
+    setLoadingDividends(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('market-data', {
+        body: { type: 'dividends' }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.dividends && data.dividends.length > 0) {
+        setDividends(data.dividends.map((div: any) => ({
+          ticker: div.ticker,
+          companyName: div.companyName,
+          dataCom: div.dataCom,
+          value: div.value,
+          paymentDay: div.paymentDay,
+          paymentMonth: div.paymentMonth,
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching dividends:", error);
+    }
+    setLoadingDividends(false);
+  };
+
   useEffect(() => {
     fetchMarketData();
     fetchMarketNews();
     fetchUserInvestments();
     fetchEconomicIndicators();
+    fetchDividends();
     // Auto-refresh: cotações a cada 60s, notícias a cada 2 minutos
     const marketInterval = setInterval(fetchMarketData, 60000);
     const newsInterval = setInterval(fetchMarketNews, 120000);
