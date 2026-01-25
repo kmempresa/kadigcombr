@@ -79,7 +79,7 @@ const TradeTab = ({
     const saved = localStorage.getItem('kadig-favorites');
     return saved ? JSON.parse(saved) : [];
   });
-  const [marketSubTab, setMarketSubTab] = useState<"dados" | "carteiras">("dados");
+  
   const [indicesExpanded, setIndicesExpanded] = useState(true);
   const [altasExpanded, setAltasExpanded] = useState(true);
   const [baixasExpanded, setBaixasExpanded] = useState(true);
@@ -579,35 +579,7 @@ const TradeTab = ({
             exit={{ opacity: 0 }}
             className="px-4 pt-4"
           >
-            {/* Sub menu */}
-            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-4">
-              <button 
-                onClick={() => setMarketSubTab("dados")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
-                  marketSubTab === "dados" 
-                    ? "bg-muted" 
-                    : "bg-card border border-border"
-                }`}
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-medium text-foreground text-sm">Dados do<br/>mercado</span>
-              </button>
-              <button 
-                onClick={() => setMarketSubTab("carteiras")}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors whitespace-nowrap ${
-                  marketSubTab === "carteiras" 
-                    ? "bg-muted" 
-                    : "bg-card border border-border"
-                }`}
-              >
-                <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">btg</span>
-                </div>
-                <span className="font-medium text-foreground text-sm">Carteiras<br/>BTG Pactual</span>
-              </button>
-            </div>
+            {/* Sub menu removed - only market data shown */}
 
             {loadingMarket ? (
               <div className="flex flex-col items-center justify-center py-12">
