@@ -6,24 +6,28 @@ import { Eye, EyeOff, ArrowRight, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
+import { useSecureAuth } from "@/hooks/useSecureAuth";
+
 const Auth = () => {
+  
   const navigate = useNavigate();
+  const { saveSession, biometricAvailable, setBiometricEnabled } = useSecureAuth();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password.trim()
       });
+      
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast.error("E-mail ou senha incorretos");
@@ -34,11 +38,23 @@ const Auth = () => {
         }
         return;
       }
-      if (data.user) {
+      
+      if (data.session) {
+        // Save tokens securely for "stay logged in" feature
+        await saveSession(data.session.access_token, data.session.refresh_token);
+        
+        // If biometric is available, enable it by default
+        if (biometricAvailable) {
+          await setBiometricEnabled(true);
+        }
+        
         // Check if user has completed onboarding (has a profile)
-        const {
-          data: profile
-        } = await supabase.from("profiles").select("full_name, investor_profile").eq("user_id", data.user.id).single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, investor_profile")
+          .eq("user_id", data.user.id)
+          .single();
+          
         if (profile?.full_name && profile?.investor_profile) {
           // User has completed onboarding, go to dashboard
           navigate("/app");
@@ -64,16 +80,14 @@ const Auth = () => {
     }
     setIsSigningUp(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password.trim(),
         options: {
           emailRedirectTo: `${window.location.origin}/onboarding`
         }
       });
+      
       if (error) {
         if (error.message.includes("User already registered")) {
           toast.error("Este e-mail já está cadastrado. Tente fazer login.");
@@ -82,6 +96,17 @@ const Auth = () => {
         }
         return;
       }
+      
+      if (data.session) {
+        // Save tokens securely for "stay logged in" feature
+        await saveSession(data.session.access_token, data.session.refresh_token);
+        
+        // If biometric is available, enable it by default
+        if (biometricAvailable) {
+          await setBiometricEnabled(true);
+        }
+      }
+      
       if (data.user) {
         toast.success("Conta criada com sucesso!");
         // Go to onboarding to complete profile
