@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronRight } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface Investment {
   id: string;
@@ -46,6 +47,7 @@ export default function CoberturaFGCDrawer({
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'emissor'>('carteira');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Filter investments covered by FGC
   const coveredInvestments = investments.filter(inv => 
@@ -109,10 +111,10 @@ export default function CoberturaFGCDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Cobertura FGC</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="cobertura-fgc" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">

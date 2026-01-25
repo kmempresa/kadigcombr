@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronRight } from "lucide-react";
+import { X, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
+import { AnalysisHelpDialog, HelpButton } from "./AnalysisHelpDialog";
 
 interface Investment {
   id: string;
@@ -38,6 +39,7 @@ export default function RentabilidadeRealDrawer({
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativos'>('carteira');
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const totalGain = totalPatrimonio - totalInvested;
   const returnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
@@ -70,10 +72,10 @@ export default function RentabilidadeRealDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Rentabilidade Real</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <HelpButton onClick={() => setHelpOpen(true)} />
           </div>
+
+          <AnalysisHelpDialog open={helpOpen} onOpenChange={setHelpOpen} section="rentabilidade-real" />
 
           {/* Tabs */}
           <div className="flex bg-muted/30">
