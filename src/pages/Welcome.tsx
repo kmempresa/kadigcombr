@@ -6,7 +6,7 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen relative overflow-hidden fixed inset-0">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Gradient background - Kadig colors */}
       <div className="absolute inset-0 bg-gradient-to-b from-kadig-navy via-background to-kadig-deep" />
       
