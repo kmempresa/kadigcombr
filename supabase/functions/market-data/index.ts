@@ -403,6 +403,88 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Buscar dividendos reais da BRAPI
+    if (type === 'dividends') {
+      console.log('Fetching real dividends from BRAPI');
+      
+      try {
+        // Tickers de ações e FIIs que costumam pagar dividendos
+        const dividendTickers = [
+          'PETR4', 'VALE3', 'BBAS3', 'ITUB4', 'BBDC4', 'TAEE11', 'CPLE6', 'ELET3',
+          'XPLG11', 'HGLG11', 'MXRF11', 'XPML11', 'VISC11', 'BCFF11', 'HGBS11',
+          'KNRI11', 'KNCR11', 'VRTA11', 'HGRE11', 'GGRC11'
+        ];
+        
+        const dividends: any[] = [];
+        const batchSize = 10;
+        
+        for (let i = 0; i < dividendTickers.length; i += batchSize) {
+          const batch = dividendTickers.slice(i, i + batchSize);
+          const url = `https://brapi.dev/api/quote/${batch.join(',')}?token=${BRAPI_TOKEN}&dividends=true`;
+          
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.results) {
+              for (const stock of data.results) {
+                if (stock.dividendsData?.cashDividends && stock.dividendsData.cashDividends.length > 0) {
+                  // Pegar os dividendos mais recentes (próximos a pagar)
+                  const recentDividends = stock.dividendsData.cashDividends
+                    .filter((div: any) => {
+                      const paymentDate = new Date(div.paymentDate);
+                      const now = new Date();
+                      // Dividendos com pagamento nos próximos 60 dias ou últimos 30 dias
+                      const diffDays = (paymentDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+                      return diffDays >= -30 && diffDays <= 60;
+                    })
+                    .slice(0, 2); // Máximo 2 por ativo
+                  
+                  for (const div of recentDividends) {
+                    const paymentDate = new Date(div.paymentDate);
+                    const exDate = new Date(div.approvedOn || div.paymentDate);
+                    const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+                    
+                    dividends.push({
+                      ticker: stock.symbol,
+                      companyName: stock.longName || stock.shortName || stock.symbol,
+                      dataCom: exDate.toLocaleDateString('pt-BR'),
+                      value: parseFloat(div.rate) || 0,
+                      paymentDay: paymentDate.getDate(),
+                      paymentMonth: monthNames[paymentDate.getMonth()],
+                      paymentDate: div.paymentDate,
+                      type: div.label || 'DIVIDENDO',
+                    });
+                  }
+                }
+              }
+            }
+          } catch (batchError) {
+            console.error(`Error fetching dividend batch: ${batchError}`);
+          }
+        }
+        
+        // Ordenar por data de pagamento (mais próximos primeiro)
+        dividends.sort((a, b) => new Date(a.paymentDate).getTime() - new Date(b.paymentDate).getTime());
+        
+        console.log(`Found ${dividends.length} real dividends`);
+        
+        return new Response(
+          JSON.stringify({ 
+            dividends: dividends.slice(0, 20), // Máximo 20 dividendos
+            lastUpdate: new Date().toISOString() 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching dividends:', error);
+        return new Response(
+          JSON.stringify({ dividends: [], error: 'Failed to fetch dividends' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Buscar notícias de uma ação específica usando Google News RSS
     if (type === 'news' && symbol) {
       console.log(`Fetching news for ${symbol}`);
