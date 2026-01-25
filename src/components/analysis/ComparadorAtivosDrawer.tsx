@@ -3,6 +3,7 @@ import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { X, Check, Search, ChevronLeft, ChevronRight, Hand, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -34,6 +35,9 @@ export default function ComparadorAtivosDrawer({
   formatCurrency,
   economicIndicators
 }: ComparadorAtivosDrawerProps) {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
+
   const [currentStep, setCurrentStep] = useState<Step>('main');
   const [selectedIndices, setSelectedIndices] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
@@ -233,7 +237,7 @@ export default function ComparadorAtivosDrawer({
                   }`}
                 >
                   <p className="text-xs text-muted-foreground uppercase mb-1">{inv.asset_type}</p>
-                  <p className="font-medium text-emerald-500">{inv.asset_name}</p>
+                  <p className="font-medium text-primary">{inv.asset_name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     Rentabilidade: {inv.gain_percent.toFixed(2)}%
                   </p>
@@ -404,11 +408,11 @@ export default function ComparadorAtivosDrawer({
                   <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-border">
                     <div>
                       <p className="text-xs text-muted-foreground">Rent. Carteira</p>
-                      <p className="font-medium text-emerald-500">{selectedAsset?.gain_percent.toFixed(2)}%</p>
+                      <p className="font-medium text-primary">{selectedAsset?.gain_percent.toFixed(2)}%</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Rent. Ativo</p>
-                      <p className="font-medium text-emerald-500">{selectedAsset?.gain_percent.toFixed(2)}%</p>
+                      <p className="font-medium text-primary">{selectedAsset?.gain_percent.toFixed(2)}%</p>
                     </div>
                   </div>
                   
@@ -476,7 +480,13 @@ export default function ComparadorAtivosDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-[#1a1f2e] text-white dark">
+      <DrawerContent 
+        className={`h-[95vh] bg-background text-foreground ${themeClass}`}
+        style={{
+          backgroundColor: "hsl(var(--background))",
+          color: "hsl(var(--foreground))",
+        }}
+      >
         <DrawerTitle className="sr-only">Comparador de Ativos</DrawerTitle>
         <div className="flex flex-col h-full">
           {/* Header */}
