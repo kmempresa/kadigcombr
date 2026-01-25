@@ -80,7 +80,7 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
   const Icon = config.icon;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-24 relative bg-background">
+    <div className="flex-1 overflow-y-auto pb-32 relative bg-background">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Grid Pattern */}
