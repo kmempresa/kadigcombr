@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  HelpCircle,
+  Bell,
   Eye,
   EyeOff,
   Search,
@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import StockDetailDrawer from "@/components/StockDetailDrawer";
 import { usePortfolio } from "@/contexts/PortfolioContext";
+import { useNotifications } from "@/hooks/useNotifications";
+import { NotificationsDrawer } from "@/components/NotificationsDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -51,6 +53,16 @@ const TradeTab = ({
   onAddConnection
 }: TradeTabProps) => {
   const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
+  const { 
+    notifications, 
+    loading: notificationsLoading, 
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAllNotifications 
+  } = useNotifications();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<StockQuote | null>(null);
   const [stockDetailOpen, setStockDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus-ativos" | "patrimonio" | "mercado" | "favoritos">("meus-ativos");
@@ -199,11 +211,7 @@ const TradeTab = ({
   return (
     <div className="flex-1 pb-20 bg-background">
       {/* Header Premium */}
-      <header className="relative overflow-hidden pt-safe">
-        {/* Background gradient effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute top-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
+      <header className="relative pt-safe">
         
         <div className="relative px-4 pb-4 pt-2">
           <div className="flex items-center justify-between">
@@ -228,10 +236,16 @@ const TradeTab = ({
             {/* Right side - Action buttons */}
             <div className="flex items-center gap-1">
               <motion.button 
+                onClick={() => setNotificationsOpen(true)}
                 whileTap={{ scale: 0.9 }}
-                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                className="relative p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
               >
-                <HelpCircle className="w-5 h-5" />
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </motion.button>
               <motion.button 
                 onClick={onToggleValues}
@@ -389,34 +403,6 @@ const TradeTab = ({
                       <span className="font-medium text-foreground">Adicionar ativos</span>
                     </button>
 
-                    <button
-                      onClick={onAddConnection}
-                      className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4 relative overflow-hidden group"
-                    >
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Link2 className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <span className="font-medium text-foreground block">Adicionar conexão</span>
-                        <span className="text-xs text-muted-foreground">Em breve</span>
-                      </div>
-                      <div className="flex gap-1">
-                        {[0, 1, 2].map((i) => (
-                          <motion.div
-                            key={i}
-                            className="w-1.5 h-1.5 bg-primary/50 rounded-full"
-                            animate={{
-                              opacity: [0.3, 1, 0.3],
-                            }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              delay: i * 0.2,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </button>
                   </div>
                 </div>
               ) : (
@@ -864,6 +850,16 @@ const TradeTab = ({
         isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
       />
 
+      <NotificationsDrawer
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        notifications={notifications}
+        loading={notificationsLoading}
+        onMarkAsRead={markAsRead}
+        onMarkAllAsRead={markAllAsRead}
+        onDelete={deleteNotification}
+        onClearAll={clearAllNotifications}
+      />
     </div>
   );
 };
