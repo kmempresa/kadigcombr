@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Link2,
   MessageSquare,
-  Loader2
+  Loader2,
+  Fingerprint
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/useTheme";
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useSecureAuth } from "@/hooks/useSecureAuth";
 
 interface SecurityDrawerProps {
   open: boolean;
@@ -32,7 +34,15 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [view, setView] = useState<View>("main");
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  
+  // Use secure auth hook for biometric
+  const { 
+    biometricEnabled, 
+    biometricAvailable, 
+    setBiometricEnabled,
+    stayLoggedIn,
+    clearSession
+  } = useSecureAuth();
   
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -44,19 +54,14 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
 
-  // Load biometric preference from localStorage
-  useEffect(() => {
-    const savedBiometric = localStorage.getItem("kadig-biometric-enabled");
-    if (savedBiometric) {
-      setBiometricEnabled(JSON.parse(savedBiometric));
+  // Handle biometric toggle
+  const handleBiometricToggle = async (checked: boolean) => {
+    const success = await setBiometricEnabled(checked);
+    if (success) {
+      toast.success(checked ? "Biometria ativada" : "Biometria desativada");
+    } else {
+      toast.error("Erro ao alterar configuração de biometria");
     }
-  }, []);
-
-  // Save biometric preference
-  const handleBiometricToggle = (checked: boolean) => {
-    setBiometricEnabled(checked);
-    localStorage.setItem("kadig-biometric-enabled", JSON.stringify(checked));
-    toast.success(checked ? "Biometria ativada" : "Biometria desativada");
   };
 
   // Handle password change
@@ -117,6 +122,9 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
       await supabase.from('chat_conversations').delete().eq('user_id', user.id);
       await supabase.from('profiles').delete().eq('user_id', user.id);
 
+      // Clear secure session storage
+      await clearSession();
+      
       // Sign out user
       await supabase.auth.signOut();
       

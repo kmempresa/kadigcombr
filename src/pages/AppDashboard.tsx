@@ -3,6 +3,7 @@ import biancaConsultora from "@/assets/bianca-consultora.png";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useTheme } from "@/hooks/useTheme";
 import { useRealTimePrices } from "@/hooks/useRealTimePrices";
+import { useSecureAuth } from "@/hooks/useSecureAuth";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 // Lucide icons
@@ -204,6 +205,9 @@ const AppDashboard = () => {
 
   // Subscription hook
   const { isPremium, refetch: refetchSubscription } = useSubscription();
+
+  // Secure auth hook
+  const { clearSession } = useSecureAuth();
 
   // Notifications hook
   const { 
@@ -531,6 +535,8 @@ const AppDashboard = () => {
   };
 
   const handleLogout = async () => {
+    // Clear secure session storage (tokens)
+    await clearSession();
     await supabase.auth.signOut();
     localStorage.removeItem("kadig-user-profile");
     navigate("/welcome");
