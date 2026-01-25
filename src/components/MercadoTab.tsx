@@ -55,6 +55,23 @@ interface NewsItem {
   category?: string;
 }
 
+interface AgendaEvent {
+  id: string;
+  date: string;
+  day: number;
+  month: string;
+  fullMonth: string;
+  year: number;
+  type: string;
+  category: string;
+  title: string;
+  description: string;
+  importance: string;
+  icon: string;
+  ticker?: string;
+  company?: string;
+}
+
 interface DividendItem {
   ticker: string;
   companyName: string;
@@ -104,6 +121,11 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   // Real dividends data from API
   const [dividends, setDividends] = useState<DividendItem[]>([]);
   const [loadingDividends, setLoadingDividends] = useState(false);
+  // Market agenda events from API
+  const [agendaEvents, setAgendaEvents] = useState<AgendaEvent[]>([]);
+  const [loadingAgenda, setLoadingAgenda] = useState(false);
+  const [showAllAgenda, setShowAllAgenda] = useState(false);
+  const [agendaFilter, setAgendaFilter] = useState<'all' | 'monetary' | 'economic' | 'corporate' | 'market'>('all');
 
   // Mock best performance stocks
   const [bestPerformance] = useState([
@@ -228,12 +250,32 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     setLoadingDividends(false);
   };
 
+  // Fetch market agenda events from API
+  const fetchAgenda = async () => {
+    setLoadingAgenda(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('market-data', {
+        body: { type: 'market-agenda' }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.events && data.events.length > 0) {
+        setAgendaEvents(data.events);
+      }
+    } catch (error) {
+      console.error("Error fetching market agenda:", error);
+    }
+    setLoadingAgenda(false);
+  };
+
   useEffect(() => {
     fetchMarketData();
     fetchMarketNews();
     fetchUserInvestments();
     fetchEconomicIndicators();
     fetchDividends();
+    fetchAgenda();
     // Auto-refresh: cotações a cada 60s, notícias a cada 2 minutos
     const marketInterval = setInterval(fetchMarketData, 60000);
     const newsInterval = setInterval(fetchMarketNews, 120000);
@@ -766,21 +808,129 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             </div>
           </section>
 
-          {/* Agenda do mercado - Dividendos */}
+          {/* Agenda do mercado - Eventos e Dividendos */}
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-primary rounded-full" />
               <h2 className="text-lg font-semibold text-white">Agenda do mercado</h2>
             </div>
             
-            {/* Premium banner */}
-            <div className="bg-[#252b3d] rounded-xl p-4 mb-4 flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-primary" />
-              <p className="text-gray-300 text-sm">
-                Tá esperando um provento? <span className="text-primary font-medium">Assine Premium!</span>
-              </p>
+            {/* Category Filters */}
+            <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-2">
+              {[
+                { key: 'all', label: 'Todos' },
+                { key: 'monetary', label: 'Monetário' },
+                { key: 'economic', label: 'Econômico' },
+                { key: 'corporate', label: 'Corporativo' },
+                { key: 'market', label: 'Mercado' },
+              ].map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setAgendaFilter(filter.key as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                    agendaFilter === filter.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-[#252b3d] text-gray-300 hover:bg-[#3a4259]'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
             </div>
 
+            {/* Events Section */}
+            <div className="bg-[#252b3d] rounded-2xl p-4 mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-white font-semibold">Próximos Eventos</h3>
+                <button 
+                  onClick={() => setShowAllAgenda(!showAllAgenda)}
+                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                >
+                  {showAllAgenda ? 'Ver menos' : 'Ver todos'}
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAllAgenda ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+              
+              {loadingAgenda ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : agendaEvents.length > 0 ? (
+                <div className="space-y-3">
+                  {agendaEvents
+                    .filter(event => agendaFilter === 'all' || event.category === agendaFilter)
+                    .slice(0, showAllAgenda ? 20 : 5)
+                    .map((event) => (
+                      <div 
+                        key={event.id}
+                        className={`flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors ${
+                          event.type === 'earnings' ? 'cursor-pointer hover:bg-[#3a4259]' : ''
+                        }`}
+                        onClick={() => {
+                          if (event.type === 'earnings' && event.ticker) {
+                            setSelectedStock({
+                              symbol: event.ticker,
+                              shortName: event.company || event.ticker,
+                              regularMarketPrice: 0,
+                              regularMarketChange: 0,
+                              regularMarketChangePercent: 0,
+                              logoUrl: `https://icons.brapi.dev/icons/${event.ticker}.svg`,
+                            });
+                            setStockDetailOpen(true);
+                          }
+                        }}
+                      >
+                        <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center text-center flex-shrink-0 ${
+                          event.type === 'copom' ? 'bg-emerald-500/20 border-2 border-emerald-500' :
+                          event.type === 'fomc' ? 'bg-blue-500/20 border-2 border-blue-500' :
+                          event.type === 'ipca' || event.type === 'pib' ? 'bg-orange-500/20 border-2 border-orange-500' :
+                          event.type === 'earnings' ? 'bg-purple-500/20 border-2 border-purple-500' :
+                          event.type === 'holiday' ? 'bg-red-500/20 border-2 border-red-500' :
+                          'bg-cyan-500/20 border-2 border-cyan-500'
+                        }`}>
+                          <span className="text-white font-bold text-lg leading-none">{event.day}</span>
+                          <span className={`text-xs ${
+                            event.type === 'copom' ? 'text-emerald-400' :
+                            event.type === 'fomc' ? 'text-blue-400' :
+                            event.type === 'ipca' || event.type === 'pib' ? 'text-orange-400' :
+                            event.type === 'earnings' ? 'text-purple-400' :
+                            event.type === 'holiday' ? 'text-red-400' :
+                            'text-cyan-400'
+                          }`}>{event.month}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`text-lg`}>{event.icon}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${
+                              event.importance === 'alta' ? 'bg-red-500/20 text-red-400' :
+                              event.importance === 'média' ? 'bg-yellow-500/20 text-yellow-400' :
+                              'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {event.importance.toUpperCase()}
+                            </span>
+                            {event.ticker && (
+                              <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                                {event.ticker}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-white text-sm font-medium">{event.title}</p>
+                          <p className="text-gray-400 text-xs mt-1">{event.description}</p>
+                        </div>
+                        {event.type === 'earnings' && (
+                          <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
+                        )}
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  Nenhum evento encontrado
+                </p>
+              )}
+            </div>
+
+            {/* Dividends Section */}
             <div className="bg-[#252b3d] rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-white font-semibold">Dividendos</h3>
@@ -793,44 +943,53 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 </button>
               </div>
               
-              <div className="space-y-4">
-                {dividends.slice(0, showAllDividends ? dividends.length : 3).map((dividend, index) => (
-                  <div 
-                    key={index} 
-                    onClick={() => {
-                      // Create a stock object from dividend data to open drawer
-                      setSelectedStock({
-                        symbol: dividend.ticker,
-                        shortName: dividend.companyName,
-                        regularMarketPrice: 0,
-                        regularMarketChange: 0,
-                        regularMarketChangePercent: 0,
-                        logoUrl: `https://icons.brapi.dev/icons/${dividend.ticker}.svg`,
-                      });
-                      setStockDetailOpen(true);
-                    }}
-                    className="flex items-start gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
-                  >
-                    <div className="w-14 h-14 rounded-full bg-violet-500/20 border-2 border-violet-500 flex flex-col items-center justify-center text-center flex-shrink-0">
-                      <span className="text-white font-bold text-lg leading-none">{dividend.paymentDay}</span>
-                      <span className="text-violet-400 text-xs">{dividend.paymentMonth}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="bg-violet-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
-                          {dividend.ticker}
-                        </span>
-                        <span className="text-gray-400 text-xs">DATA-COM:</span>
-                        <span className="text-white text-xs">{dividend.dataCom}</span>
-                        <span className="text-gray-400 text-xs ml-2">VALOR</span>
-                        <span className="text-emerald-400 text-xs font-medium">R$ {dividend.value.toFixed(2)}</span>
+              {loadingDividends ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : dividends.length > 0 ? (
+                <div className="space-y-4">
+                  {dividends.slice(0, showAllDividends ? dividends.length : 3).map((dividend, index) => (
+                    <div 
+                      key={index} 
+                      onClick={() => {
+                        setSelectedStock({
+                          symbol: dividend.ticker,
+                          shortName: dividend.companyName,
+                          regularMarketPrice: 0,
+                          regularMarketChange: 0,
+                          regularMarketChangePercent: 0,
+                          logoUrl: `https://icons.brapi.dev/icons/${dividend.ticker}.svg`,
+                        });
+                        setStockDetailOpen(true);
+                      }}
+                      className="flex items-start gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-violet-500/20 border-2 border-violet-500 flex flex-col items-center justify-center text-center flex-shrink-0">
+                        <span className="text-white font-bold text-lg leading-none">{dividend.paymentDay}</span>
+                        <span className="text-violet-400 text-xs">{dividend.paymentMonth}</span>
                       </div>
-                      <p className="text-gray-400 text-xs truncate">{dividend.companyName}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="bg-violet-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                            {dividend.ticker}
+                          </span>
+                          <span className="text-gray-400 text-xs">DATA-COM:</span>
+                          <span className="text-white text-xs">{dividend.dataCom}</span>
+                          <span className="text-gray-400 text-xs ml-2">VALOR</span>
+                          <span className="text-emerald-400 text-xs font-medium">R$ {dividend.value.toFixed(2)}</span>
+                        </div>
+                        <p className="text-gray-400 text-xs truncate">{dividend.companyName}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm text-center py-4">
+                  Nenhum dividendo encontrado
+                </p>
+              )}
             </div>
           </section>
         </>

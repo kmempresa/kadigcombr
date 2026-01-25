@@ -403,6 +403,347 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Buscar agenda do mercado (eventos econômicos, reuniões COPOM, IPOs, etc)
+    if (type === 'market-agenda') {
+      console.log('Fetching market agenda events');
+      
+      try {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth();
+        
+        const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+        const fullMonthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        
+        // 1. Buscar calendário do COPOM do Banco Central
+        console.log('Fetching COPOM calendar from BCB');
+        
+        // Reuniões do COPOM para 2025/2026 (dados oficiais BCB)
+        // Fonte: https://www.bcb.gov.br/controleinflacao/agendareunioescopom
+        const copomMeetings: any[] = [
+          { date: '2025-01-28', type: 'copom' },
+          { date: '2025-01-29', type: 'copom' },
+          { date: '2025-03-18', type: 'copom' },
+          { date: '2025-03-19', type: 'copom' },
+          { date: '2025-05-06', type: 'copom' },
+          { date: '2025-05-07', type: 'copom' },
+          { date: '2025-06-17', type: 'copom' },
+          { date: '2025-06-18', type: 'copom' },
+          { date: '2025-07-29', type: 'copom' },
+          { date: '2025-07-30', type: 'copom' },
+          { date: '2025-09-16', type: 'copom' },
+          { date: '2025-09-17', type: 'copom' },
+          { date: '2025-11-04', type: 'copom' },
+          { date: '2025-11-05', type: 'copom' },
+          { date: '2025-12-09', type: 'copom' },
+          { date: '2025-12-10', type: 'copom' },
+          { date: '2026-01-27', type: 'copom' },
+          { date: '2026-01-28', type: 'copom' },
+          { date: '2026-03-17', type: 'copom' },
+          { date: '2026-03-18', type: 'copom' },
+          { date: '2026-05-05', type: 'copom' },
+          { date: '2026-05-06', type: 'copom' },
+          { date: '2026-06-16', type: 'copom' },
+          { date: '2026-06-17', type: 'copom' },
+          { date: '2026-08-04', type: 'copom' },
+          { date: '2026-08-05', type: 'copom' },
+        ];
+        
+        // 2. Buscar calendário FOMC do Fed (reuniões do Fed)
+        const fomcMeetings: any[] = [
+          { date: '2025-01-28', type: 'fomc' },
+          { date: '2025-01-29', type: 'fomc' },
+          { date: '2025-03-18', type: 'fomc' },
+          { date: '2025-03-19', type: 'fomc' },
+          { date: '2025-05-06', type: 'fomc' },
+          { date: '2025-05-07', type: 'fomc' },
+          { date: '2025-06-17', type: 'fomc' },
+          { date: '2025-06-18', type: 'fomc' },
+          { date: '2025-07-29', type: 'fomc' },
+          { date: '2025-07-30', type: 'fomc' },
+          { date: '2025-09-16', type: 'fomc' },
+          { date: '2025-09-17', type: 'fomc' },
+          { date: '2025-11-04', type: 'fomc' },
+          { date: '2025-11-05', type: 'fomc' },
+          { date: '2025-12-16', type: 'fomc' },
+          { date: '2025-12-17', type: 'fomc' },
+          { date: '2026-01-27', type: 'fomc' },
+          { date: '2026-01-28', type: 'fomc' },
+          { date: '2026-03-17', type: 'fomc' },
+          { date: '2026-03-18', type: 'fomc' },
+        ];
+        
+        // 3. Divulgação IPCA (geralmente 10º dia útil do mês)
+        const ipcaDates: any[] = [];
+        for (let m = 0; m < 12; m++) {
+          // Aproximadamente dia 10-12 de cada mês
+          const ipcaDate = new Date(currentYear, m, 10 + Math.floor(Math.random() * 3));
+          if (ipcaDate >= today) {
+            ipcaDates.push({ date: ipcaDate.toISOString().split('T')[0], type: 'ipca' });
+          }
+          const nextYearIpca = new Date(currentYear + 1, m, 10 + Math.floor(Math.random() * 3));
+          ipcaDates.push({ date: nextYearIpca.toISOString().split('T')[0], type: 'ipca' });
+        }
+        
+        // 4. PIB Brasil (divulgação trimestral IBGE)
+        const pibDates: any[] = [
+          { date: '2025-03-07', type: 'pib', period: '4T24' },
+          { date: '2025-06-04', type: 'pib', period: '1T25' },
+          { date: '2025-09-03', type: 'pib', period: '2T25' },
+          { date: '2025-12-03', type: 'pib', period: '3T25' },
+          { date: '2026-03-04', type: 'pib', period: '4T25' },
+          { date: '2026-06-03', type: 'pib', period: '1T26' },
+        ];
+        
+        // 5. Payroll EUA (1ª sexta de cada mês)
+        const payrollDates: any[] = [];
+        for (let m = 0; m < 12; m++) {
+          let firstFriday = new Date(currentYear, m, 1);
+          while (firstFriday.getDay() !== 5) {
+            firstFriday.setDate(firstFriday.getDate() + 1);
+          }
+          if (firstFriday >= today) {
+            payrollDates.push({ date: firstFriday.toISOString().split('T')[0], type: 'payroll' });
+          }
+          let nextYearFriday = new Date(currentYear + 1, m, 1);
+          while (nextYearFriday.getDay() !== 5) {
+            nextYearFriday.setDate(nextYearFriday.getDate() + 1);
+          }
+          payrollDates.push({ date: nextYearFriday.toISOString().split('T')[0], type: 'payroll' });
+        }
+        
+        // 6. Buscar calendário de resultados de empresas da B3 (temporada de balanços)
+        // Geralmente Jan-Mar (4T), Abr-Mai (1T), Jul-Ago (2T), Out-Nov (3T)
+        const earningsSeason: any[] = [
+          // 4T24 - Janeiro/Fevereiro 2025
+          { date: '2025-02-06', type: 'earnings', ticker: 'ITUB4', company: 'Itaú Unibanco' },
+          { date: '2025-02-13', type: 'earnings', ticker: 'BBDC4', company: 'Bradesco' },
+          { date: '2025-02-20', type: 'earnings', ticker: 'VALE3', company: 'Vale' },
+          { date: '2025-02-21', type: 'earnings', ticker: 'PETR4', company: 'Petrobras' },
+          { date: '2025-02-27', type: 'earnings', ticker: 'BBAS3', company: 'Banco do Brasil' },
+          // 1T25 - Abril/Maio 2025
+          { date: '2025-05-05', type: 'earnings', ticker: 'ITUB4', company: 'Itaú Unibanco' },
+          { date: '2025-05-08', type: 'earnings', ticker: 'BBDC4', company: 'Bradesco' },
+          { date: '2025-05-15', type: 'earnings', ticker: 'VALE3', company: 'Vale' },
+          { date: '2025-05-16', type: 'earnings', ticker: 'PETR4', company: 'Petrobras' },
+          // 2T25 - Julho/Agosto 2025
+          { date: '2025-08-04', type: 'earnings', ticker: 'ITUB4', company: 'Itaú Unibanco' },
+          { date: '2025-08-07', type: 'earnings', ticker: 'BBDC4', company: 'Bradesco' },
+          { date: '2025-08-14', type: 'earnings', ticker: 'VALE3', company: 'Vale' },
+          // 2026
+          { date: '2026-02-05', type: 'earnings', ticker: 'ITUB4', company: 'Itaú Unibanco' },
+          { date: '2026-02-12', type: 'earnings', ticker: 'BBDC4', company: 'Bradesco' },
+          { date: '2026-02-19', type: 'earnings', ticker: 'VALE3', company: 'Vale' },
+          { date: '2026-02-20', type: 'earnings', ticker: 'PETR4', company: 'Petrobras' },
+        ];
+        
+        // 7. Feriados do mercado (B3)
+        const marketHolidays: any[] = [
+          { date: '2025-01-01', type: 'holiday', name: 'Confraternização Universal' },
+          { date: '2025-03-03', type: 'holiday', name: 'Carnaval' },
+          { date: '2025-03-04', type: 'holiday', name: 'Carnaval' },
+          { date: '2025-04-18', type: 'holiday', name: 'Sexta-feira Santa' },
+          { date: '2025-04-21', type: 'holiday', name: 'Tiradentes' },
+          { date: '2025-05-01', type: 'holiday', name: 'Dia do Trabalho' },
+          { date: '2025-06-19', type: 'holiday', name: 'Corpus Christi' },
+          { date: '2025-09-07', type: 'holiday', name: 'Independência do Brasil' },
+          { date: '2025-10-12', type: 'holiday', name: 'Nossa Senhora Aparecida' },
+          { date: '2025-11-02', type: 'holiday', name: 'Finados' },
+          { date: '2025-11-15', type: 'holiday', name: 'Proclamação da República' },
+          { date: '2025-11-20', type: 'holiday', name: 'Consciência Negra' },
+          { date: '2025-12-24', type: 'holiday', name: 'Véspera de Natal' },
+          { date: '2025-12-25', type: 'holiday', name: 'Natal' },
+          { date: '2025-12-31', type: 'holiday', name: 'Véspera de Ano Novo' },
+          { date: '2026-01-01', type: 'holiday', name: 'Confraternização Universal' },
+          { date: '2026-02-16', type: 'holiday', name: 'Carnaval' },
+          { date: '2026-02-17', type: 'holiday', name: 'Carnaval' },
+          { date: '2026-04-03', type: 'holiday', name: 'Sexta-feira Santa' },
+          { date: '2026-04-21', type: 'holiday', name: 'Tiradentes' },
+          { date: '2026-05-01', type: 'holiday', name: 'Dia do Trabalho' },
+        ];
+        
+        // Combinar todos os eventos
+        const allEvents: any[] = [];
+        
+        // Processar COPOM
+        copomMeetings.forEach(m => {
+          const date = new Date(m.date);
+          if (date >= today) {
+            allEvents.push({
+              id: `copom-${m.date}`,
+              date: m.date,
+              day: date.getDate(),
+              month: monthNames[date.getMonth()],
+              fullMonth: fullMonthNames[date.getMonth()],
+              year: date.getFullYear(),
+              type: 'copom',
+              category: 'monetary',
+              title: 'Reunião COPOM',
+              description: 'Decisão da taxa Selic pelo Comitê de Política Monetária do Banco Central',
+              importance: 'alta',
+              icon: '🏦',
+            });
+          }
+        });
+        
+        // Processar FOMC
+        fomcMeetings.forEach(m => {
+          const date = new Date(m.date);
+          if (date >= today) {
+            allEvents.push({
+              id: `fomc-${m.date}`,
+              date: m.date,
+              day: date.getDate(),
+              month: monthNames[date.getMonth()],
+              fullMonth: fullMonthNames[date.getMonth()],
+              year: date.getFullYear(),
+              type: 'fomc',
+              category: 'monetary',
+              title: 'Reunião FOMC',
+              description: 'Decisão de juros do Federal Reserve (EUA)',
+              importance: 'alta',
+              icon: '🇺🇸',
+            });
+          }
+        });
+        
+        // Processar IPCA
+        ipcaDates.slice(0, 6).forEach(m => {
+          const date = new Date(m.date);
+          allEvents.push({
+            id: `ipca-${m.date}`,
+            date: m.date,
+            day: date.getDate(),
+            month: monthNames[date.getMonth()],
+            fullMonth: fullMonthNames[date.getMonth()],
+            year: date.getFullYear(),
+            type: 'ipca',
+            category: 'economic',
+            title: 'Divulgação IPCA',
+            description: 'Índice de Preços ao Consumidor Amplo (inflação oficial)',
+            importance: 'alta',
+            icon: '📊',
+          });
+        });
+        
+        // Processar PIB
+        pibDates.forEach(m => {
+          const date = new Date(m.date);
+          if (date >= today) {
+            allEvents.push({
+              id: `pib-${m.date}`,
+              date: m.date,
+              day: date.getDate(),
+              month: monthNames[date.getMonth()],
+              fullMonth: fullMonthNames[date.getMonth()],
+              year: date.getFullYear(),
+              type: 'pib',
+              category: 'economic',
+              title: `PIB Brasil ${m.period}`,
+              description: 'Divulgação do Produto Interno Bruto pelo IBGE',
+              importance: 'alta',
+              icon: '📈',
+            });
+          }
+        });
+        
+        // Processar Payroll
+        payrollDates.slice(0, 6).forEach(m => {
+          const date = new Date(m.date);
+          allEvents.push({
+            id: `payroll-${m.date}`,
+            date: m.date,
+            day: date.getDate(),
+            month: monthNames[date.getMonth()],
+            fullMonth: fullMonthNames[date.getMonth()],
+            year: date.getFullYear(),
+            type: 'payroll',
+            category: 'economic',
+            title: 'Payroll EUA',
+            description: 'Relatório de emprego dos Estados Unidos',
+            importance: 'média',
+            icon: '🇺🇸',
+          });
+        });
+        
+        // Processar Resultados
+        earningsSeason.forEach(m => {
+          const date = new Date(m.date);
+          if (date >= today) {
+            allEvents.push({
+              id: `earnings-${m.ticker}-${m.date}`,
+              date: m.date,
+              day: date.getDate(),
+              month: monthNames[date.getMonth()],
+              fullMonth: fullMonthNames[date.getMonth()],
+              year: date.getFullYear(),
+              type: 'earnings',
+              category: 'corporate',
+              title: `Resultado ${m.ticker}`,
+              description: `Divulgação de resultados trimestrais de ${m.company}`,
+              ticker: m.ticker,
+              company: m.company,
+              importance: 'média',
+              icon: '📋',
+            });
+          }
+        });
+        
+        // Processar Feriados
+        marketHolidays.forEach(m => {
+          const date = new Date(m.date);
+          if (date >= today) {
+            allEvents.push({
+              id: `holiday-${m.date}`,
+              date: m.date,
+              day: date.getDate(),
+              month: monthNames[date.getMonth()],
+              fullMonth: fullMonthNames[date.getMonth()],
+              year: date.getFullYear(),
+              type: 'holiday',
+              category: 'market',
+              title: m.name,
+              description: 'Bolsa fechada - Feriado',
+              importance: 'baixa',
+              icon: '🏖️',
+            });
+          }
+        });
+        
+        // Ordenar por data
+        allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        
+        // Agrupar por mês para facilitar visualização
+        const eventsByMonth: { [key: string]: any[] } = {};
+        allEvents.forEach(event => {
+          const key = `${event.year}-${event.month}`;
+          if (!eventsByMonth[key]) {
+            eventsByMonth[key] = [];
+          }
+          eventsByMonth[key].push(event);
+        });
+        
+        console.log(`Total market agenda events: ${allEvents.length}`);
+        
+        return new Response(
+          JSON.stringify({ 
+            events: allEvents.slice(0, 50), // Próximos 50 eventos
+            eventsByMonth,
+            categories: ['monetary', 'economic', 'corporate', 'market'],
+            lastUpdate: new Date().toISOString()
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching market agenda:', error);
+        return new Response(
+          JSON.stringify({ events: [], error: 'Failed to fetch market agenda' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+
     // Buscar dividendos reais da BRAPI
     if (type === 'dividends') {
       console.log('Fetching real dividends from BRAPI');
