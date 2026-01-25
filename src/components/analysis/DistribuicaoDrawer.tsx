@@ -1,25 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { X, HelpCircle, ChevronRight } from "lucide-react";
+import { X, HelpCircle, ChevronRight, Loader2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useTheme } from "@/hooks/useTheme";
-
-interface Investment {
-  id: string;
-  asset_name: string;
-  asset_type: string;
-  ticker: string | null;
-  current_value: number;
-  total_invested: number;
-  gain_percent: number;
-}
+import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
 
 interface DistribuicaoDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  investments: Investment[];
-  totalPatrimonio: number;
-  formatCurrency: (value: number) => string;
+  portfolioId: string | null;
 }
 
 // Normalize asset types from database to display labels
@@ -69,13 +58,23 @@ const COLORS = [
 export default function DistribuicaoDrawer({ 
   open, 
   onOpenChange, 
-  investments, 
-  totalPatrimonio,
-  formatCurrency 
+  portfolioId,
 }: DistribuicaoDrawerProps) {
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'classes' | 'estrategias' | 'instituicoes'>('classes');
+  
+  // Real-time data
+  const { 
+    investments, 
+    totals, 
+    loading, 
+    isUpdating, 
+    formatCurrency, 
+    formatLastUpdate 
+  } = useRealtimeAnalysis({ portfolioId, enabled: open });
+  
+  const totalPatrimonio = totals.totalValue;
 
   // Group by asset type (Classes)
   const classeData = investments.reduce((acc, inv) => {
@@ -177,12 +176,13 @@ export default function DistribuicaoDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Distribuição da Carteira</h2>
-            <button 
-              onClick={() => onOpenChange(false)}
-              className="w-8 h-8 rounded-full bg-muted flex items-center justify-center"
-            >
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isUpdating && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+              <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
+              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -204,6 +204,12 @@ export default function DistribuicaoDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : (
+            <>
             {/* Chart Card */}
             <div className="bg-card border border-border rounded-2xl p-4">
               <h3 className="text-center font-medium text-foreground mb-4">{getTitle()}</h3>
@@ -283,6 +289,8 @@ export default function DistribuicaoDrawer({
                 </div>
               </div>
             ))}
+            </>
+            )}
           </div>
 
           {/* Close Button */}

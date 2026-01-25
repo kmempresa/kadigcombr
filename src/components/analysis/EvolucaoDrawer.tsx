@@ -4,15 +4,7 @@ import { X, HelpCircle, Loader2 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
-
-interface Investment {
-  id: string;
-  asset_name: string;
-  asset_type: string;
-  current_value: number;
-  total_invested: number;
-  gain_percent: number;
-}
+import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
 
 interface HistoryRecord {
   snapshot_date: string;
@@ -27,11 +19,7 @@ interface HistoryRecord {
 interface EvolucaoDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  investments: Investment[];
-  totalPatrimonio: number;
-  totalInvested: number;
-  formatCurrency: (value: number) => string;
-  economicIndicators: any;
+  portfolioId: string | null;
 }
 
 const PERIOD_FILTERS = ['ESCOLHER', '3 MESES', '6 MESES', '12 MESES'];
@@ -39,19 +27,28 @@ const PERIOD_FILTERS = ['ESCOLHER', '3 MESES', '6 MESES', '12 MESES'];
 export default function EvolucaoDrawer({
   open,
   onOpenChange,
-  investments,
-  totalPatrimonio,
-  totalInvested,
-  formatCurrency,
-  economicIndicators
+  portfolioId,
 }: EvolucaoDrawerProps) {
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'acumulado' | 'historico'>('acumulado');
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
   const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [firstInvestmentDate, setFirstInvestmentDate] = useState<string | null>(null);
+
+  // Real-time data
+  const { 
+    totals, 
+    economicIndicators,
+    loading, 
+    isUpdating, 
+    formatCurrency, 
+    formatLastUpdate 
+  } = useRealtimeAnalysis({ portfolioId, enabled: open });
+
+  const totalPatrimonio = totals.totalValue;
+  const totalInvested = totals.totalInvested;
 
   // Calculate real return
   const totalGain = totalPatrimonio - totalInvested;
@@ -62,12 +59,12 @@ export default function EvolucaoDrawer({
   const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.44;
   const cdiPercent = cdi12m > 0 ? (returnPercent / cdi12m) * 100 : 0;
 
-  // Fetch real historical data from Supabase
+
   useEffect(() => {
     const fetchHistoricalData = async () => {
       if (!open) return;
       
-      setLoading(true);
+      setHistoryLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
@@ -104,7 +101,7 @@ export default function EvolucaoDrawer({
       } catch (error) {
         console.error("Error fetching historical data:", error);
       } finally {
-        setLoading(false);
+        setHistoryLoading(false);
       }
     };
 
@@ -211,9 +208,13 @@ export default function EvolucaoDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Evolução da Carteira</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              {(isUpdating || historyLoading) && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+              <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
+              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -235,7 +236,7 @@ export default function EvolucaoDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
-            {loading ? (
+            {(loading || historyLoading) ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>

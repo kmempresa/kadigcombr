@@ -2225,28 +2225,19 @@ const AppDashboard = () => {
       <DistribuicaoDrawer
         open={distribuicaoOpen}
         onOpenChange={setDistribuicaoOpen}
-        investments={filteredInvestments}
-        totalPatrimonio={totalPatrimonio}
-        formatCurrency={formatCurrency}
+        portfolioId={activePortfolioId}
       />
 
       <EvolucaoDrawer
         open={evolucaoOpen}
         onOpenChange={setEvolucaoOpen}
-        investments={filteredInvestments}
-        totalPatrimonio={totalPatrimonio}
-        totalInvested={totalInvestido}
-        formatCurrency={formatCurrency}
-        economicIndicators={economicIndicators}
+        portfolioId={activePortfolioId}
       />
 
       <RentabilidadeDrawer
         open={rentabilidadeOpen}
         onOpenChange={setRentabilidadeOpen}
-        totalPatrimonio={totalPatrimonio}
-        totalInvested={totalInvestido}
-        formatCurrency={formatCurrency}
-        economicIndicators={economicIndicators}
+        portfolioId={activePortfolioId}
       />
 
       <RentabilidadeRealDrawer
@@ -2262,10 +2253,7 @@ const AppDashboard = () => {
       <RiscoRetornoDrawer
         open={riscoRetornoOpen}
         onOpenChange={setRiscoRetornoOpen}
-        investments={filteredInvestments}
-        totalPatrimonio={totalPatrimonio}
-        totalInvested={totalInvestido}
-        economicIndicators={economicIndicators}
+        portfolioId={activePortfolioId}
       />
 
       <GanhoCapitalDrawer

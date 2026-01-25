@@ -4,6 +4,7 @@ import { X, HelpCircle, ChevronDown, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
+import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
 
 interface HistoryRecord {
   snapshot_date: string;
@@ -18,10 +19,7 @@ interface HistoryRecord {
 interface RentabilidadeDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  totalPatrimonio: number;
-  totalInvested: number;
-  formatCurrency: (value: number) => string;
-  economicIndicators: any;
+  portfolioId: string | null;
 }
 
 const PERIOD_FILTERS = ['ESCOLHER', '3 MESES', '6 MESES', '12 MESES'];
@@ -29,18 +27,27 @@ const PERIOD_FILTERS = ['ESCOLHER', '3 MESES', '6 MESES', '12 MESES'];
 export default function RentabilidadeDrawer({
   open,
   onOpenChange,
-  totalPatrimonio,
-  totalInvested,
-  formatCurrency,
-  economicIndicators
+  portfolioId,
 }: RentabilidadeDrawerProps) {
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'geral' | 'mensal' | 'anual'>('geral');
   const [selectedPeriod, setSelectedPeriod] = useState('12 MESES');
   const [historyData, setHistoryData] = useState<HistoryRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
+  // Real-time data
+  const { 
+    totals, 
+    economicIndicators,
+    loading, 
+    isUpdating, 
+    formatCurrency, 
+    formatLastUpdate 
+  } = useRealtimeAnalysis({ portfolioId, enabled: open });
+
+  const totalPatrimonio = totals.totalValue;
+  const totalInvested = totals.totalInvested;
   const totalGain = totalPatrimonio - totalInvested;
   const returnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
   const cdi12m = economicIndicators?.accumulated12m?.cdi || 14.96;
@@ -52,7 +59,7 @@ export default function RentabilidadeDrawer({
     const fetchHistoricalData = async () => {
       if (!open) return;
       
-      setLoading(true);
+      setHistoryLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
@@ -73,7 +80,7 @@ export default function RentabilidadeDrawer({
       } catch (error) {
         console.error("Error fetching historical data:", error);
       } finally {
-        setLoading(false);
+        setHistoryLoading(false);
       }
     };
 
@@ -219,9 +226,13 @@ export default function RentabilidadeDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Rentabilidade</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              {(isUpdating || historyLoading) && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+              <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
+              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
