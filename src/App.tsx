@@ -33,15 +33,14 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// App component with BrowserRouter wrapping all route-dependent components
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <ThemeProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <PortfolioProvider>
+        <PortfolioProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Splash />} />
               <Route path="/site" element={<Index />} />
@@ -70,8 +69,8 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </PortfolioProvider>
-        </BrowserRouter>
+          </BrowserRouter>
+        </PortfolioProvider>
       </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>

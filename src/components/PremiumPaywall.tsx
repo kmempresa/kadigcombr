@@ -80,9 +80,13 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
   const Icon = config.icon;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-40 safe-area-inset-bottom relative bg-background">
+    <div className="flex-1 overflow-y-auto pb-24 relative bg-background">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Gradient Orbs - smaller and more subtle */}
+        <div className={`absolute top-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-gradient-to-br ${config.accentColor} opacity-8 dark:opacity-12 rounded-full blur-[80px]`} />
+        <div className="absolute bottom-20 right-0 w-48 h-48 bg-kadig-cyan/5 dark:bg-kadig-cyan/8 rounded-full blur-[60px]" />
+        
         {/* Grid Pattern */}
         <div 
           className="absolute inset-0 opacity-[0.015] dark:opacity-[0.02]"

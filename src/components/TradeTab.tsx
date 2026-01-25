@@ -211,7 +211,11 @@ const TradeTab = ({
   return (
     <div className="flex-1 pb-20 bg-background">
       {/* Header Premium */}
-      <header className="relative pt-safe">
+      <header className="relative overflow-hidden pt-safe">
+        {/* Background gradient effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl -translate-y-1/2 -translate-x-1/2" />
         
         <div className="relative px-4 pb-4 pt-2">
           <div className="flex items-center justify-between">
@@ -403,6 +407,34 @@ const TradeTab = ({
                       <span className="font-medium text-foreground">Adicionar ativos</span>
                     </button>
 
+                    <button
+                      onClick={onAddConnection}
+                      className="w-full flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-4 relative overflow-hidden group"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Link2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <span className="font-medium text-foreground block">Adicionar conexão</span>
+                        <span className="text-xs text-muted-foreground">Em breve</span>
+                      </div>
+                      <div className="flex gap-1">
+                        {[0, 1, 2].map((i) => (
+                          <motion.div
+                            key={i}
+                            className="w-1.5 h-1.5 bg-primary/50 rounded-full"
+                            animate={{
+                              opacity: [0.3, 1, 0.3],
+                            }}
+                            transition={{
+                              duration: 1,
+                              repeat: Infinity,
+                              delay: i * 0.2,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </button>
                   </div>
                 </div>
               ) : (

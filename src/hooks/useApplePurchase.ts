@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Capacitor } from '@capacitor/core';
 
-// Product ID for Apple StoreKit
+// Product ID for Apple/Google In-App Purchase
 const PREMIUM_PRODUCT_ID = 'kadig.premium';
 
 interface UsePurchaseResult {
@@ -13,10 +13,35 @@ interface UsePurchaseResult {
   isNative: boolean;
 }
 
+// Dynamic import type for the plugin
+type CapacitorPurchasesType = typeof import('@capgo/capacitor-purchases').CapacitorPurchases;
+let CapacitorPurchases: CapacitorPurchasesType | null = null;
+
+const loadPurchasesPlugin = async (): Promise<boolean> => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const module = await import('@capgo/capacitor-purchases');
+      CapacitorPurchases = module.CapacitorPurchases;
+      return true;
+    } catch (error) {
+      console.warn('Capacitor Purchases plugin not available:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
 export const useApplePurchase = (): UsePurchaseResult => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pluginLoaded, setPluginLoaded] = useState(false);
+
   const isNative = Capacitor.isNativePlatform();
-  const isIOS = isNative && Capacitor.getPlatform() === 'ios';
+
+  useEffect(() => {
+    if (isNative) {
+      loadPurchasesPlugin().then(setPluginLoaded);
+    }
+  }, [isNative]);
 
   const activateSubscription = useCallback(async () => {
     try {
@@ -54,47 +79,87 @@ export const useApplePurchase = (): UsePurchaseResult => {
 
   const purchasePremium = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
-    console.log('[IAP] Purchase initiated - isIOS:', isIOS);
 
     try {
-      if (isIOS) {
-        // Import dynamically to avoid issues on web
-        const { NativePurchases, PURCHASE_TYPE } = await import('@capgo/native-purchases');
-        
-        // First, fetch the product from StoreKit
-        console.log('[IAP] Fetching product from StoreKit:', PREMIUM_PRODUCT_ID);
-        
+      if (isNative && pluginLoaded && CapacitorPurchases) {
+        // Native iOS/Android - use Capacitor Purchases (RevenueCat)
         try {
-          const { product } = await NativePurchases.getProduct({
-            productIdentifier: PREMIUM_PRODUCT_ID,
-            productType: PURCHASE_TYPE.SUBS,
+          // Get available offerings from RevenueCat
+          const offeringsResult = await CapacitorPurchases.getOfferings();
+          const offerings = offeringsResult?.offerings;
+          console.log('Offerings:', offerings);
+          
+          // Find the current offering
+          const currentOffering = offerings?.current;
+          
+          if (!currentOffering) {
+            toast.error("Nenhuma oferta disponível");
+            setIsProcessing(false);
+            return false;
+          }
+
+          // Find the package to purchase (monthly or the first available)
+          let packageToPurchase = currentOffering.monthly || 
+                                   currentOffering.availablePackages?.[0];
+
+          // Or find by product identifier
+          if (!packageToPurchase) {
+            packageToPurchase = currentOffering.availablePackages?.find(
+              pkg => pkg.product?.identifier === PREMIUM_PRODUCT_ID
+            ) || null;
+          }
+
+          if (!packageToPurchase) {
+            toast.error("Produto não encontrado");
+            setIsProcessing(false);
+            return false;
+          }
+
+          // Make the purchase
+          const result = await CapacitorPurchases.purchasePackage({
+            identifier: packageToPurchase.identifier,
+            offeringIdentifier: currentOffering.identifier,
           });
-          console.log('[IAP] Product loaded:', product);
-        } catch (fetchError) {
-          console.warn('[IAP] Could not fetch product details, proceeding anyway:', fetchError);
+
+          console.log('Purchase successful:', result);
+          
+          // Activate subscription in Supabase
+          const activated = await activateSubscription();
+          if (activated) {
+            toast.success("🎉 Bem-vindo ao Kadig Premium!");
+            setIsProcessing(false);
+            return true;
+          }
+
+          toast.error("Erro ao ativar assinatura");
+          setIsProcessing(false);
+          return false;
+        } catch (purchaseError: any) {
+          console.error('Purchase error:', purchaseError);
+          
+          // Handle common error cases
+          const errorMessage = purchaseError?.message || '';
+          const errorCode = purchaseError?.code;
+          
+          if (errorMessage.includes('cancelled') || errorMessage.includes('canceled') || errorCode === 1) {
+            toast.info("Compra cancelada");
+          } else if (errorMessage.includes('already owned') || errorCode === 6) {
+            // User already has the subscription - activate it
+            const activated = await activateSubscription();
+            if (activated) {
+              toast.success("Assinatura ativada!");
+              setIsProcessing(false);
+              return true;
+            }
+          } else {
+            toast.error(errorMessage || "Erro na compra");
+          }
+          
+          setIsProcessing(false);
+          return false;
         }
-        
-        // Now attempt the purchase
-        console.log('[IAP] Calling NativePurchases.purchaseProduct with ID:', PREMIUM_PRODUCT_ID);
-        
-        const result = await NativePurchases.purchaseProduct({
-          productIdentifier: PREMIUM_PRODUCT_ID,
-          productType: PURCHASE_TYPE.SUBS,
-        });
-        
-        console.log('[IAP] Purchase result:', result);
-        
-        // Activate subscription in database
-        const activated = await activateSubscription();
-        if (activated) {
-          toast.success("🎉 Bem-vindo ao Kadig Premium!");
-        }
-        
-        setIsProcessing(false);
-        return activated;
       } else {
-        // Web fallback for testing
-        console.log('[IAP] Web fallback - activating subscription directly');
+        // Web fallback - direct subscription (for testing/web version)
         const activated = await activateSubscription();
         if (activated) {
           toast.success("🎉 Bem-vindo ao Kadig Premium!");
@@ -104,58 +169,58 @@ export const useApplePurchase = (): UsePurchaseResult => {
         setIsProcessing(false);
         return activated;
       }
-    } catch (error: any) {
-      console.error("[IAP] Purchase error:", error);
-      
-      // Check if user cancelled
-      if (error.message?.includes('cancel') || error.code === 'E_USER_CANCELLED') {
-        toast.info("Compra cancelada");
-      } else {
-        toast.error(error.message || "Erro ao processar compra");
-      }
-      
+    } catch (error) {
+      console.error("Purchase error:", error);
+      toast.error("Erro ao processar compra");
       setIsProcessing(false);
       return false;
     }
-  }, [isIOS, activateSubscription]);
+  }, [isNative, pluginLoaded, activateSubscription]);
 
   const restorePurchases = useCallback(async (): Promise<boolean> => {
     setIsProcessing(true);
-    console.log('[IAP] Restore initiated - isIOS:', isIOS);
 
     try {
-      if (isIOS) {
-        const { NativePurchases } = await import('@capgo/native-purchases');
-        
-        console.log('[IAP] Calling NativePurchases.restorePurchases');
-        await NativePurchases.restorePurchases();
-        
-        console.log('[IAP] Restore completed');
-        
-        // Activate subscription after restore
-        const activated = await activateSubscription();
-        if (activated) {
-          toast.success("Assinatura restaurada com sucesso!");
+      if (isNative && pluginLoaded && CapacitorPurchases) {
+        try {
+          const result = await CapacitorPurchases.restorePurchases();
+          console.log('Restore result:', result);
+
+          // Check if user has active entitlements
+          const customerInfo = result?.customerInfo;
+          const activeEntitlements = customerInfo?.entitlements?.active;
+          
+          if (activeEntitlements && Object.keys(activeEntitlements).length > 0) {
+            const activated = await activateSubscription();
+            if (activated) {
+              toast.success("Assinatura restaurada com sucesso!");
+              setIsProcessing(false);
+              return true;
+            }
+          } else {
+            toast.info("Nenhuma compra anterior encontrada");
+          }
+          
           setIsProcessing(false);
-          return true;
-        } else {
-          toast.info("Nenhuma compra anterior encontrada");
+          return false;
+        } catch (restoreError: any) {
+          console.error('Restore error:', restoreError);
+          toast.error(restoreError.message || "Erro ao restaurar");
+          setIsProcessing(false);
+          return false;
         }
-        
-        setIsProcessing(false);
-        return false;
       } else {
-        toast.info("Restauração disponível apenas no app iOS");
+        toast.info("Restauração disponível apenas no app nativo");
         setIsProcessing(false);
         return false;
       }
-    } catch (error: any) {
-      console.error("[IAP] Restore error:", error);
-      toast.error(error.message || "Erro ao restaurar compras");
+    } catch (error) {
+      console.error("Restore error:", error);
+      toast.error("Erro ao restaurar compras");
       setIsProcessing(false);
       return false;
     }
-  }, [isIOS, activateSubscription]);
+  }, [isNative, pluginLoaded, activateSubscription]);
 
   return {
     purchasePremium,
