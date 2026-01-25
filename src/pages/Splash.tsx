@@ -23,72 +23,113 @@ const Splash = () => {
     let cancelled = false;
 
     const checkAuthAndNavigate = async () => {
-      // Wait for initial animation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      if (cancelled) return;
+      try {
+        // Wait for initial animation
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (cancelled) return;
 
-      setPhase("settling");
-      await new Promise(resolve => setTimeout(resolve, 500));
-      if (cancelled) return;
-
-      // Load preferences first
-      await loadPreferences();
-
-      // Check for existing Supabase session first
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        // User is already logged in via Supabase
-        setPhase("done");
+        setPhase("settling");
         await new Promise(resolve => setTimeout(resolve, 500));
         if (cancelled) return;
-        
-        // Check if user has completed onboarding
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("full_name, investor_profile")
-          .eq("user_id", session.user.id)
-          .single();
 
-        if (profile?.full_name && profile?.investor_profile) {
+        // Load preferences with timeout to prevent hanging on iOS
+        const loadPrefsWithTimeout = Promise.race([
+          loadPreferences(),
+          new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout
+        ]);
+        await loadPrefsWithTimeout;
+
+        // Check for existing Supabase session with timeout
+        let session = null;
+        try {
+          const sessionResult = await Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]) as { data: { session: any } };
+          session = sessionResult?.data?.session;
+        } catch (error) {
+          console.log("Session check timeout or error:", error);
+        }
+        
+        if (session) {
+          // User is already logged in via Supabase
+          setPhase("done");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (cancelled) return;
+          
+          // Check if user has completed onboarding with timeout
+          try {
+            const profileResult = await Promise.race([
+              supabase
+                .from("profiles")
+                .select("full_name, investor_profile")
+                .eq("user_id", session.user.id)
+                .single(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+            ]) as { data: any };
+
+            if (profileResult?.data?.full_name && profileResult?.data?.investor_profile) {
+              navigate("/app");
+            } else {
+              navigate("/onboarding");
+            }
+          } catch (error) {
+            console.log("Profile check error:", error);
+            navigate("/onboarding");
+          }
+          return;
+        }
+
+        // No active session, try to restore from stored tokens with timeout
+        let autoLoginResult = { hasSession: false, requiresBiometric: false, success: false };
+        try {
+          autoLoginResult = await Promise.race([
+            attemptAutoLogin(),
+            new Promise<typeof autoLoginResult>((resolve) => 
+              setTimeout(() => resolve({ hasSession: false, requiresBiometric: false, success: false }), 3000)
+            )
+          ]);
+        } catch (error) {
+          console.log("Auto login error:", error);
+        }
+
+        if (!autoLoginResult.hasSession) {
+          // No stored session, go to welcome
+          setPhase("done");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (cancelled) return;
+          navigate("/welcome");
+          return;
+        }
+
+        if (autoLoginResult.requiresBiometric) {
+          // Show biometric prompt
+          setPhase("biometric");
+          setShowBiometricPrompt(true);
+          return;
+        }
+
+        if (autoLoginResult.success) {
+          // Session restored successfully
+          setPhase("done");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (cancelled) return;
           navigate("/app");
         } else {
-          navigate("/onboarding");
+          // Failed to restore session
+          setPhase("done");
+          await new Promise(resolve => setTimeout(resolve, 500));
+          if (cancelled) return;
+          navigate("/welcome");
         }
-        return;
-      }
-
-      // No active session, try to restore from stored tokens
-      const autoLoginResult = await attemptAutoLogin();
-
-      if (!autoLoginResult.hasSession) {
-        // No stored session, go to welcome
+      } catch (error) {
+        console.error("Splash navigation error:", error);
+        // Fallback: go to welcome on any error
         setPhase("done");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (cancelled) return;
-        navigate("/welcome");
-        return;
-      }
-
-      if (autoLoginResult.requiresBiometric) {
-        // Show biometric prompt
-        setPhase("biometric");
-        setShowBiometricPrompt(true);
-        return;
-      }
-
-      if (autoLoginResult.success) {
-        // Session restored successfully
-        setPhase("done");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (cancelled) return;
-        navigate("/app");
-      } else {
-        // Failed to restore session
-        setPhase("done");
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (cancelled) return;
-        navigate("/welcome");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        if (!cancelled) {
+          navigate("/welcome");
+        }
       }
     };
 
