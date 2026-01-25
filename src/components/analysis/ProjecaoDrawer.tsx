@@ -783,28 +783,42 @@ const ProjecaoDrawer = ({
             className="bg-card rounded-2xl p-4 border border-border"
           >
             <h3 className="text-sm font-medium text-foreground mb-4">Evolução Projetada</h3>
-            <div className="h-56">
+            <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={projectionData}>
+                <AreaChart 
+                  data={projectionData}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="gradientSelected" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={scenarioColors[selectedScenario]} stopOpacity={0.3} />
                       <stop offset="95%" stopColor={scenarioColors[selectedScenario]} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
                   <XAxis 
                     dataKey="month" 
                     stroke="hsl(var(--muted-foreground))" 
-                    fontSize={10}
+                    fontSize={9}
                     tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    interval={1}
                   />
                   <YAxis 
                     stroke="hsl(var(--muted-foreground))" 
-                    fontSize={9}
+                    fontSize={8}
                     tickLine={false}
-                    tickFormatter={(value) => showValues ? `${(value / 1000).toFixed(0)}k` : "••"}
-                    width={40}
+                    axisLine={false}
+                    tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(value) => {
+                      if (!showValues) return "••";
+                      if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                      if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+                      return value.toString();
+                    }}
+                    width={48}
+                    domain={['dataMin * 0.98', 'dataMax * 1.02']}
                   />
                   <Tooltip 
                     contentStyle={{ 
@@ -812,8 +826,9 @@ const ProjecaoDrawer = ({
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "12px",
                       fontSize: "11px",
+                      padding: "8px 12px",
                     }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
+                    labelStyle={{ color: "hsl(var(--foreground))", marginBottom: "4px" }}
                     formatter={(value: number, name: string) => [
                       showValues ? formatCurrency(value) : "R$ ••••••",
                       name === selectedScenario ? scenarioLabels[selectedScenario] : name === "cdi" ? "CDI" : name
@@ -823,27 +838,27 @@ const ProjecaoDrawer = ({
                     type="monotone"
                     dataKey={selectedScenario}
                     stroke={scenarioColors[selectedScenario]}
-                    strokeWidth={3}
+                    strokeWidth={2}
                     fill="url(#gradientSelected)"
                   />
                   <Line
                     type="monotone"
                     dataKey="cdi"
                     stroke="hsl(var(--muted-foreground))"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     strokeDasharray="5 5"
                     dot={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex items-center justify-center gap-4 mt-2 text-xs">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: scenarioColors[selectedScenario] }} />
+            <div className="flex items-center justify-center gap-4 mt-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: scenarioColors[selectedScenario] }} />
                 <span className="text-muted-foreground">{scenarioLabels[selectedScenario]}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-0.5 bg-muted-foreground" />
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-0.5 bg-muted-foreground shrink-0" style={{ borderStyle: "dashed" }} />
                 <span className="text-muted-foreground">CDI</span>
               </div>
             </div>
@@ -861,16 +876,16 @@ const ProjecaoDrawer = ({
               
               {/* Selected Scenario Highlight */}
               <div className="bg-gradient-to-r from-success/10 to-success/5 rounded-2xl p-4 border border-success/20">
-                <div className="flex justify-between items-start">
-                  <div>
+                <div className="flex justify-between items-start gap-2">
+                  <div className="flex-1 min-w-0">
                     <span className="text-xs text-muted-foreground">Cenário {scenarioLabels[selectedScenario]}</span>
-                    <p className="text-xl font-bold text-foreground">{formatCurrency(finalProjections[selectedScenario].value)}</p>
+                    <p className="text-lg font-bold text-foreground truncate">{formatCurrency(finalProjections[selectedScenario].value)}</p>
                   </div>
-                  <div className="text-right">
-                    <span className={`text-lg font-bold ${finalProjections[selectedScenario].gain >= 0 ? "text-success" : "text-destructive"}`}>
+                  <div className="text-right shrink-0">
+                    <span className={`text-base font-bold ${finalProjections[selectedScenario].gain >= 0 ? "text-success" : "text-destructive"}`}>
                       {formatPercent(finalProjections[selectedScenario].percent)}
                     </span>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground truncate">
                       {finalProjections[selectedScenario].gain >= 0 ? "+" : ""}{formatCurrency(finalProjections[selectedScenario].gain)}
                     </p>
                   </div>
@@ -884,14 +899,14 @@ const ProjecaoDrawer = ({
                     key={scenario}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedScenario(scenario)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer overflow-hidden ${
                       selectedScenario === scenario
                         ? "border-primary bg-primary/5"
                         : "border-border bg-card hover:bg-muted/50"
                     }`}
                   >
-                    <span className="text-[10px] text-muted-foreground uppercase">{scenarioLabels[scenario]}</span>
-                    <p className="text-sm font-bold text-foreground mt-1">
+                    <span className="text-[9px] text-muted-foreground uppercase block truncate">{scenarioLabels[scenario]}</span>
+                    <p className="text-sm font-bold text-foreground mt-0.5 truncate">
                       {formatPercent(finalProjections[scenario].percent)}
                     </p>
                   </motion.div>
@@ -899,21 +914,21 @@ const ProjecaoDrawer = ({
               </div>
 
               {/* CDI vs IPCA Comparison */}
-              <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+              <div className="bg-muted/50 rounded-xl p-3 space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-muted-foreground" />
+                  <Info className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="text-xs text-muted-foreground">Comparativo com indicadores</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-background rounded-lg p-3 border border-border">
-                    <span className="text-xs text-muted-foreground">CDI Projetado</span>
-                    <p className="text-sm font-semibold text-foreground">{formatCurrency(finalProjections.cdi.value)}</p>
-                    <span className="text-xs text-primary">{formatPercent(finalProjections.cdi.percent)}</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-background rounded-lg p-2.5 border border-border overflow-hidden">
+                    <span className="text-[10px] text-muted-foreground block">CDI Projetado</span>
+                    <p className="text-xs font-semibold text-foreground truncate">{formatCurrency(finalProjections.cdi.value)}</p>
+                    <span className="text-[10px] text-primary">{formatPercent(finalProjections.cdi.percent)}</span>
                   </div>
-                  <div className="bg-background rounded-lg p-3 border border-border">
-                    <span className="text-xs text-muted-foreground">IPCA Projetado</span>
-                    <p className="text-sm font-semibold text-foreground">{formatCurrency(finalProjections.ipca.value)}</p>
-                    <span className="text-xs text-warning">{formatPercent(finalProjections.ipca.percent)}</span>
+                  <div className="bg-background rounded-lg p-2.5 border border-border overflow-hidden">
+                    <span className="text-[10px] text-muted-foreground block">IPCA Projetado</span>
+                    <p className="text-xs font-semibold text-foreground truncate">{formatCurrency(finalProjections.ipca.value)}</p>
+                    <span className="text-[10px] text-warning">{formatPercent(finalProjections.ipca.percent)}</span>
                   </div>
                 </div>
               </div>
