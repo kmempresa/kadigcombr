@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, User, Mic, Paperclip, History, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Send, User, History, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import biancaConsultora from "@/assets/bianca-consultora.png";
@@ -709,10 +709,6 @@ const ConsultorIA = () => {
       <div className="flex-shrink-0 p-4 safe-area-inset-bottom bg-gradient-to-t from-card to-transparent relative z-10">
         <div className="bg-card rounded-3xl shadow-lg border border-border p-2">
           <div className="flex items-end gap-2">
-            <button className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-all flex-shrink-0">
-              <Paperclip className="w-5 h-5" />
-            </button>
-            
             <div className="flex-1 min-h-[44px] flex items-center">
               <textarea
                 ref={inputRef}
@@ -721,14 +717,10 @@ const ConsultorIA = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Pergunte algo..."
                 rows={1}
-                className="w-full bg-transparent text-foreground placeholder:text-muted-foreground resize-none outline-none text-[15px] py-3 px-2 max-h-32"
+                className="w-full bg-transparent text-foreground placeholder:text-muted-foreground resize-none outline-none text-[15px] py-3 px-3 max-h-32"
                 style={{ minHeight: "24px" }}
               />
             </div>
-
-            <button className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/80 transition-all flex-shrink-0">
-              <Mic className="w-5 h-5" />
-            </button>
             
             <motion.button
               whileHover={{ scale: 1.05 }}
