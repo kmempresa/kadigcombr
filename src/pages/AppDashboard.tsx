@@ -2170,7 +2170,9 @@ const AppDashboard = () => {
             onAddConnection={() => navigate("/conexoes")}
           />
         ) : (
-          <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
+          <div className="flex-1 pb-24">
+            <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
+          </div>
         )
       )}
 
@@ -2179,7 +2181,9 @@ const AppDashboard = () => {
         isPremium ? (
           <MercadoTab showValues={showValues} />
         ) : (
-          <PremiumPaywall type="mercado" onSubscribe={() => setPremiumDrawerOpen(true)} />
+          <div className="flex-1 pb-24">
+            <PremiumPaywall type="mercado" onSubscribe={() => setPremiumDrawerOpen(true)} />
+          </div>
         )
       )}
 

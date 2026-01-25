@@ -80,7 +80,7 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
   const Icon = config.icon;
 
   return (
-    <div className="flex-1 overflow-y-auto pb-32 relative bg-background">
+    <div className="flex-1 overflow-y-auto relative bg-background">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Grid Pattern */}
@@ -94,7 +94,7 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
       </div>
 
       {/* Content - more compact */}
-      <div className="relative z-10 px-4 pt-6">
+      <div className="relative z-10 px-4 pt-6 pb-8">
         {/* Premium Badge */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
