@@ -3,16 +3,7 @@ import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, HelpCircle, Info, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
-
-interface Investment {
-  id: string;
-  asset_name: string;
-  asset_type: string;
-  ticker?: string | null;
-  current_value: number;
-  total_invested: number;
-  gain_percent: number;
-}
+import { useRealtimeAnalysis } from "@/hooks/useRealtimeAnalysis";
 
 interface MarketAnalysis {
   ticker: string;
@@ -24,10 +15,7 @@ interface MarketAnalysis {
 interface RiscoRetornoDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  investments: Investment[];
-  totalPatrimonio: number;
-  totalInvested: number;
-  economicIndicators: any;
+  portfolioId: string | null;
 }
 
 // Sharpe Ratio Gauge Component
@@ -104,17 +92,26 @@ const SharpeColorBar = ({ sharpe }: { sharpe: number }) => {
 export default function RiscoRetornoDrawer({
   open,
   onOpenChange,
-  investments,
-  totalPatrimonio,
-  totalInvested,
-  economicIndicators
+  portfolioId,
 }: RiscoRetornoDrawerProps) {
   const { theme } = useTheme();
   const themeClass = theme === "light" ? "light-theme" : "";
   const [activeTab, setActiveTab] = useState<'carteira' | 'ativos'>('carteira');
-  const [loading, setLoading] = useState(false);
+  const [marketLoading, setMarketLoading] = useState(false);
   const [marketAnalysis, setMarketAnalysis] = useState<Map<string, MarketAnalysis>>(new Map());
 
+  // Real-time data
+  const { 
+    investments, 
+    totals, 
+    economicIndicators,
+    loading, 
+    isUpdating, 
+    formatLastUpdate 
+  } = useRealtimeAnalysis({ portfolioId, enabled: open });
+
+  const totalPatrimonio = totals.totalValue;
+  const totalInvested = totals.totalInvested;
   const totalGain = totalPatrimonio - totalInvested;
   const returnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
   const cdi12m = economicIndicators?.accumulated12m?.cdi || 13.14;
@@ -122,10 +119,10 @@ export default function RiscoRetornoDrawer({
 
   // Fetch real volatility data from market-analysis API
   useEffect(() => {
-    const fetchMarketAnalysis = async () => {
+    const fetchMarketAnalysisData = async () => {
       if (!open || investments.length === 0) return;
       
-      setLoading(true);
+      setMarketLoading(true);
       try {
         const analysisMap = new Map<string, MarketAnalysis>();
 
@@ -186,11 +183,11 @@ export default function RiscoRetornoDrawer({
       } catch (error) {
         console.error("Error fetching market analysis:", error);
       } finally {
-        setLoading(false);
+        setMarketLoading(false);
       }
     };
 
-    fetchMarketAnalysis();
+    fetchMarketAnalysisData();
   }, [open, investments]);
 
   // Calculate portfolio volatility (weighted average)
@@ -260,9 +257,13 @@ export default function RiscoRetornoDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Risco Retorno</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              {(isUpdating || marketLoading) && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+              <span className="text-xs text-muted-foreground">{formatLastUpdate()}</span>
+              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -284,7 +285,7 @@ export default function RiscoRetornoDrawer({
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {loading ? (
+            {(loading || marketLoading) ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
