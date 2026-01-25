@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { X, Check, Search, ChevronLeft, ChevronRight, Hand, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -34,6 +35,8 @@ export default function ComparadorAtivosDrawer({
   formatCurrency,
   economicIndicators
 }: ComparadorAtivosDrawerProps) {
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
   const [currentStep, setCurrentStep] = useState<Step>('main');
   const [selectedIndices, setSelectedIndices] = useState<string[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Investment | null>(null);
@@ -476,8 +479,7 @@ export default function ComparadorAtivosDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[95vh] bg-[#1a1f2e] text-white dark">
-        <DrawerTitle className="sr-only">Comparador de Ativos</DrawerTitle>
+      <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
