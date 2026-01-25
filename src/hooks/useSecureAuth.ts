@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { Preferences } from "@capacitor/preferences";
 import { supabase } from "@/integrations/supabase/client";
 
 // Keys for secure storage
@@ -11,22 +10,65 @@ const STAY_LOGGED_IN_KEY = "kadig-stay-logged-in";
 // Check if running in Capacitor native environment
 const isNative = () => {
   try {
-    return typeof (window as any).Capacitor !== 'undefined';
+    return !!(window as any).Capacitor?.isNativePlatform?.();
   } catch {
     return false;
   }
+};
+
+// Safe localStorage fallback for web
+const safeStorage = {
+  get: async (key: string): Promise<string | null> => {
+    if (isNative()) {
+      try {
+        const { Preferences } = await import("@capacitor/preferences");
+        const result = await Preferences.get({ key });
+        return result.value;
+      } catch (error) {
+        console.log("Preferences not available, using localStorage");
+      }
+    }
+    return localStorage.getItem(key);
+  },
+  set: async (key: string, value: string): Promise<void> => {
+    if (isNative()) {
+      try {
+        const { Preferences } = await import("@capacitor/preferences");
+        await Preferences.set({ key, value });
+        return;
+      } catch (error) {
+        console.log("Preferences not available, using localStorage");
+      }
+    }
+    localStorage.setItem(key, value);
+  },
+  remove: async (key: string): Promise<void> => {
+    if (isNative()) {
+      try {
+        const { Preferences } = await import("@capacitor/preferences");
+        await Preferences.remove({ key });
+        return;
+      } catch (error) {
+        console.log("Preferences not available, using localStorage");
+      }
+    }
+    localStorage.removeItem(key);
+  },
 };
 
 // Dynamic import for biometric auth (only available in native)
 let BiometricAuth: any = null;
 
 const loadBiometricAuth = async () => {
-  if (isNative() && !BiometricAuth) {
+  if (!isNative()) return null;
+  
+  if (!BiometricAuth) {
     try {
       const module = await import("@aparajita/capacitor-biometric-auth");
       BiometricAuth = module.BiometricAuth;
     } catch (error) {
       console.log("Biometric auth not available:", error);
+      return null;
     }
   }
   return BiometricAuth;
@@ -66,9 +108,9 @@ export const useSecureAuth = () => {
   const loadPreferences = useCallback(async () => {
     try {
       const [biometricEnabledResult, stayLoggedInResult, tokenResult] = await Promise.all([
-        Preferences.get({ key: BIOMETRIC_ENABLED_KEY }),
-        Preferences.get({ key: STAY_LOGGED_IN_KEY }),
-        Preferences.get({ key: SECURE_TOKEN_KEY }),
+        safeStorage.get(BIOMETRIC_ENABLED_KEY),
+        safeStorage.get(STAY_LOGGED_IN_KEY),
+        safeStorage.get(SECURE_TOKEN_KEY),
       ]);
 
       const biometricAvailable = await checkBiometricAvailability();
@@ -76,9 +118,9 @@ export const useSecureAuth = () => {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        biometricEnabled: biometricEnabledResult.value === "true",
-        stayLoggedIn: stayLoggedInResult.value === "true",
-        hasStoredSession: !!tokenResult.value,
+        biometricEnabled: biometricEnabledResult === "true",
+        stayLoggedIn: stayLoggedInResult === "true",
+        hasStoredSession: !!tokenResult,
         biometricAvailable,
       }));
     } catch (error) {
@@ -91,9 +133,9 @@ export const useSecureAuth = () => {
   const saveSession = useCallback(async (accessToken: string, refreshToken: string) => {
     try {
       await Promise.all([
-        Preferences.set({ key: SECURE_TOKEN_KEY, value: accessToken }),
-        Preferences.set({ key: SECURE_REFRESH_TOKEN_KEY, value: refreshToken }),
-        Preferences.set({ key: STAY_LOGGED_IN_KEY, value: "true" }),
+        safeStorage.set(SECURE_TOKEN_KEY, accessToken),
+        safeStorage.set(SECURE_REFRESH_TOKEN_KEY, refreshToken),
+        safeStorage.set(STAY_LOGGED_IN_KEY, "true"),
       ]);
       setState(prev => ({ ...prev, hasStoredSession: true, stayLoggedIn: true }));
       return true;
@@ -107,14 +149,14 @@ export const useSecureAuth = () => {
   const getStoredSession = useCallback(async () => {
     try {
       const [tokenResult, refreshResult] = await Promise.all([
-        Preferences.get({ key: SECURE_TOKEN_KEY }),
-        Preferences.get({ key: SECURE_REFRESH_TOKEN_KEY }),
+        safeStorage.get(SECURE_TOKEN_KEY),
+        safeStorage.get(SECURE_REFRESH_TOKEN_KEY),
       ]);
 
-      if (tokenResult.value && refreshResult.value) {
+      if (tokenResult && refreshResult) {
         return {
-          accessToken: tokenResult.value,
-          refreshToken: refreshResult.value,
+          accessToken: tokenResult,
+          refreshToken: refreshResult,
         };
       }
       return null;
@@ -128,9 +170,9 @@ export const useSecureAuth = () => {
   const clearSession = useCallback(async () => {
     try {
       await Promise.all([
-        Preferences.remove({ key: SECURE_TOKEN_KEY }),
-        Preferences.remove({ key: SECURE_REFRESH_TOKEN_KEY }),
-        Preferences.set({ key: STAY_LOGGED_IN_KEY, value: "false" }),
+        safeStorage.remove(SECURE_TOKEN_KEY),
+        safeStorage.remove(SECURE_REFRESH_TOKEN_KEY),
+        safeStorage.set(STAY_LOGGED_IN_KEY, "false"),
       ]);
       setState(prev => ({ ...prev, hasStoredSession: false, stayLoggedIn: false }));
       return true;
@@ -143,7 +185,7 @@ export const useSecureAuth = () => {
   // Set biometric preference
   const setBiometricEnabled = useCallback(async (enabled: boolean) => {
     try {
-      await Preferences.set({ key: BIOMETRIC_ENABLED_KEY, value: enabled ? "true" : "false" });
+      await safeStorage.set(BIOMETRIC_ENABLED_KEY, enabled ? "true" : "false");
       setState(prev => ({ ...prev, biometricEnabled: enabled }));
       
       // Also save to localStorage for SecurityDrawer compatibility
@@ -225,8 +267,8 @@ export const useSecureAuth = () => {
     }
 
     // Check if biometric is enabled
-    const biometricResult = await Preferences.get({ key: BIOMETRIC_ENABLED_KEY });
-    const biometricEnabled = biometricResult.value === "true";
+    const biometricEnabledValue = await safeStorage.get(BIOMETRIC_ENABLED_KEY);
+    const biometricEnabled = biometricEnabledValue === "true";
 
     if (biometricEnabled) {
       return { success: false, requiresBiometric: true, hasSession: true };
