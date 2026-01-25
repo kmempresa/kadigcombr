@@ -53,6 +53,7 @@ import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
+import SensibilidadeAtivosDrawer from "@/components/analysis/SensibilidadeAtivosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
@@ -189,6 +190,7 @@ const AppDashboard = () => {
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
   const [projecaoOpen, setProjecaoOpen] = useState(false);
+  const [sensibilidadeOpen, setSensibilidadeOpen] = useState(false);
   const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
   const [goalType, setGoalType] = useState<"patrimonio" | "renda_passiva">("patrimonio");
   const [goals, setGoals] = useState<{ patrimonio?: any; renda_passiva?: any }>({});
@@ -1688,6 +1690,7 @@ const AppDashboard = () => {
               {/* Sensibilidade dos Ativos */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
+                onClick={() => setSensibilidadeOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-cyan-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-cyan-500/10 hover:border-cyan-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -2303,6 +2306,16 @@ const AppDashboard = () => {
         showValues={showValues}
         totalPatrimonio={totalPatrimonio}
         totalInvestido={totalInvestido}
+        totalGanho={totalGanhos}
+        economicIndicators={economicIndicators}
+      />
+
+      <SensibilidadeAtivosDrawer
+        open={sensibilidadeOpen}
+        onOpenChange={setSensibilidadeOpen}
+        investments={filteredInvestments}
+        totalPatrimonio={totalPatrimonio}
+        totalInvested={totalInvestido}
         totalGanho={totalGanhos}
         economicIndicators={economicIndicators}
       />
