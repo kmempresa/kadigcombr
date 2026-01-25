@@ -1,8 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
-import { X, HelpCircle, Loader2, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { X, HelpCircle, Loader2, TrendingUp, TrendingDown, Minus, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "@/hooks/useTheme";
+import { useRealtimeInvestments } from "@/hooks/useRealtimeInvestments";
+import { useRealTimePrices } from "@/hooks/useRealTimePrices";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Investment {
   id: string;
@@ -17,7 +26,7 @@ interface Investment {
 interface SensibilidadeAtivosDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  investments: Investment[];
+  portfolioId: string | null;
   totalPatrimonio: number;
   totalInvested: number;
   totalGanho: number;
@@ -42,7 +51,7 @@ interface AssetSensitivity {
 export default function SensibilidadeAtivosDrawer({
   open,
   onOpenChange,
-  investments,
+  portfolioId,
   totalPatrimonio,
   totalInvested,
   totalGanho,
@@ -52,8 +61,16 @@ export default function SensibilidadeAtivosDrawer({
   const themeClass = theme === "light" ? "light-theme" : "";
   const [loading, setLoading] = useState(false);
   const [volatilityData, setVolatilityData] = useState<Map<string, number>>(new Map());
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  
+  // Real-time data hooks
+  const { investments } = useRealtimeInvestments(portfolioId);
+  const { isUpdating, lastUpdateTime } = useRealTimePrices({
+    autoRefresh: true,
+    refreshInterval: 5 * 60 * 1000, // 5 minutes
+  });
 
-  // Fetch volatility data
+  // Fetch volatility data - recalculates when investments change
   useEffect(() => {
     const fetchVolatilityData = async () => {
       if (!open || investments.length === 0) return;
@@ -100,8 +117,17 @@ export default function SensibilidadeAtivosDrawer({
       }
     };
 
-    fetchVolatilityData();
+    if (open) {
+      fetchVolatilityData();
+    }
   }, [open, investments]);
+
+  // Auto-select first asset if none selected
+  useEffect(() => {
+    if (investments.length > 0 && !selectedAssetId) {
+      setSelectedAssetId(investments[0].id);
+    }
+  }, [investments, selectedAssetId]);
 
   // Calculate sensitivities
   const sensitivities: AssetSensitivity[] = useMemo(() => {
@@ -195,6 +221,19 @@ export default function SensibilidadeAtivosDrawer({
     }
   };
 
+  // Get selected asset details
+  const selectedAsset = sensitivities.find(s => s.id === selectedAssetId);
+
+  // Format last update time
+  const formatLastUpdate = () => {
+    if (!lastUpdateTime) return "Nunca";
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdateTime.getTime()) / 1000);
+    if (diff < 60) return "Agora";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+    return `${Math.floor(diff / 3600)}h atrás`;
+  };
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className={`h-[95vh] bg-background ${themeClass}`}>
@@ -203,19 +242,119 @@ export default function SensibilidadeAtivosDrawer({
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-lg font-semibold text-foreground">Sensibilidade dos Ativos</h2>
-            <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-muted-foreground" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isUpdating && (
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              )}
+              <span className="text-xs text-muted-foreground">
+                {formatLastUpdate()}
+              </span>
+              <button className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {loading ? (
+            {(loading && sensitivities.length === 0) ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
             ) : (
               <>
+                {/* Asset Selector */}
+                <div className="bg-card border border-border rounded-2xl p-4">
+                  <h3 className="font-medium text-foreground mb-3">Selecionar Ativo</h3>
+                  <Select value={selectedAssetId || undefined} onValueChange={setSelectedAssetId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Escolha um ativo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sensitivities.map((asset) => (
+                        <SelectItem key={asset.id} value={asset.id}>
+                          <div className="flex items-center justify-between w-full gap-2">
+                            <span className="font-medium">{asset.name}</span>
+                            {asset.ticker && (
+                              <span className="text-xs text-muted-foreground">
+                                {asset.ticker}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Selected Asset Detail */}
+                {selectedAsset && (
+                  <div className="bg-gradient-to-br from-accent/10 to-accent/5 border border-accent rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-bold text-foreground text-lg">{selectedAsset.name}</h3>
+                        <p className="text-sm text-muted-foreground">{selectedAsset.type}</p>
+                      </div>
+                      <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full ${getImpactBgColor(selectedAsset.impact)}`}>
+                        <span className={getImpactColor(selectedAsset.impact)}>
+                          {getImpactIcon(selectedAsset.impact)}
+                        </span>
+                        <span className={`text-lg font-bold ${getImpactColor(selectedAsset.impact)}`}>
+                          {selectedAsset.contribution >= 0 ? '+' : ''}{selectedAsset.contribution.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 mt-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-card/50 rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Valor Atual</p>
+                          <p className="font-bold text-foreground">{formatCurrency(selectedAsset.value)}</p>
+                        </div>
+                        <div className="bg-card/50 rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Investido</p>
+                          <p className="font-bold text-foreground">{formatCurrency(selectedAsset.invested)}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-card/50 rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Peso</p>
+                          <p className="font-bold text-foreground">{selectedAsset.weight.toFixed(1)}%</p>
+                        </div>
+                        <div className="bg-card/50 rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Rentabilidade</p>
+                          <p className={`font-bold ${selectedAsset.gainPercent >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                            {selectedAsset.gainPercent >= 0 ? '+' : ''}{selectedAsset.gainPercent.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="bg-card/50 rounded-xl p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Volatilidade</p>
+                          <p className="font-bold text-foreground">{selectedAsset.volatility.toFixed(1)}%</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-card/50 rounded-xl p-3">
+                        <p className="text-xs text-muted-foreground mb-2">Contribuição para o Portfólio</p>
+                        <div className="h-3 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all ${selectedAsset.contribution >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                            style={{ 
+                              width: `${Math.min(Math.abs(selectedAsset.contribution) * 10, 100)}%`,
+                              marginLeft: selectedAsset.contribution < 0 ? 'auto' : 0
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-1 text-xs">
+                          <span className="text-red-500">-10%</span>
+                          <span className="text-muted-foreground">0%</span>
+                          <span className="text-emerald-500">+10%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Summary Card */}
                 <div className="bg-card border border-border rounded-2xl p-4">
                   <h3 className="font-medium text-foreground mb-4 text-center">Contribuição Total</h3>

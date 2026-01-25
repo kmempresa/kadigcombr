@@ -2313,7 +2313,7 @@ const AppDashboard = () => {
       <SensibilidadeAtivosDrawer
         open={sensibilidadeOpen}
         onOpenChange={setSensibilidadeOpen}
-        investments={filteredInvestments}
+        portfolioId={activePortfolioId}
         totalPatrimonio={totalPatrimonio}
         totalInvested={totalInvestido}
         totalGanho={totalGanhos}
