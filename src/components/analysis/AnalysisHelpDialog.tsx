@@ -5,7 +5,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { HelpCircle, BookOpen, TrendingUp, PieChart, BarChart3, Shield, Coins, LineChart, Activity, AlertTriangle } from "lucide-react";
+import { HelpCircle, BookOpen, TrendingUp, PieChart, BarChart3, Shield, Coins, LineChart, Activity } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export type AnalysisSectionType = 
   | 'distribuicao'
@@ -189,58 +190,66 @@ interface AnalysisHelpDialogProps {
 
 export function AnalysisHelpDialog({ open, onOpenChange, section }: AnalysisHelpDialogProps) {
   const content = helpContent[section];
+  const { theme } = useTheme();
+  const themeClass = theme === "light" ? "light-theme" : "";
 
   if (!content) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto max-h-[90vh] flex flex-col p-0">
+      <DialogContent 
+        className={`w-[calc(100%-2rem)] max-w-md mx-auto max-h-[90vh] flex flex-col p-0 rounded-2xl ${themeClass}`}
+        style={{
+          backgroundColor: theme === "light" ? "hsl(var(--background))" : "hsl(var(--background))",
+          color: theme === "light" ? "hsl(var(--foreground))" : "hsl(var(--foreground))",
+        }}
+      >
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3 mb-2">
             {content.icon}
-            <DialogTitle className="text-lg">{content.title}</DialogTitle>
+            <DialogTitle className="text-lg text-foreground">{content.title}</DialogTitle>
           </div>
-          <DialogDescription className="text-left text-sm">
+          <DialogDescription className="text-left text-sm text-muted-foreground">
             {content.description}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
-          {/* Tips */}
-          <div>
-            <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              Dicas
-            </h4>
-            <ul className="space-y-2">
-              {content.tips.map((tip, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <span className="text-primary mt-0.5">•</span>
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Metrics */}
-          {content.metrics && content.metrics.length > 0 && (
+            {/* Tips */}
             <div>
               <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                Métricas
+                <BookOpen className="w-4 h-4 text-primary" />
+                Dicas
               </h4>
-              <div className="space-y-2">
-                {content.metrics.map((metric, index) => (
-                  <div key={index} className="bg-muted/50 rounded-lg p-3">
-                    <p className="font-medium text-foreground text-sm">{metric.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{metric.description}</p>
-                  </div>
+              <ul className="space-y-2">
+                {content.tips.map((tip, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <span className="text-primary mt-0.5">•</span>
+                    {tip}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
-          )}
-        </div>
+
+            {/* Metrics */}
+            {content.metrics && content.metrics.length > 0 && (
+              <div>
+                <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Métricas
+                </h4>
+                <div className="space-y-2">
+                  {content.metrics.map((metric, index) => (
+                    <div key={index} className="bg-muted/50 rounded-lg p-3">
+                      <p className="font-medium text-foreground text-sm">{metric.label}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{metric.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
