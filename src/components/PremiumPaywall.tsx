@@ -94,7 +94,7 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
       </div>
 
       {/* Content - more compact */}
-      <div className="relative z-10 px-4 pt-6 pb-8">
+      <div className="relative z-10 px-4 pt-6 pb-32">
         {/* Premium Badge */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
