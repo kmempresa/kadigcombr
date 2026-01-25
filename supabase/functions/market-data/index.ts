@@ -408,11 +408,16 @@ Deno.serve(async (req) => {
       console.log('Fetching real dividends from BRAPI');
       
       try {
-        // Tickers de ações e FIIs que costumam pagar dividendos
+        // Tickers expandidos de ações e FIIs que costumam pagar dividendos
         const dividendTickers = [
-          'PETR4', 'VALE3', 'BBAS3', 'ITUB4', 'BBDC4', 'TAEE11', 'CPLE6', 'ELET3',
+          // Ações com bons dividendos
+          'PETR4', 'VALE3', 'BBAS3', 'ITUB4', 'BBDC4', 'TAEE11', 'CPLE6', 'ELET6',
+          'CMIG4', 'SANB11', 'BPAC11', 'BBSE3', 'TRPL4', 'VIVT3', 'ENBR3',
+          'CPFE3', 'ENGI11', 'CSMG3', 'SAPR11', 'AURE3', 'CXSE3', 'CMIN3',
+          // FIIs com dividendos mensais
           'XPLG11', 'HGLG11', 'MXRF11', 'XPML11', 'VISC11', 'BCFF11', 'HGBS11',
-          'KNRI11', 'KNCR11', 'VRTA11', 'HGRE11', 'GGRC11'
+          'KNRI11', 'KNCR11', 'VRTA11', 'HGRE11', 'GGRC11', 'PVBI11', 'BTLG11',
+          'HSML11', 'VILG11', 'RBRR11', 'CPTS11', 'RBRF11', 'VGIP11'
         ];
         
         const dividends: any[] = [];
