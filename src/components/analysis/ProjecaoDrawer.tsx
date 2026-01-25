@@ -82,20 +82,22 @@ const ProjecaoDrawer = ({
   const [globalAssets, setGlobalAssets] = useState<GlobalAsset[]>([]);
   const [selectedTarget, setSelectedTarget] = useState<string>("carteira");
   const [showSelector, setShowSelector] = useState(false);
-  const [assetVolatility, setAssetVolatility] = useState<{ [ticker: string]: { change: number; volatility: number } }>({});
-  const [marketAnalysis, setMarketAnalysis] = useState<{ [key: string]: { expectedReturn: number; volatility: number; change30d?: number } }>({});
+
+  // Fetch data and subscribe to realtime updates
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchData = async () => {
       if (!open) return;
       setIsLoading(true);
       
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session || !isMounted) return;
 
         // Fetch in parallel
         const [historyResult, investmentsResult, globalResult] = await Promise.all([
-          // Historical data
+          // Historical data (last year)
           (async () => {
             const oneYearAgo = new Date();
             oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
@@ -120,7 +122,9 @@ const ProjecaoDrawer = ({
             .order("value_brl", { ascending: false }),
         ]);
 
-        // Process historical returns
+        if (!isMounted) return;
+
+        // Process historical returns (monthly)
         const history = historyResult.data || [];
         if (history.length > 1) {
           const returns: number[] = [];
@@ -128,101 +132,60 @@ const ProjecaoDrawer = ({
             const prev = history[i - 1];
             const curr = history[i];
             if (prev.total_value > 0) {
-              const monthlyReturn = ((curr.total_value - prev.total_value) / prev.total_value) * 100;
-              returns.push(monthlyReturn);
+              const dailyReturn = ((curr.total_value - prev.total_value) / prev.total_value) * 100;
+              returns.push(dailyReturn);
             }
           }
           setHistoricalReturns(returns);
         }
 
-        const loadedInvestments = investmentsResult.data || [];
-        setInvestments(loadedInvestments);
+        setInvestments(investmentsResult.data || []);
         setGlobalAssets(globalResult.data || []);
 
-        // Fetch comprehensive market analysis from the new API
-        const analysisMap: { [key: string]: { expectedReturn: number; volatility: number; change30d?: number } } = {};
-        
-        // Get stock analysis
-        const stockTickers = loadedInvestments
-          .filter(inv => inv.ticker && ['Ações, Stocks e ETF', 'BDRs', 'FIIs e REITs'].includes(inv.asset_type))
-          .map(inv => inv.ticker)
-          .filter(Boolean) as string[];
-
-        if (stockTickers.length > 0) {
-          try {
-            const { data: stockAnalysis } = await supabase.functions.invoke('market-analysis', {
-              body: { assets: stockTickers, assetType: 'stocks' }
-            });
-            
-            if (stockAnalysis?.analyses) {
-              stockAnalysis.analyses.forEach((a: any) => {
-                analysisMap[a.ticker] = {
-                  expectedReturn: a.expectedReturn / 100, // Convert to decimal
-                  volatility: a.volatility / 100,
-                  change30d: a.change30d,
-                };
-              });
-            }
-          } catch (e) {
-            console.error("Error fetching stock analysis:", e);
-          }
-        }
-
-        // Get crypto analysis
-        const cryptoNames = loadedInvestments
-          .filter(inv => inv.asset_type === 'Criptoativos')
-          .map(inv => inv.asset_name);
-
-        if (cryptoNames.length > 0) {
-          try {
-            const { data: cryptoAnalysis } = await supabase.functions.invoke('market-analysis', {
-              body: { assets: cryptoNames, assetType: 'crypto' }
-            });
-            
-            if (cryptoAnalysis?.analyses) {
-              cryptoAnalysis.analyses.forEach((a: any) => {
-                analysisMap[a.ticker] = {
-                  expectedReturn: a.expectedReturn / 100,
-                  volatility: a.volatility / 100,
-                  change30d: a.change30d,
-                };
-              });
-            }
-          } catch (e) {
-            console.error("Error fetching crypto analysis:", e);
-          }
-        }
-
-        // Get fixed income analysis (CDI/SELIC)
-        try {
-          const { data: fixedIncomeAnalysis } = await supabase.functions.invoke('market-analysis', {
-            body: { assetType: 'fixed_income' }
-          });
-          
-          if (fixedIncomeAnalysis?.analyses) {
-            fixedIncomeAnalysis.analyses.forEach((a: any) => {
-              analysisMap[a.ticker] = {
-                expectedReturn: a.expectedReturn / 100,
-                volatility: a.volatility / 100,
-              };
-            });
-          }
-        } catch (e) {
-          console.error("Error fetching fixed income analysis:", e);
-        }
-
-        setMarketAnalysis(analysisMap);
-        console.log("ProjecaoDrawer - Market analysis loaded:", Object.keys(analysisMap).length);
-        console.log("ProjecaoDrawer - Investments loaded:", loadedInvestments.length);
-        console.log("ProjecaoDrawer - Global assets loaded:", globalResult.data?.length || 0);
+        console.log("ProjecaoDrawer - Data loaded:", {
+          investments: investmentsResult.data?.length || 0,
+          globalAssets: globalResult.data?.length || 0,
+          historyPoints: history.length,
+        });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching projection data:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchData();
+
+    // Subscribe to realtime updates for automatic refresh
+    const investmentsChannel = supabase
+      .channel('projections-investments-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'investments' },
+        () => {
+          console.log("Investments updated, refreshing projections...");
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    const globalAssetsChannel = supabase
+      .channel('projections-global-assets-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'global_assets' },
+        () => {
+          console.log("Global assets updated, refreshing projections...");
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      isMounted = false;
+      supabase.removeChannel(investmentsChannel);
+      supabase.removeChannel(globalAssetsChannel);
+    };
   }, [open]);
 
   // Calculate totals
@@ -366,115 +329,144 @@ const ProjecaoDrawer = ({
     const baseValue = selectedItem?.value || totalPatrimonio;
     
     // Get CDI and IPCA monthly rates from real economic indicators
-    const cdi12m = economicIndicators?.accumulated12m?.cdi || 11.5;
-    const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.5;
+    const cdi12m = economicIndicators?.accumulated12m?.cdi || 14.38; // Current real CDI
+    const ipca12m = economicIndicators?.accumulated12m?.ipca || 4.26; // Current real IPCA
+    const selic = economicIndicators?.current?.selic || 15; // Current SELIC rate
+    
+    // Calculate monthly rates from annual rates
     const cdiMonthly = Math.pow(1 + cdi12m / 100, 1/12) - 1;
     const ipcaMonthly = Math.pow(1 + ipca12m / 100, 1/12) - 1;
+    const selicMonthly = Math.pow(1 + selic / 100, 1/12) - 1;
     
-    // Use real market analysis from API when available
+    // Helper to get realistic expected return based on asset type
+    const getExpectedReturnByType = (assetType: string | null): { monthlyReturn: number; volatility: number } => {
+      switch (assetType) {
+        case "Criptoativos":
+          // Crypto: Use CDI + risk premium (historical crypto returns are highly variable)
+          // Long-term expectation: higher than stocks but with high volatility
+          return { monthlyReturn: cdiMonthly + 0.02, volatility: 0.15 };
+        case "Ação":
+        case "Ações, Stocks e ETF":
+          // Stocks: CDI + equity risk premium (~6% annual)
+          return { monthlyReturn: cdiMonthly + 0.005, volatility: 0.05 };
+        case "BDRs":
+          // BDRs: Similar to stocks but with currency exposure
+          return { monthlyReturn: cdiMonthly + 0.004, volatility: 0.06 };
+        case "FIIs e REITs":
+          // REITs: CDI + small premium with lower volatility
+          return { monthlyReturn: cdiMonthly + 0.002, volatility: 0.03 };
+        case "Renda Fixa":
+        case "Tesouro Direto":
+          // Fixed income: CDI rate with very low volatility
+          return { monthlyReturn: cdiMonthly, volatility: 0.005 };
+        case "Fundos":
+          // Funds: Slightly above CDI
+          return { monthlyReturn: cdiMonthly * 1.05, volatility: 0.02 };
+        case "Moedas":
+          // Currencies: Lower expected return, moderate volatility
+          return { monthlyReturn: 0.003, volatility: 0.04 };
+        case "Conta Corrente":
+          // Checking account: No return
+          return { monthlyReturn: 0, volatility: 0 };
+        default:
+          // Default: CDI rate
+          return { monthlyReturn: cdiMonthly, volatility: 0.02 };
+      }
+    };
+    
     let baseMonthlyReturn: number;
     let volatility: number;
     
     const assetType = selectedItem ? getAssetTypeForItem(selectedItem.id) : null;
     
-    // Check if we have real market analysis for this specific asset
-    const getMarketAnalysisForItem = (): { expectedReturn: number; volatility: number } | null => {
-      if (selectedItem?.id.startsWith("asset_")) {
-        const assetId = selectedItem.id.replace("asset_", "");
-        const inv = investments.find(i => i.id === assetId);
-        if (inv?.ticker && marketAnalysis[inv.ticker]) {
-          return marketAnalysis[inv.ticker];
-        }
-        if (inv?.asset_name && marketAnalysis[inv.asset_name]) {
-          return marketAnalysis[inv.asset_name];
-        }
-      }
-      return null;
-    };
-    
-    const realAnalysis = getMarketAnalysisForItem();
-    
-    if (realAnalysis) {
-      // Use REAL data from market API
-      baseMonthlyReturn = realAnalysis.expectedReturn;
-      volatility = realAnalysis.volatility;
-      console.log(`Using REAL market analysis: return=${(baseMonthlyReturn * 100).toFixed(2)}%, volatility=${(volatility * 100).toFixed(2)}%`);
-    } else if (selectedItem?.type === "global" || selectedItem?.type === "global_asset") {
+    if (selectedItem?.type === "global" || selectedItem?.type === "global_asset") {
       // Real assets (real estate, vehicles, etc.) - follow inflation + small premium
-      baseMonthlyReturn = ipcaMonthly * 1.3;
-      volatility = 0.02;
-    } else if (assetType === "Criptoativos") {
-      // Check if we have real crypto data
-      const inv = investments.find(i => selectedItem?.id === `asset_${i.id}`);
-      if (inv && marketAnalysis[inv.asset_name]) {
-        baseMonthlyReturn = marketAnalysis[inv.asset_name].expectedReturn;
-        volatility = marketAnalysis[inv.asset_name].volatility;
-      } else {
-        baseMonthlyReturn = 0.04;
-        volatility = 0.15;
-      }
-    } else if (assetType === "Ação" || assetType === "Ações, Stocks e ETF" || assetType === "BDRs") {
-      baseMonthlyReturn = 0.01;
-      volatility = 0.05;
-    } else if (assetType === "FIIs e REITs") {
-      baseMonthlyReturn = 0.008;
-      volatility = 0.03;
-    } else if (assetType === "Renda Fixa" || assetType === "Tesouro Direto") {
-      // Use real CDI from market analysis if available
-      if (marketAnalysis['CDI']) {
-        baseMonthlyReturn = marketAnalysis['CDI'].expectedReturn;
-        volatility = marketAnalysis['CDI'].volatility;
+      // Real estate historically appreciates at IPCA + 2-4% annually
+      baseMonthlyReturn = ipcaMonthly + 0.002; // IPCA + 2.4% annual
+      volatility = 0.01; // Low volatility for real assets
+    } else if (selectedItem?.id.startsWith("asset_")) {
+      // Individual asset - use type-based expectation
+      const assetId = selectedItem.id.replace("asset_", "");
+      const inv = investments.find(i => i.id === assetId);
+      const typeReturn = getExpectedReturnByType(inv?.asset_type || null);
+      baseMonthlyReturn = typeReturn.monthlyReturn;
+      volatility = typeReturn.volatility;
+    } else if (selectedItem?.id.startsWith("type_")) {
+      // Asset type category
+      const typeName = selectedItem.id.replace("type_", "");
+      const typeReturn = getExpectedReturnByType(typeName);
+      baseMonthlyReturn = typeReturn.monthlyReturn;
+      volatility = typeReturn.volatility;
+    } else if (selectedItem?.type === "carteira") {
+      // Investment portfolio - weighted average based on asset types
+      let weightedReturn = 0;
+      let weightedVolatility = 0;
+      let totalValue = 0;
+      
+      investments.forEach(inv => {
+        const value = inv.current_value || 0;
+        const typeReturn = getExpectedReturnByType(inv.asset_type);
+        weightedReturn += typeReturn.monthlyReturn * value;
+        weightedVolatility += typeReturn.volatility * value;
+        totalValue += value;
+      });
+      
+      if (totalValue > 0) {
+        baseMonthlyReturn = weightedReturn / totalValue;
+        volatility = weightedVolatility / totalValue;
       } else {
         baseMonthlyReturn = cdiMonthly;
-        volatility = 0.005;
+        volatility = 0.02;
       }
-    } else if (assetType === "Moedas") {
-      baseMonthlyReturn = 0.005;
-      volatility = 0.04;
-    } else if (assetType === "Fundos") {
-      baseMonthlyReturn = cdiMonthly * 1.1;
-      volatility = 0.02;
-    } else if (selectedItem?.type === "carteira" && historicalReturns.length > 0) {
-      const avgHistoricalReturn = historicalReturns.reduce((a, b) => a + b, 0) / historicalReturns.length;
-      baseMonthlyReturn = avgHistoricalReturn / 100;
-      const variance = historicalReturns.reduce((sum, r) => sum + Math.pow(r - avgHistoricalReturn, 2), 0) / historicalReturns.length;
-      volatility = Math.sqrt(variance) / 100;
+      
+      // Also consider historical returns if available
+      if (historicalReturns.length >= 3) {
+        const avgHistoricalReturn = historicalReturns.reduce((a, b) => a + b, 0) / historicalReturns.length;
+        // Blend historical with expected (60% expected, 40% historical)
+        baseMonthlyReturn = baseMonthlyReturn * 0.6 + (avgHistoricalReturn / 100) * 0.4;
+      }
     } else if (selectedItem?.type === "total") {
-      // Total patrimony - weighted average with real data
+      // Total patrimony - weighted average of investments + global assets
       const investmentWeight = totalPatrimonio / (totalPatrimonio + totalGlobal || 1);
       const globalWeight = totalGlobal / (totalPatrimonio + totalGlobal || 1);
       
-      // Calculate weighted average from all assets with real analysis
-      let weightedReturn = 0;
-      let weightedVolatility = 0;
-      let totalWeight = 0;
+      // Calculate weighted average from investments
+      let invWeightedReturn = 0;
+      let invWeightedVolatility = 0;
+      let totalInvValue = 0;
       
       investments.forEach(inv => {
-        const analysis = marketAnalysis[inv.ticker || ''] || marketAnalysis[inv.asset_name];
-        if (analysis) {
-          const weight = inv.current_value / totalPatrimonio;
-          weightedReturn += analysis.expectedReturn * weight;
-          weightedVolatility += analysis.volatility * weight;
-          totalWeight += weight;
-        }
+        const value = inv.current_value || 0;
+        const typeReturn = getExpectedReturnByType(inv.asset_type);
+        invWeightedReturn += typeReturn.monthlyReturn * value;
+        invWeightedVolatility += typeReturn.volatility * value;
+        totalInvValue += value;
       });
       
-      if (totalWeight > 0.5) {
-        // More than 50% of portfolio has real data
-        baseMonthlyReturn = weightedReturn;
-        volatility = weightedVolatility;
-      } else {
-        baseMonthlyReturn = (cdiMonthly * investmentWeight) + (ipcaMonthly * 1.3 * globalWeight);
-        volatility = 0.03;
-      }
+      const invReturn = totalInvValue > 0 ? invWeightedReturn / totalInvValue : cdiMonthly;
+      const invVolatility = totalInvValue > 0 ? invWeightedVolatility / totalInvValue : 0.02;
+      
+      // Global assets follow IPCA + premium
+      const globalReturn = ipcaMonthly + 0.002;
+      const globalVolatility = 0.01;
+      
+      baseMonthlyReturn = (invReturn * investmentWeight) + (globalReturn * globalWeight);
+      volatility = (invVolatility * investmentWeight) + (globalVolatility * globalWeight);
     } else {
       baseMonthlyReturn = cdiMonthly;
       volatility = 0.01;
     }
     
-    // Scenario multipliers based on volatility
-    const pessimisticMultiplier = Math.max(0.2, 1 - volatility * 3);
-    const optimisticMultiplier = Math.min(2.5, 1 + volatility * 3);
+    // Ensure reasonable bounds for monthly return
+    // Cap at -5% to +10% monthly to avoid unrealistic projections
+    baseMonthlyReturn = Math.max(-0.05, Math.min(0.10, baseMonthlyReturn));
+    volatility = Math.max(0.001, Math.min(0.20, volatility));
+    
+    // Scenario multipliers based on volatility (more conservative)
+    const pessimisticMultiplier = Math.max(0.3, 1 - volatility * 2);
+    const optimisticMultiplier = Math.min(1.8, 1 + volatility * 2);
+    
+    console.log(`Projeção para ${selectedItem?.name}: return=${(baseMonthlyReturn * 100).toFixed(3)}%/mês, volatility=${(volatility * 100).toFixed(2)}%`);
     
     const data: ProjectionData[] = [];
     let pessimista = baseValue;
@@ -516,7 +508,7 @@ const ProjecaoDrawer = ({
     }
     
     return data;
-  }, [selectedItem, historicalReturns, economicIndicators, totalPatrimonio, totalGlobal, investments, marketAnalysis]);
+  }, [selectedItem, historicalReturns, economicIndicators, totalPatrimonio, totalGlobal, investments, getAssetTypeForItem]);
 
   // Calculate final projections
   const finalProjections = useMemo(() => {
