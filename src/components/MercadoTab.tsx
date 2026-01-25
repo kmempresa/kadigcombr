@@ -795,23 +795,39 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               
               <div className="space-y-4">
                 {dividends.slice(0, showAllDividends ? dividends.length : 3).map((dividend, index) => (
-                  <div key={index} className="flex items-start gap-3">
+                  <div 
+                    key={index} 
+                    onClick={() => {
+                      // Create a stock object from dividend data to open drawer
+                      setSelectedStock({
+                        symbol: dividend.ticker,
+                        shortName: dividend.companyName,
+                        regularMarketPrice: 0,
+                        regularMarketChange: 0,
+                        regularMarketChangePercent: 0,
+                        logoUrl: `https://icons.brapi.dev/icons/${dividend.ticker}.svg`,
+                      });
+                      setStockDetailOpen(true);
+                    }}
+                    className="flex items-start gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
+                  >
                     <div className="w-14 h-14 rounded-full bg-violet-500/20 border-2 border-violet-500 flex flex-col items-center justify-center text-center flex-shrink-0">
                       <span className="text-white font-bold text-lg leading-none">{dividend.paymentDay}</span>
                       <span className="text-violet-400 text-xs">{dividend.paymentMonth}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="bg-violet-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
                           {dividend.ticker}
                         </span>
                         <span className="text-gray-400 text-xs">DATA-COM:</span>
                         <span className="text-white text-xs">{dividend.dataCom}</span>
                         <span className="text-gray-400 text-xs ml-2">VALOR</span>
-                        <span className="text-white text-xs">R$ {dividend.value.toFixed(2)}</span>
+                        <span className="text-emerald-400 text-xs font-medium">R$ {dividend.value.toFixed(2)}</span>
                       </div>
                       <p className="text-gray-400 text-xs truncate">{dividend.companyName}</p>
                     </div>
+                    <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
                   </div>
                 ))}
               </div>
