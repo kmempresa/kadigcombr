@@ -19,6 +19,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import { downloadPDF, isNativePlatform } from "@/lib/nativeDownload";
 
 interface Analyst {
   name: string;
@@ -257,11 +258,20 @@ const RelatorioDetailDrawer = ({ open, onOpenChange, reportId }: RelatorioDetail
         pdf.text(`Página ${i}/${totalPages}`, pageWidth - margin - 20, pageHeight - 5);
       }
 
-      // Save
+      // Generate file name
       const fileName = `Relatorio_${report.ticker}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
       
-      toast.success("PDF baixado com sucesso!");
+      // Check if we're on native platform
+      if (isNativePlatform()) {
+        // Get PDF as base64 for native download
+        const pdfBase64 = pdf.output('datauristring');
+        await downloadPDF(pdfBase64, fileName);
+        toast.success("PDF salvo com sucesso!");
+      } else {
+        // Web: use traditional download
+        pdf.save(fileName);
+        toast.success("PDF baixado com sucesso!");
+      }
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast.error("Erro ao gerar PDF");
