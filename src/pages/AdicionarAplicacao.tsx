@@ -86,18 +86,31 @@ const AdicionarAplicacao = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const newQuantity = (selectedInvestment.quantity || 0) + (parseFloat(applicationQuantity) || 0);
-      const newTotalInvested = (selectedInvestment.total_invested || 0) + (parseFloat(applicationValue) || 0);
-      const newCurrentValue = newQuantity * (parseFloat(applicationPrice) || selectedInvestment.purchase_price || 0);
+      const appQty = parseFloat(applicationQuantity) || 0;
+      const appVal = parseFloat(applicationValue) || 0;
+      const appPrice = parseFloat(applicationPrice) || selectedInvestment.purchase_price || 0;
+      
+      const originalQty = selectedInvestment.quantity || 0;
+      const originalTotalInvested = selectedInvestment.total_invested || 0;
+      const originalCurrentValue = selectedInvestment.current_value || 0;
+      
+      const newQuantity = originalQty + appQty;
+      const newTotalInvested = originalTotalInvested + appVal;
+      
+      // Add value to current value (proportionally)
+      const newCurrentValue = originalCurrentValue + (appQty * appPrice);
       const gainPercent = newTotalInvested > 0 ? ((newCurrentValue - newTotalInvested) / newTotalInvested) * 100 : 0;
 
-      // Update investment
+      // Update investment with new current_price as weighted average
+      const newCurrentPrice = newQuantity > 0 ? newCurrentValue / newQuantity : appPrice;
+      
       const { error: updateError } = await supabase
         .from("investments")
         .update({
           quantity: newQuantity,
           total_invested: newTotalInvested,
           current_value: newCurrentValue,
+          current_price: newCurrentPrice,
           gain_percent: gainPercent,
           updated_at: new Date().toISOString(),
         })
