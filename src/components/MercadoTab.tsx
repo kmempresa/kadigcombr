@@ -28,6 +28,7 @@ import SimuladorDrawer from "@/components/analysis/SimuladorDrawer";
 import CarteirasRecomendadasDrawer from "@/components/analysis/CarteirasRecomendadasDrawer";
 import RelatoriosDrawer from "@/components/analysis/RelatoriosDrawer";
 import IndiceKadigDrawer from "@/components/analysis/IndiceKadigDrawer";
+import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
 
 interface StockQuote {
   symbol: string;
@@ -97,6 +98,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [carteirasOpen, setCarteirasOpen] = useState(false);
   const [relatoriosOpen, setRelatoriosOpen] = useState(false);
   const [indiceKadigOpen, setIndiceKadigOpen] = useState(false);
+  const [comparadorOpen, setComparadorOpen] = useState(false);
+  const [userInvestments, setUserInvestments] = useState<any[]>([]);
+  const [economicIndicators, setEconomicIndicators] = useState<any>(null);
   // Mock dividends data
   const [dividends] = useState<DividendItem[]>([
     { ticker: "CPLE3", companyName: "CIA PARANAENSE DE ENERGIA - COPEL", dataCom: "30/12/2025", value: 0.37, paymentDay: 19, paymentMonth: "JAN" },
@@ -162,9 +166,52 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     setLoading(false);
   };
 
+  // Fetch user investments for comparador
+  const fetchUserInvestments = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('investments')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (data) {
+        setUserInvestments(data.map(inv => ({
+          id: inv.id,
+          asset_name: inv.asset_name,
+          asset_type: inv.asset_type,
+          ticker: inv.ticker,
+          current_value: inv.current_value || 0,
+          total_invested: inv.total_invested || 0,
+          gain_percent: inv.gain_percent || 0
+        })));
+      }
+    } catch (error) {
+      console.error("Error fetching investments:", error);
+    }
+  };
+
+  // Fetch economic indicators
+  const fetchEconomicIndicators = async () => {
+    try {
+      const { data } = await supabase.functions.invoke('market-data', {
+        body: { type: 'economic-indicators' }
+      });
+      if (data) {
+        setEconomicIndicators(data);
+      }
+    } catch (error) {
+      console.error("Error fetching economic indicators:", error);
+    }
+  };
+
   useEffect(() => {
     fetchMarketData();
     fetchMarketNews();
+    fetchUserInvestments();
+    fetchEconomicIndicators();
     // Auto-refresh: cotações a cada 60s, notícias a cada 2 minutos
     const marketInterval = setInterval(fetchMarketData, 60000);
     const newsInterval = setInterval(fetchMarketNews, 120000);
@@ -222,7 +269,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
 
   const tools = [
     { label: "Simulador de investimentos", gradient: "from-violet-500 to-purple-600", icon: Calculator, onClick: () => setSimuladorOpen(true) },
-    { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => {} },
+    { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => setComparadorOpen(true) },
     { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
     { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => setRelatoriosOpen(true) },
     { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => setIndiceKadigOpen(true) },
@@ -783,6 +830,15 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       <IndiceKadigDrawer
         open={indiceKadigOpen}
         onOpenChange={setIndiceKadigOpen}
+      />
+
+      {/* Comparador de Ativos Drawer */}
+      <ComparadorAtivosDrawer
+        open={comparadorOpen}
+        onOpenChange={setComparadorOpen}
+        investments={userInvestments}
+        formatCurrency={(value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+        economicIndicators={economicIndicators}
       />
     </div>
   );
