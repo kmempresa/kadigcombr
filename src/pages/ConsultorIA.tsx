@@ -462,7 +462,7 @@ const ConsultorIA = () => {
   }
 
   return (
-    <div className={`${themeClass} bg-gradient-to-b from-background to-card flex flex-col min-h-screen overflow-hidden`}>
+    <div className={`${themeClass} bg-gradient-to-b from-background to-card flex flex-col h-screen overflow-hidden`}>
       {/* History Drawer */}
       <AnimatePresence>
         {showHistory && (
