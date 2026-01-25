@@ -194,18 +194,19 @@ export function AnalysisHelpDialog({ open, onOpenChange, section }: AnalysisHelp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md mx-4 max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md mx-auto max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3 mb-2">
             {content.icon}
             <DialogTitle className="text-lg">{content.title}</DialogTitle>
           </div>
-          <DialogDescription className="text-left">
+          <DialogDescription className="text-left text-sm">
             {content.description}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-4">
           {/* Tips */}
           <div>
             <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
@@ -239,6 +240,7 @@ export function AnalysisHelpDialog({ open, onOpenChange, section }: AnalysisHelp
               </div>
             </div>
           )}
+        </div>
         </div>
       </DialogContent>
     </Dialog>
