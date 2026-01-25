@@ -131,10 +131,20 @@ const AdicionarResgate = () => {
 
         toast.success("Resgate total realizado! Ativo removido da carteira.");
       } else {
-        // Partial redeem
-        const newQuantity = Math.max(0, (selectedInvestment.quantity || 0) - redeemQty);
-        const newTotalInvested = Math.max(0, (selectedInvestment.total_invested || 0) - redeemVal);
-        const newCurrentValue = newQuantity * (parseFloat(redeemPrice) || selectedInvestment.purchase_price || 0);
+        // Partial redeem - calculate proportionally
+        const originalQuantity = selectedInvestment.quantity || 1;
+        const originalTotalInvested = selectedInvestment.total_invested || 0;
+        const originalCurrentValue = selectedInvestment.current_value || 0;
+        const currentPrice = selectedInvestment.current_value / originalQuantity;
+        
+        const newQuantity = Math.max(0, originalQuantity - redeemQty);
+        
+        // Calculate proportional reduction
+        const redeemRatio = redeemQty / originalQuantity;
+        const newTotalInvested = Math.max(0, originalTotalInvested * (1 - redeemRatio));
+        const newCurrentValue = Math.max(0, originalCurrentValue - redeemVal);
+        
+        // Recalculate gain percent based on actual values
         const gainPercent = newTotalInvested > 0 ? ((newCurrentValue - newTotalInvested) / newTotalInvested) * 100 : 0;
 
         if (newQuantity <= 0 || newCurrentValue <= 0) {
@@ -170,6 +180,7 @@ const AdicionarResgate = () => {
               quantity: newQuantity,
               total_invested: newTotalInvested,
               current_value: newCurrentValue,
+              current_price: newQuantity > 0 ? newCurrentValue / newQuantity : currentPrice,
               gain_percent: gainPercent,
               updated_at: new Date().toISOString(),
             })
