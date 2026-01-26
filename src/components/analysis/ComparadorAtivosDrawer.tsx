@@ -3,7 +3,6 @@ import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { X, Check, Search, ChevronLeft, ChevronRight, Hand, Loader2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import { useTheme } from "@/hooks/useTheme";
 
 interface Investment {
   id: string;
@@ -35,8 +34,7 @@ export default function ComparadorAtivosDrawer({
   formatCurrency,
   economicIndicators
 }: ComparadorAtivosDrawerProps) {
-  const { theme } = useTheme();
-  const themeClass = theme === "light" ? "light-theme" : "";
+  // Always use dark theme for this drawer
 
   const [currentStep, setCurrentStep] = useState<Step>('main');
   const [selectedIndices, setSelectedIndices] = useState<string[]>([]);
@@ -481,10 +479,10 @@ export default function ComparadorAtivosDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent 
-        className={`h-[95vh] bg-background text-foreground ${themeClass}`}
+        className="h-[95vh] dark"
         style={{
-          backgroundColor: "hsl(var(--background))",
-          color: "hsl(var(--foreground))",
+          backgroundColor: "#0f1419",
+          color: "#ffffff",
         }}
       >
         <DrawerTitle className="sr-only">Comparador de Ativos</DrawerTitle>
