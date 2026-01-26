@@ -146,9 +146,9 @@ const Onboarding = () => {
       console.error('Error fetching top banks:', err);
       // Use fallback data if API fails
       setTopBanks([
-        { name: "Banco do Brasil", ticker: "BBAS3", dividendYield: 9.8, price: 28.45, sector: "Bancos" },
-        { name: "Itausa", ticker: "ITSA4", dividendYield: 8.2, price: 10.15, sector: "Bancos" },
-        { name: "Bradesco", ticker: "BBDC4", dividendYield: 7.5, price: 14.32, sector: "Bancos" }
+        { name: "Itaú Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
+        { name: "XP Investimentos", ticker: "XPBR31", dividendYield: 5.8, price: 105.20, sector: "Corretoras" },
+        { name: "C6 Bank", ticker: "C6BANK", dividendYield: 4.5, price: 18.75, sector: "Bancos Digitais" }
       ]);
     } finally {
       setLoadingBanks(false);
