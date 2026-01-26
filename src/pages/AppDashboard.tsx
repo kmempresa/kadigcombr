@@ -49,7 +49,7 @@ import RentabilidadeDrawer from "@/components/analysis/RentabilidadeDrawer";
 import RentabilidadeRealDrawer from "@/components/analysis/RentabilidadeRealDrawer";
 import RiscoRetornoDrawer from "@/components/analysis/RiscoRetornoDrawer";
 import GanhoCapitalDrawer from "@/components/analysis/GanhoCapitalDrawer";
-import ComparadorAtivosDrawer from "@/components/analysis/ComparadorAtivosDrawer";
+
 import CoberturaFGCDrawer from "@/components/analysis/CoberturaFGCDrawer";
 import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
@@ -186,7 +186,7 @@ const AppDashboard = () => {
   const [rentabilidadeRealOpen, setRentabilidadeRealOpen] = useState(false);
   const [riscoRetornoOpen, setRiscoRetornoOpen] = useState(false);
   const [ganhoCapitalOpen, setGanhoCapitalOpen] = useState(false);
-  const [comparadorOpen, setComparadorOpen] = useState(false);
+  
   const [coberturaFGCOpen, setCoberturaFGCOpen] = useState(false);
   const [proventosOpen, setProventosOpen] = useState(false);
   const [projecaoOpen, setProjecaoOpen] = useState(false);
@@ -1713,34 +1713,6 @@ const AppDashboard = () => {
                   <p className="text-sm text-muted-foreground leading-relaxed">Entenda como cada ativo contribui para o resultado da carteira.</p>
                 </div>
               </motion.button>
-
-              {/* Comparador de Ativos */}
-              <motion.button 
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setComparadorOpen(true)}
-                className="w-full bg-gradient-to-br from-card to-blue-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-blue-500/10 hover:border-blue-200 transition-all duration-300 group"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
-                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="font-bold text-foreground text-base">Comparador de Ativos</span>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-blue-500 transition-colors" />
-                  </div>
-                </div>
-                <div className="border-t border-border/50 pt-3 pl-16">
-                  <p className="text-sm text-muted-foreground leading-relaxed">Compare um ativo da sua carteira com os índices do mercado.</p>
-                </div>
-              </motion.button>
-
               {/* Cobertura do FGC */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
@@ -2264,15 +2236,6 @@ const AppDashboard = () => {
         totalInvested={totalInvestido}
         formatCurrency={formatCurrency}
       />
-
-      <ComparadorAtivosDrawer
-        open={comparadorOpen}
-        onOpenChange={setComparadorOpen}
-        investments={filteredInvestments}
-        formatCurrency={formatCurrency}
-        economicIndicators={economicIndicators}
-      />
-
       <CoberturaFGCDrawer
         open={coberturaFGCOpen}
         onOpenChange={setCoberturaFGCOpen}
