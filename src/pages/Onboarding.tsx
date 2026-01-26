@@ -557,12 +557,6 @@ const Onboarding = () => {
                     </motion.div>
                   ))}
                 </div>
-
-                <div className="text-center px-4">
-                  <p className="text-sm text-muted-foreground">
-                    Dados atualizados em tempo real via BRAPI
-                  </p>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>
