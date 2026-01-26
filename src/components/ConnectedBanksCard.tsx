@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Building2, RefreshCw, Loader2, TrendingUp, ChevronRight } from "lucide-react";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 import { usePluggySync } from "@/hooks/usePluggySync";
+import { BankLogo } from "@/components/BankLogo";
 
 interface ConnectedBanksCardProps {
   investments: Array<{
@@ -89,29 +90,13 @@ export function ConnectedBanksCard({
               transition={{ delay: index * 0.05 }}
               className="px-4 py-3 flex items-center gap-3"
             >
-              {/* Bank Logo */}
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-md relative"
-                style={{ 
-                  backgroundColor: connection.connector_primary_color 
-                    ? (connection.connector_primary_color.startsWith('#') 
-                        ? connection.connector_primary_color 
-                        : `#${connection.connector_primary_color}`)
-                    : 'hsl(var(--muted))' 
-                }}
-              >
-                {connection.connector_image_url ? (
-                  <img 
-                    src={connection.connector_image_url} 
-                    alt={connection.connector_name || 'Banco'} 
-                    className="w-7 h-7 object-contain"
-                  />
-                ) : (
-                  <span className="text-white font-bold text-sm">
-                    {(connection.connector_name || 'B').charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
+              {/* Bank Logo - Using BankLogo component for reliable logos */}
+              <BankLogo
+                connectorName={connection.connector_name}
+                connectorImageUrl={connection.connector_image_url}
+                connectorPrimaryColor={connection.connector_primary_color}
+                size="sm"
+              />
               
               {/* Bank Info */}
               <div className="flex-1 min-w-0">
