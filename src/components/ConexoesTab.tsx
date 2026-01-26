@@ -23,6 +23,8 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 import { usePluggySync } from "@/hooks/usePluggySync";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 import { notifyConnectionAdded, notifyConnectionRemoved } from "@/lib/notifications";
+import { getBankLogoInfo } from "@/lib/bankLogos";
+import { BankLogo } from "@/components/BankLogo";
 import {
   Drawer,
   DrawerContent,
@@ -577,29 +579,13 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
               />
               
               <div className="relative flex items-center gap-3">
-                {/* Logo */}
-                <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shadow-lg relative"
-                  style={{ 
-                    backgroundColor: connection.connector_primary_color 
-                      ? (connection.connector_primary_color.startsWith('#') 
-                          ? connection.connector_primary_color 
-                          : `#${connection.connector_primary_color}`)
-                      : 'hsl(var(--muted))' 
-                  }}
-                >
-                  {connection.connector_image_url ? (
-                    <img 
-                      src={connection.connector_image_url} 
-                      alt={connection.connector_name || 'Instituição'}
-                      className="w-8 h-8 object-contain"
-                    />
-                  ) : (
-                    <span className="text-white font-bold text-lg">
-                      {(connection.connector_name || 'B').charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+                {/* Logo - Using BankLogo component for reliable logos */}
+                <BankLogo
+                  connectorName={connection.connector_name}
+                  connectorImageUrl={connection.connector_image_url}
+                  connectorPrimaryColor={connection.connector_primary_color}
+                  size="md"
+                />
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
@@ -716,17 +702,13 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
-              {selectedConnection?.connector_image_url && (
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: selectedConnection.connector_primary_color ? `#${selectedConnection.connector_primary_color}` : '#E5E7EB' }}
-                >
-                  <img 
-                    src={selectedConnection.connector_image_url} 
-                    alt={selectedConnection.connector_name || 'Instituição'}
-                    className="w-6 h-6 object-contain"
-                  />
-                </div>
+              {selectedConnection && (
+                <BankLogo
+                  connectorName={selectedConnection.connector_name}
+                  connectorImageUrl={selectedConnection.connector_image_url}
+                  connectorPrimaryColor={selectedConnection.connector_primary_color}
+                  size="sm"
+                />
               )}
               {selectedConnection?.connector_name || 'Detalhes'}
             </DrawerTitle>
@@ -833,26 +815,12 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
             {/* Connection Info */}
             {selectedConnection && (
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl">
-                <div 
-                  className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-muted"
-                  style={{ 
-                    backgroundColor: selectedConnection.connector_primary_color 
-                      ? (selectedConnection.connector_primary_color.startsWith('#') 
-                          ? selectedConnection.connector_primary_color 
-                          : `#${selectedConnection.connector_primary_color}`)
-                      : undefined 
-                  }}
-                >
-                  {selectedConnection.connector_image_url ? (
-                    <img 
-                      src={selectedConnection.connector_image_url} 
-                      alt={selectedConnection.connector_name || 'Instituição'}
-                      className="w-full h-full object-contain p-1"
-                    />
-                  ) : (
-                    <Building2 className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
+                <BankLogo
+                  connectorName={selectedConnection.connector_name}
+                  connectorImageUrl={selectedConnection.connector_image_url}
+                  connectorPrimaryColor={selectedConnection.connector_primary_color}
+                  size="sm"
+                />
                 <div>
                   <p className="font-medium text-foreground">{selectedConnection.connector_name}</p>
                   <p className="text-xs text-muted-foreground">Conexão selecionada</p>
