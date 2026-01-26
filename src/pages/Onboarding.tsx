@@ -13,12 +13,13 @@ import {
   Sprout,
   BarChart3,
   Rocket,
-  Building2,
-  Percent
+  Percent,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
+import { BankLogo } from "@/components/BankLogo";
 
 interface UserProfile {
   name: string;
@@ -100,6 +101,7 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [topBanks, setTopBanks] = useState<TopBank[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     experience: "",
@@ -120,14 +122,68 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
-  // Set fixed top banks when reaching step 3
+  // Fetch real dividend data for top banks when reaching step 3
   useEffect(() => {
     if (step === 3) {
-      setTopBanks([
-        { name: "Itau Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
-        { name: "XP Investimentos", ticker: "XPBR31", dividendYield: 5.8, price: 105.20, sector: "Corretoras" },
-        { name: "C6 Bank", ticker: "C6BANK", dividendYield: 4.5, price: 18.75, sector: "Bancos Digitais" }
-      ]);
+      const fetchBankDividends = async () => {
+        setLoadingBanks(true);
+        try {
+          // Fetch real quotes for the banks
+          const tickers = ['ITUB4', 'XPBR31', 'BBAS3'];
+          const results = await Promise.all(
+            tickers.map(async (ticker) => {
+              try {
+                const { data } = await supabase.functions.invoke('market-data', {
+                  body: { type: 'quote', symbol: ticker }
+                });
+                return { ticker, data };
+              } catch {
+                return { ticker, data: null };
+              }
+            })
+          );
+
+          const bankData: TopBank[] = [
+            {
+              name: "Itaú Unibanco",
+              ticker: "ITUB4",
+              dividendYield: results[0]?.data?.dividendYield || 7.2,
+              price: results[0]?.data?.regularMarketPrice || 32.50,
+              sector: "Bancos"
+            },
+            {
+              name: "XP Investimentos",
+              ticker: "XPBR31",
+              dividendYield: results[1]?.data?.dividendYield || 5.8,
+              price: results[1]?.data?.regularMarketPrice || 105.20,
+              sector: "Corretoras"
+            },
+            {
+              name: "Banco do Brasil",
+              ticker: "BBAS3",
+              dividendYield: results[2]?.data?.dividendYield || 8.5,
+              price: results[2]?.data?.regularMarketPrice || 28.40,
+              sector: "Bancos"
+            }
+          ];
+
+          // Sort by dividend yield
+          bankData.sort((a, b) => b.dividendYield - a.dividendYield);
+          setTopBanks(bankData);
+        } catch (error) {
+          console.error('Error fetching bank dividends:', error);
+          // Fallback to fixed data
+          setTopBanks([
+            { name: "Itaú Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
+            { name: "XP Investimentos", ticker: "XPBR31", dividendYield: 5.8, price: 105.20, sector: "Corretoras" },
+            { name: "Banco do Brasil", ticker: "BBAS3", dividendYield: 8.5, price: 28.40, sector: "Bancos" }
+          ]);
+        } finally {
+          setLoadingBanks(false);
+        }
+      };
+      
+      fetchBankDividends();
     }
   }, [step]);
 
@@ -439,7 +495,12 @@ const Onboarding = () => {
                 </div>
 
                 <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
-                  {topBanks.map((bank, index) => (
+                  {loadingBanks ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      <p className="text-muted-foreground text-sm">Buscando dados de mercado...</p>
+                    </div>
+                  ) : topBanks.map((bank, index) => (
                     <motion.div
                       key={bank.ticker}
                       initial={{ opacity: 0, y: 20 }}
@@ -457,9 +518,11 @@ const Onboarding = () => {
                       </div>
 
                       <div className="flex items-center gap-4 pr-12">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
-                        </div>
+                        <BankLogo
+                          connectorName={bank.name}
+                          size="md"
+                          className="flex-shrink-0"
+                        />
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
