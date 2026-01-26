@@ -1208,75 +1208,72 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  }
 
-  // Top dividend banks - returns top 3 banks with highest dividend yield
-  if (type === 'top-dividend-banks') {
-    console.log('Fetching top dividend banks from BRAPI');
-    
-    try {
-      // List of major Brazilian bank stocks
-      const bankTickers = ['BBAS3', 'ITUB4', 'BBDC4', 'SANB11', 'ITSA4', 'BRSR6', 'BPAC11', 'ABCB4', 'BMGB4', 'BIDI11'];
+    // Top dividend banks - returns top 3 banks with highest dividend yield
+    if (type === 'top-dividend-banks') {
+      console.log('Fetching top dividend banks from BRAPI');
       
-      const response = await fetch(
-        `https://brapi.dev/api/quote/${bankTickers.join(',')}?token=${BRAPI_TOKEN}&fundamental=true`
-      );
-      
-      if (!response.ok) {
-        throw new Error(`BRAPI error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log(`BRAPI returned ${data.results?.length || 0} bank stocks`);
-      
-      if (data.results && data.results.length > 0) {
-        // Map and sort by dividend yield
-        const banks = data.results
-          .filter((stock: any) => stock.dividendYield && stock.dividendYield > 0)
-          .map((stock: any) => ({
-            name: stock.longName || stock.shortName || stock.symbol,
-            ticker: stock.symbol,
-            dividendYield: stock.dividendYield || 0,
-            price: stock.regularMarketPrice || 0,
-            sector: 'Bancos',
-          }))
-          .sort((a: any, b: any) => b.dividendYield - a.dividendYield)
-          .slice(0, 5); // Return top 5, client will use top 3
+      try {
+        // List of major Brazilian bank stocks
+        const bankTickers = ['BBAS3', 'ITUB4', 'BBDC4', 'SANB11', 'ITSA4', 'BRSR6', 'BPAC11', 'ABCB4', 'BMGB4', 'BIDI11'];
         
-        console.log(`Returning ${banks.length} top dividend banks`);
+        const response = await fetch(
+          `https://brapi.dev/api/quote/${bankTickers.join(',')}?token=${BRAPI_TOKEN}&fundamental=true`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`BRAPI error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`BRAPI returned ${data.results?.length || 0} bank stocks`);
+        
+        if (data.results && data.results.length > 0) {
+          // Map and sort by dividend yield
+          const banks = data.results
+            .filter((stock: any) => stock.dividendYield && stock.dividendYield > 0)
+            .map((stock: any) => ({
+              name: stock.longName || stock.shortName || stock.symbol,
+              ticker: stock.symbol,
+              dividendYield: stock.dividendYield || 0,
+              price: stock.regularMarketPrice || 0,
+              sector: 'Bancos',
+            }))
+            .sort((a: any, b: any) => b.dividendYield - a.dividendYield)
+            .slice(0, 5);
+          
+          console.log(`Returning ${banks.length} top dividend banks`);
+          
+          return new Response(
+            JSON.stringify({ 
+              banks, 
+              lastUpdate: new Date().toISOString() 
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
+        throw new Error('No bank data available');
+        
+      } catch (error) {
+        console.error('Error fetching top dividend banks:', error);
+        
+        const fallbackBanks = [
+          { name: 'Banco do Brasil', ticker: 'BBAS3', dividendYield: 9.8, price: 28.45, sector: 'Bancos' },
+          { name: 'Itausa', ticker: 'ITSA4', dividendYield: 8.2, price: 10.15, sector: 'Bancos' },
+          { name: 'Bradesco', ticker: 'BBDC4', dividendYield: 7.5, price: 14.32, sector: 'Bancos' },
+        ];
         
         return new Response(
           JSON.stringify({ 
-            banks, 
-            lastUpdate: new Date().toISOString() 
+            banks: fallbackBanks, 
+            lastUpdate: new Date().toISOString(),
+            source: 'fallback'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
-      // Fallback if no data
-      throw new Error('No bank data available');
-      
-    } catch (error) {
-      console.error('Error fetching top dividend banks:', error);
-      
-      // Return fallback data
-      const fallbackBanks = [
-        { name: 'Banco do Brasil', ticker: 'BBAS3', dividendYield: 9.8, price: 28.45, sector: 'Bancos' },
-        { name: 'Itausa', ticker: 'ITSA4', dividendYield: 8.2, price: 10.15, sector: 'Bancos' },
-        { name: 'Bradesco', ticker: 'BBDC4', dividendYield: 7.5, price: 14.32, sector: 'Bancos' },
-      ];
-      
-      return new Response(
-        JSON.stringify({ 
-          banks: fallbackBanks, 
-          lastUpdate: new Date().toISOString(),
-          source: 'fallback'
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
-  }
 
     // Default response for unknown type
     return new Response(
@@ -1284,7 +1281,7 @@ Deno.serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: unknown) {
+  } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error:', errorMessage);
     return new Response(
