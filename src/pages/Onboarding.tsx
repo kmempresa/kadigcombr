@@ -19,7 +19,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
-import { BankLogo } from "@/components/BankLogo";
 
 interface UserProfile {
   name: string;
@@ -33,6 +32,7 @@ interface TopBank {
   dividendYield: number;
   price: number;
   sector: string;
+  logoUrl: string | null;
 }
 
 const experienceOptions = [
@@ -128,42 +128,42 @@ const Onboarding = () => {
       const fetchBankDividends = async () => {
         setLoadingBanks(true);
         try {
-          // Fetch real quotes for the banks
-          const tickers = ['ITUB4', 'XPBR31', 'BBAS3'];
-          const results = await Promise.all(
-            tickers.map(async (ticker) => {
-              try {
-                const { data } = await supabase.functions.invoke('market-data', {
-                  body: { type: 'quote', symbol: ticker }
-                });
-                return { ticker, data };
-              } catch {
-                return { ticker, data: null };
-              }
-            })
-          );
+          // Fetch real stock data from market-data API
+          const { data } = await supabase.functions.invoke('market-data', {
+            body: { type: 'stocks' }
+          });
+
+          // Get data for specific bank tickers from the stocks array
+          const stocks = data?.stocks || [];
+          
+          const itub4 = stocks.find((s: any) => s.symbol === 'ITUB4');
+          const bbas3 = stocks.find((s: any) => s.symbol === 'BBAS3');
+          const sanb11 = stocks.find((s: any) => s.symbol === 'SANB11');
 
           const bankData: TopBank[] = [
             {
               name: "Itaú Unibanco",
               ticker: "ITUB4",
-              dividendYield: results[0]?.data?.dividendYield || 7.2,
-              price: results[0]?.data?.regularMarketPrice || 32.50,
-              sector: "Bancos"
-            },
-            {
-              name: "XP Investimentos",
-              ticker: "XPBR31",
-              dividendYield: results[1]?.data?.dividendYield || 5.8,
-              price: results[1]?.data?.regularMarketPrice || 105.20,
-              sector: "Corretoras"
+              dividendYield: 7.2, // Fixed dividend yield estimate
+              price: itub4?.regularMarketPrice || 43.57,
+              sector: "Bancos",
+              logoUrl: itub4?.logoUrl || "https://icons.brapi.dev/icons/ITUB4.svg"
             },
             {
               name: "Banco do Brasil",
               ticker: "BBAS3",
-              dividendYield: results[2]?.data?.dividendYield || 8.5,
-              price: results[2]?.data?.regularMarketPrice || 28.40,
-              sector: "Bancos"
+              dividendYield: 8.5, // Fixed dividend yield estimate
+              price: bbas3?.regularMarketPrice || 24.28,
+              sector: "Bancos",
+              logoUrl: bbas3?.logoUrl || "https://icons.brapi.dev/icons/BBAS3.svg"
+            },
+            {
+              name: "Santander Brasil",
+              ticker: "SANB11",
+              dividendYield: 6.8, // Fixed dividend yield estimate
+              price: sanb11?.regularMarketPrice || 35.74,
+              sector: "Bancos",
+              logoUrl: sanb11?.logoUrl || "https://icons.brapi.dev/icons/SANB11.svg"
             }
           ];
 
@@ -172,11 +172,11 @@ const Onboarding = () => {
           setTopBanks(bankData);
         } catch (error) {
           console.error('Error fetching bank dividends:', error);
-          // Fallback to fixed data
+          // Fallback to fixed data with BRAPI logos
           setTopBanks([
-            { name: "Itaú Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
-            { name: "XP Investimentos", ticker: "XPBR31", dividendYield: 5.8, price: 105.20, sector: "Corretoras" },
-            { name: "Banco do Brasil", ticker: "BBAS3", dividendYield: 8.5, price: 28.40, sector: "Bancos" }
+            { name: "Banco do Brasil", ticker: "BBAS3", dividendYield: 8.5, price: 24.28, sector: "Bancos", logoUrl: "https://icons.brapi.dev/icons/BBAS3.svg" },
+            { name: "Itaú Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 43.57, sector: "Bancos", logoUrl: "https://icons.brapi.dev/icons/ITUB4.svg" },
+            { name: "Santander Brasil", ticker: "SANB11", dividendYield: 6.8, price: 35.74, sector: "Bancos", logoUrl: "https://icons.brapi.dev/icons/SANB11.svg" }
           ]);
         } finally {
           setLoadingBanks(false);
@@ -518,11 +518,19 @@ const Onboarding = () => {
                       </div>
 
                       <div className="flex items-center gap-4 pr-12">
-                        <BankLogo
-                          connectorName={bank.name}
-                          size="md"
-                          className="flex-shrink-0"
-                        />
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-card border border-border flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {bank.logoUrl ? (
+                            <img 
+                              src={bank.logoUrl} 
+                              alt={bank.name}
+                              className="w-10 h-10 object-contain"
+                            />
+                          ) : (
+                            <span className="text-lg font-bold text-primary">
+                              {bank.name.charAt(0)}
+                            </span>
+                          )}
+                        </div>
                         
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
