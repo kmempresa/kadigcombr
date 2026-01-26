@@ -14,9 +14,7 @@ import {
   BarChart3,
   Rocket,
   Building2,
-  Percent,
-  Loader2,
-  ExternalLink
+  Percent
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -102,7 +100,6 @@ const Onboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [topBanks, setTopBanks] = useState<TopBank[]>([]);
-  const [loadingBanks, setLoadingBanks] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     experience: "",
@@ -123,37 +120,16 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
-  // Fetch top banks when reaching step 3
+  // Set fixed top banks when reaching step 3
   useEffect(() => {
     if (step === 3) {
-      fetchTopBanks();
-    }
-  }, [step]);
-
-  const fetchTopBanks = async () => {
-    setLoadingBanks(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('market-data', {
-        body: { type: 'top-dividend-banks' }
-      });
-
-      if (error) throw error;
-
-      if (data?.banks && Array.isArray(data.banks)) {
-        setTopBanks(data.banks.slice(0, 3));
-      }
-    } catch (err) {
-      console.error('Error fetching top banks:', err);
-      // Use fallback data if API fails
       setTopBanks([
-        { name: "Itaú Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
+        { name: "Itau Unibanco", ticker: "ITUB4", dividendYield: 7.2, price: 32.50, sector: "Bancos" },
         { name: "XP Investimentos", ticker: "XPBR31", dividendYield: 5.8, price: 105.20, sector: "Corretoras" },
         { name: "C6 Bank", ticker: "C6BANK", dividendYield: 4.5, price: 18.75, sector: "Bancos Digitais" }
       ]);
-    } finally {
-      setLoadingBanks(false);
     }
-  };
+  }, [step]);
 
   const saveProfileAndContinue = async () => {
     if (!userId) {
@@ -463,59 +439,52 @@ const Onboarding = () => {
                 </div>
 
                 <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
-                  {loadingBanks ? (
-                    <div className="flex flex-col items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-                      <p className="text-muted-foreground">Buscando melhores oportunidades...</p>
-                    </div>
-                  ) : (
-                    topBanks.map((bank, index) => (
-                      <motion.div
-                        key={bank.ticker}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="relative overflow-hidden p-4 sm:p-5 rounded-xl border-2 border-border bg-card shadow-sm"
-                      >
-                        {/* Rank badge */}
-                        <div className={`absolute top-0 right-0 w-12 h-12 flex items-center justify-center ${
-                          index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
-                          index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
-                          'bg-gradient-to-br from-amber-600 to-amber-700'
-                        } rounded-bl-xl`}>
-                          <span className="text-white font-bold text-lg">{index + 1}</span>
-                        </div>
+                  {topBanks.map((bank, index) => (
+                    <motion.div
+                      key={bank.ticker}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="relative overflow-hidden p-4 sm:p-5 rounded-xl border-2 border-border bg-card shadow-sm"
+                    >
+                      {/* Rank badge */}
+                      <div className={`absolute top-0 right-0 w-12 h-12 flex items-center justify-center ${
+                        index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
+                        index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
+                        'bg-gradient-to-br from-amber-600 to-amber-700'
+                      } rounded-bl-xl`}>
+                        <span className="text-white font-bold text-lg">{index + 1}</span>
+                      </div>
 
-                        <div className="flex items-center gap-4 pr-12">
-                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-bold text-foreground text-base sm:text-lg truncate">
-                                {bank.name}
-                              </h3>
-                              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                {bank.ticker}
-                              </span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{bank.sector}</p>
-                          </div>
+                      <div className="flex items-center gap-4 pr-12">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                         </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-foreground text-base sm:text-lg truncate">
+                              {bank.name}
+                            </h3>
+                            <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                              {bank.ticker}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{bank.sector}</p>
+                        </div>
+                      </div>
 
-                        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <Percent className="w-4 h-4 text-emerald-500" />
-                            <span className="text-sm text-muted-foreground">Dividend Yield</span>
-                          </div>
-                          <span className="text-lg font-bold text-emerald-500">
-                            {bank.dividendYield.toFixed(2)}%
-                          </span>
+                      <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Percent className="w-4 h-4 text-accent" />
+                          <span className="text-sm text-muted-foreground">Dividend Yield</span>
                         </div>
-                      </motion.div>
-                    ))
-                  )}
+                        <span className="text-lg font-bold text-accent">
+                          {bank.dividendYield.toFixed(2)}%
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
 
                 <div className="text-center px-4">
