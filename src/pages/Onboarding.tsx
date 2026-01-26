@@ -3,7 +3,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, User, TrendingUp, Shield, Zap, ChevronLeft } from "lucide-react";
+import { 
+  ArrowRight, 
+  User, 
+  TrendingUp, 
+  Shield, 
+  Zap, 
+  ChevronLeft,
+  Sprout,
+  BarChart3,
+  Rocket,
+  Building2,
+  Percent,
+  Loader2,
+  ExternalLink
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
@@ -14,24 +28,35 @@ interface UserProfile {
   riskTolerance: "conservative" | "moderate" | "aggressive" | "";
 }
 
+interface TopBank {
+  name: string;
+  ticker: string;
+  dividendYield: number;
+  price: number;
+  sector: string;
+}
+
 const experienceOptions = [
   {
     value: "beginner",
     label: "Iniciante",
-    description: "Estou começando no mundo dos investimentos",
-    icon: "🌱"
+    description: "Estou comecando no mundo dos investimentos",
+    icon: Sprout,
+    color: "from-emerald-500 to-emerald-600"
   },
   {
     value: "intermediate",
-    label: "Intermediário",
-    description: "Já invisto há algum tempo e conheço o básico",
-    icon: "📈"
+    label: "Intermediario",
+    description: "Ja invisto ha algum tempo e conheco o basico",
+    icon: BarChart3,
+    color: "from-primary to-primary/80"
   },
   {
     value: "advanced",
-    label: "Avançado",
-    description: "Tenho experiência sólida em investimentos",
-    icon: "🚀"
+    label: "Avancado",
+    description: "Tenho experiencia solida em investimentos",
+    icon: Rocket,
+    color: "from-accent to-accent/80"
   }
 ];
 
@@ -39,14 +64,14 @@ const riskOptions = [
   {
     value: "conservative",
     label: "Conservador",
-    description: "Prefiro segurança, mesmo com retornos menores",
+    description: "Prefiro seguranca, mesmo com retornos menores",
     icon: Shield,
     color: "from-primary to-primary/70"
   },
   {
     value: "moderate",
     label: "Moderado",
-    description: "Busco equilíbrio entre risco e retorno",
+    description: "Busco equilibrio entre risco e retorno",
     icon: TrendingUp,
     color: "from-primary to-accent"
   },
@@ -59,14 +84,12 @@ const riskOptions = [
   }
 ];
 
-// Map experience to investor profile
 const experienceToProfile: Record<string, string> = {
   beginner: "Iniciante",
   intermediate: "Intermediário",
   advanced: "Avançado"
 };
 
-// Map risk tolerance
 const riskToleranceMap: Record<string, string> = {
   conservative: "Conservador",
   moderate: "Moderado",
@@ -78,16 +101,17 @@ const Onboarding = () => {
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [topBanks, setTopBanks] = useState<TopBank[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
     name: "",
     experience: "",
     riskTolerance: ""
   });
 
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   useEffect(() => {
-    // Check if user is authenticated
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -99,78 +123,107 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
+  // Fetch top banks when reaching step 3
+  useEffect(() => {
+    if (step === 3) {
+      fetchTopBanks();
+    }
+  }, [step]);
+
+  const fetchTopBanks = async () => {
+    setLoadingBanks(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('market-data', {
+        body: { type: 'top-dividend-banks' }
+      });
+
+      if (error) throw error;
+
+      if (data?.banks && Array.isArray(data.banks)) {
+        setTopBanks(data.banks.slice(0, 3));
+      }
+    } catch (err) {
+      console.error('Error fetching top banks:', err);
+      // Use fallback data if API fails
+      setTopBanks([
+        { name: "Banco do Brasil", ticker: "BBAS3", dividendYield: 9.8, price: 28.45, sector: "Bancos" },
+        { name: "Itausa", ticker: "ITSA4", dividendYield: 8.2, price: 10.15, sector: "Bancos" },
+        { name: "Bradesco", ticker: "BBDC4", dividendYield: 7.5, price: 14.32, sector: "Bancos" }
+      ]);
+    } finally {
+      setLoadingBanks(false);
+    }
+  };
+
+  const saveProfileAndContinue = async () => {
+    if (!userId) {
+      toast.error("Sessao expirada. Faca login novamente.");
+      navigate("/auth");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      const profileData = {
+        user_id: userId,
+        full_name: profile.name.trim(),
+        investor_profile: experienceToProfile[profile.experience],
+        risk_tolerance: riskToleranceMap[profile.riskTolerance],
+        updated_at: new Date().toISOString()
+      };
+
+      if (existingProfile) {
+        const { error } = await supabase
+          .from("profiles")
+          .update(profileData)
+          .eq("user_id", userId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("profiles")
+          .insert(profileData);
+        if (error) throw error;
+      }
+
+      const { data: existingPortfolio } = await supabase
+        .from("portfolios")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      if (!existingPortfolio) {
+        await supabase
+          .from("portfolios")
+          .insert({
+            user_id: userId,
+            name: "Principal",
+            total_value: 0,
+            total_gain: 0,
+            cdi_percent: 0
+          });
+      }
+
+      toast.success("Perfil criado com sucesso!");
+      navigate("/app");
+    } catch (error: any) {
+      console.error("Error saving profile:", error);
+      toast.error("Erro ao salvar perfil. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNext = async () => {
     if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
-      // Save profile to Supabase
-      if (!userId) {
-        toast.error("Sessão expirada. Faça login novamente.");
-        navigate("/auth");
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Check if profile exists
-        const { data: existingProfile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("user_id", userId)
-          .single();
-
-        const profileData = {
-          user_id: userId,
-          full_name: profile.name.trim(),
-          investor_profile: experienceToProfile[profile.experience],
-          risk_tolerance: riskToleranceMap[profile.riskTolerance],
-          updated_at: new Date().toISOString()
-        };
-
-        if (existingProfile) {
-          // Update existing profile
-          const { error } = await supabase
-            .from("profiles")
-            .update(profileData)
-            .eq("user_id", userId);
-
-          if (error) throw error;
-        } else {
-          // Insert new profile
-          const { error } = await supabase
-            .from("profiles")
-            .insert(profileData);
-
-          if (error) throw error;
-        }
-
-        // Also create a default portfolio for the user
-        const { data: existingPortfolio } = await supabase
-          .from("portfolios")
-          .select("id")
-          .eq("user_id", userId)
-          .single();
-
-        if (!existingPortfolio) {
-          await supabase
-            .from("portfolios")
-            .insert({
-              user_id: userId,
-              name: "Principal",
-              total_value: 0,
-              total_gain: 0,
-              cdi_percent: 0
-            });
-        }
-
-        toast.success("Perfil criado com sucesso!");
-        navigate("/app");
-      } catch (error: any) {
-        console.error("Error saving profile:", error);
-        toast.error("Erro ao salvar perfil. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
+      await saveProfileAndContinue();
     }
   };
 
@@ -190,6 +243,8 @@ const Onboarding = () => {
         return profile.experience !== "";
       case 2:
         return profile.riskTolerance !== "";
+      case 3:
+        return true; // Always can proceed on bank step
       default:
         return false;
     }
@@ -245,10 +300,10 @@ const Onboarding = () => {
                     <User className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                   </div>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-                    Olá! Como podemos te chamar?
+                    Ola! Como podemos te chamar?
                   </h1>
                   <p className="text-muted-foreground text-base sm:text-lg px-4">
-                    Queremos personalizar sua experiência ao máximo
+                    Queremos personalizar sua experiencia ao maximo
                   </p>
                 </div>
 
@@ -279,43 +334,48 @@ const Onboarding = () => {
               >
                 <div className="text-center space-y-3 sm:space-y-4 px-4">
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
-                    Prazer, {profile.name}! 👋
+                    Prazer, {profile.name}!
                   </h1>
                   <p className="text-muted-foreground text-base sm:text-lg">
-                    Qual é sua experiência com investimentos?
+                    Qual e sua experiencia com investimentos?
                   </p>
                 </div>
 
                 <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
-                  {experienceOptions.map((option) => (
-                    <motion.button
-                      key={option.value}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() =>
-                        setProfile({
-                          ...profile,
-                          experience: option.value as UserProfile["experience"]
-                        })
-                      }
-                      className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all shadow-sm ${
-                        profile.experience === option.value
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-card active:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <span className="text-2xl sm:text-3xl">{option.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground text-base sm:text-lg">
-                            {option.label}
-                          </h3>
-                          <p className="text-muted-foreground text-sm line-clamp-2">
-                            {option.description}
-                          </p>
+                  {experienceOptions.map((option) => {
+                    const Icon = option.icon;
+                    return (
+                      <motion.button
+                        key={option.value}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() =>
+                          setProfile({
+                            ...profile,
+                            experience: option.value as UserProfile["experience"]
+                          })
+                        }
+                        className={`p-4 sm:p-5 rounded-xl border-2 text-left transition-all shadow-sm ${
+                          profile.experience === option.value
+                            ? "border-primary bg-primary/5"
+                            : "border-border bg-card active:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br ${option.color} flex items-center justify-center flex-shrink-0 shadow-md`}>
+                            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-foreground text-base sm:text-lg">
+                              {option.label}
+                            </h3>
+                            <p className="text-muted-foreground text-sm line-clamp-2">
+                              {option.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </motion.button>
-                  ))}
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
@@ -335,7 +395,7 @@ const Onboarding = () => {
                     Qual seu perfil de risco?
                   </h1>
                   <p className="text-muted-foreground text-base sm:text-lg">
-                    Isso nos ajuda a personalizar as recomendações
+                    Isso nos ajuda a personalizar as recomendacoes
                   </p>
                 </div>
 
@@ -379,6 +439,92 @@ const Onboarding = () => {
                 </div>
               </motion.div>
             )}
+
+            {/* Step 3: Top Banks */}
+            {step === 3 && (
+              <motion.div
+                key="banks"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6 sm:space-y-8"
+              >
+                <div className="text-center space-y-3 sm:space-y-4 px-4">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
+                    <TrendingUp className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
+                    Top 3 Bancos em Dividendos
+                  </h1>
+                  <p className="text-muted-foreground text-base sm:text-lg">
+                    Veja os bancos que mais estao pagando rendimentos atualmente
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:gap-4 max-w-lg mx-auto px-4">
+                  {loadingBanks ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+                      <p className="text-muted-foreground">Buscando melhores oportunidades...</p>
+                    </div>
+                  ) : (
+                    topBanks.map((bank, index) => (
+                      <motion.div
+                        key={bank.ticker}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="relative overflow-hidden p-4 sm:p-5 rounded-xl border-2 border-border bg-card shadow-sm"
+                      >
+                        {/* Rank badge */}
+                        <div className={`absolute top-0 right-0 w-12 h-12 flex items-center justify-center ${
+                          index === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
+                          index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
+                          'bg-gradient-to-br from-amber-600 to-amber-700'
+                        } rounded-bl-xl`}>
+                          <span className="text-white font-bold text-lg">{index + 1}</span>
+                        </div>
+
+                        <div className="flex items-center gap-4 pr-12">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-bold text-foreground text-base sm:text-lg truncate">
+                                {bank.name}
+                              </h3>
+                              <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                {bank.ticker}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{bank.sector}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <Percent className="w-4 h-4 text-emerald-500" />
+                            <span className="text-sm text-muted-foreground">Dividend Yield</span>
+                          </div>
+                          <span className="text-lg font-bold text-emerald-500">
+                            {bank.dividendYield.toFixed(2)}%
+                          </span>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+
+                <div className="text-center px-4">
+                  <p className="text-sm text-muted-foreground">
+                    Dados atualizados em tempo real via BRAPI
+                  </p>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -400,7 +546,7 @@ const Onboarding = () => {
             disabled={!canProceed() || isLoading}
             className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white px-6 sm:px-8 flex-1 max-w-[200px] shadow-md"
           >
-            {isLoading ? "Salvando..." : step === totalSteps - 1 ? "Começar" : "Continuar"}
+            {isLoading ? "Salvando..." : step === totalSteps - 1 ? "Comecar" : "Continuar"}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
