@@ -6,6 +6,7 @@ import { Eye, EyeOff, ArrowRight, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import kadigLogo from "@/assets/kadig-logo.png";
+import kadigIconAuth from "@/assets/kadig-icon-auth.png";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -129,7 +130,7 @@ const Auth = () => {
       }} className="pt-8 sm:pt-12">
           {/* Kadig logo */}
           <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg bg-[#202e4b]">
-            <img alt="Kadig" className="h-8 sm:h-10" src="/lovable-uploads/315c99b8-4f49-4939-8728-99274ca35547.png" />
+            <img alt="Kadig" className="h-8 sm:h-10" src={kadigIconAuth} />
           </div>
         </motion.header>
 
