@@ -239,7 +239,6 @@ const AppDashboard = () => {
     dragFree: false,
   });
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0); // Float index for smooth interpolation
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -247,57 +246,17 @@ const AppDashboard = () => {
   }, [emblaApi]);
 
   const onScroll = useCallback(() => {
-    if (!emblaApi) return;
-    const progress = emblaApi.scrollProgress();
-    const totalSlides = emblaApi.scrollSnapList().length;
-    const floatIndex = progress * (totalSlides - 1);
-    setScrollProgress(floatIndex);
-  }, [emblaApi]);
+    // Removed scroll interpolation to prevent flickering
+  }, []);
 
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("select", onSelect);
-    emblaApi.on("scroll", onScroll);
     onSelect();
-    onScroll();
     return () => {
       emblaApi.off("select", onSelect);
-      emblaApi.off("scroll", onScroll);
     };
-  }, [emblaApi, onSelect, onScroll]);
-
-  // Interpolate stats values based on scroll progress - uses monthlyData from state
-  // New order: monthly slides first (0 to length-1), then global and total at the end
-  const interpolatedStats = useMemo(() => {
-    const monthlyCount = monthlyData.length;
-    
-    if (monthlyCount === 0) {
-      return { carteira: 0, cdi: 0, ipca: 0 };
-    }
-    
-    // If we're past monthly slides (on global or total), show last month data
-    if (scrollProgress >= monthlyCount) {
-      return monthlyData[monthlyCount - 1]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
-    }
-    
-    // Interpolate between monthly slides
-    const lowerIndex = Math.max(0, Math.min(Math.floor(scrollProgress), monthlyCount - 1));
-    const upperIndex = Math.min(lowerIndex + 1, monthlyCount - 1);
-    const t = scrollProgress - Math.floor(scrollProgress);
-
-    const lowerStats = monthlyData[lowerIndex]?.stats || { carteira: 0, cdi: 0, ipca: 0 };
-    const upperStats = monthlyData[upperIndex]?.stats || lowerStats;
-
-    return {
-      carteira: lowerStats.carteira + (upperStats.carteira - lowerStats.carteira) * t,
-      cdi: lowerStats.cdi + (upperStats.cdi - lowerStats.cdi) * t,
-      ipca: lowerStats.ipca + (upperStats.ipca - lowerStats.ipca) * t,
-    };
-  }, [scrollProgress, monthlyData]);
-
-  const interpolatedSegments = useMemo(() => {
-    return calculateChartSegments(interpolatedStats);
-  }, [interpolatedStats]);
+  }, [emblaApi, onSelect]);
 
   const openGoalDrawer = (type: "patrimonio" | "renda_passiva") => {
     setGoalType(type);
@@ -925,30 +884,35 @@ const AppDashboard = () => {
                                 })()}
                               </>
                             ) : (
-                              // Monthly data - regular chart with carteira/cdi/ipca (static, no animation for stability)
-                              <>
-                                <circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
-                                  strokeDasharray={`${interpolatedSegments.carteira.length} ${interpolatedSegments.circumference}`}
-                                  strokeDashoffset={interpolatedSegments.carteira.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                />
-                                <circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
-                                  strokeDasharray={`${interpolatedSegments.cdi.length} ${interpolatedSegments.circumference}`}
-                                  strokeDashoffset={interpolatedSegments.cdi.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                />
-                                <circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
-                                  strokeDasharray={`${interpolatedSegments.ipca.length} ${interpolatedSegments.circumference}`}
-                                  strokeDashoffset={interpolatedSegments.ipca.offset}
-                                  strokeLinecap="round"
-                                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                />
-                              </>
+                              // Monthly data - use slide's own stats (not interpolated)
+                              (() => {
+                                const slideSegments = calculateChartSegments(slide.stats);
+                                return (
+                                  <>
+                                    <circle
+                                      cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
+                                      strokeDasharray={`${slideSegments.carteira.length} ${slideSegments.circumference}`}
+                                      strokeDashoffset={slideSegments.carteira.offset}
+                                      strokeLinecap="round"
+                                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    />
+                                    <circle
+                                      cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
+                                      strokeDasharray={`${slideSegments.cdi.length} ${slideSegments.circumference}`}
+                                      strokeDashoffset={slideSegments.cdi.offset}
+                                      strokeLinecap="round"
+                                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    />
+                                    <circle
+                                      cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
+                                      strokeDasharray={`${slideSegments.ipca.length} ${slideSegments.circumference}`}
+                                      strokeDashoffset={slideSegments.ipca.offset}
+                                      strokeLinecap="round"
+                                      style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                                    />
+                                  </>
+                                );
+                              })()
                             )}
                           </svg>
 
@@ -1035,38 +999,48 @@ const AppDashboard = () => {
                 ))}
               </div>
 
-              {/* Stats Row */}
-              <div className="flex items-center justify-around py-4 border-y border-border">
-                <div className="text-center">
-                  <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-success" />
-                    <span className="text-xs text-muted-foreground uppercase">Carteira</span>
+              {/* Stats Row - shows selected slide stats */}
+              {(() => {
+                const currentSlide = carouselSlides[selectedIndex];
+                const stats = currentSlide?.stats || { carteira: 0, cdi: 0, ipca: 0 };
+                const showStats = currentSlide?.type === "monthly";
+                
+                if (!showStats) return null;
+                
+                return (
+                  <div className="flex items-center justify-around py-4 border-y border-border">
+                    <div className="text-center">
+                      <div className="flex items-center gap-1 justify-center">
+                        <div className="w-2 h-2 rounded-full bg-success" />
+                        <span className="text-xs text-muted-foreground uppercase">Carteira</span>
+                      </div>
+                      <p className="text-lg font-bold text-success tabular-nums">
+                        {showValues ? `${stats.carteira.toFixed(2)}%` : "••%"}
+                      </p>
+                    </div>
+                    <div className="w-px h-10 bg-border" />
+                    <div className="text-center">
+                      <div className="flex items-center gap-1 justify-center">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <span className="text-xs text-muted-foreground uppercase">CDI</span>
+                      </div>
+                      <p className="text-lg font-bold text-primary tabular-nums">
+                        {showValues ? `${stats.cdi.toFixed(2)}%` : "••%"}
+                      </p>
+                    </div>
+                    <div className="w-px h-10 bg-border" />
+                    <div className="text-center">
+                      <div className="flex items-center gap-1 justify-center">
+                        <div className="w-2 h-2 rounded-full bg-warning" />
+                        <span className="text-xs text-muted-foreground uppercase">IPCA</span>
+                      </div>
+                      <p className="text-lg font-bold text-warning tabular-nums">
+                        {showValues ? `${stats.ipca.toFixed(2)}%` : "••%"}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-lg font-bold text-success tabular-nums">
-                    {showValues ? `${interpolatedStats.carteira.toFixed(2)}%` : "••%"}
-                  </p>
-                </div>
-                <div className="w-px h-10 bg-border" />
-                <div className="text-center">
-                  <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <span className="text-xs text-muted-foreground uppercase">CDI</span>
-                  </div>
-                  <p className="text-lg font-bold text-primary tabular-nums">
-                    {showValues ? `${interpolatedStats.cdi.toFixed(2)}%` : "••%"}
-                  </p>
-                </div>
-                <div className="w-px h-10 bg-border" />
-                <div className="text-center">
-                  <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-warning" />
-                    <span className="text-xs text-muted-foreground uppercase">IPCA</span>
-                  </div>
-                  <p className="text-lg font-bold text-warning tabular-nums">
-                    {showValues ? `${interpolatedStats.ipca.toFixed(2)}%` : "••%"}
-                  </p>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Connected Banks Card */}
               <ConnectedBanksCard 
