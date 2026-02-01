@@ -126,34 +126,47 @@ const getMonthName = (monthIndex: number) => {
   return months[monthIndex];
 };
 
-// Calculate chart segments based on stats
+// Calculate chart segments based on stats - uses absolute values for proportional display
 const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: number }) => {
-  const total = stats.carteira + stats.cdi + stats.ipca;
+  // Use absolute values to handle negative returns properly
+  const absCarteira = Math.abs(stats.carteira);
+  const absCdi = Math.abs(stats.cdi);
+  const absIpca = Math.abs(stats.ipca);
+  
+  const total = absCarteira + absCdi + absIpca;
+  const circumference = 2 * Math.PI * 85; // ~534.07
+  
   if (total === 0) return {
-    carteira: { dasharray: "0 534.07", offset: 0 },
-    cdi: { dasharray: "0 534.07", offset: 0 },
-    ipca: { dasharray: "0 534.07", offset: 0 },
+    carteira: { dasharray: `0 ${circumference}`, offset: circumference * 0.25 },
+    cdi: { dasharray: `0 ${circumference}`, offset: circumference * 0.25 },
+    ipca: { dasharray: `0 ${circumference}`, offset: circumference * 0.25 },
   };
   
-  const circumference = 2 * Math.PI * 85;
-  const gap = 8;
+  const gap = 12; // Gap between segments
+  const usableCircumference = circumference - (gap * 3); // Account for 3 gaps
   
-  const carteiraLength = circumference * (stats.carteira / total) - gap;
-  const cdiLength = circumference * (stats.cdi / total) - gap;
-  const ipcaLength = circumference * (stats.ipca / total) - gap;
+  // Calculate proportional lengths
+  const carteiraLength = Math.max(0, usableCircumference * (absCarteira / total));
+  const cdiLength = Math.max(0, usableCircumference * (absCdi / total));
+  const ipcaLength = Math.max(0, usableCircumference * (absIpca / total));
+  
+  // Starting offset (top of circle = circumference * 0.25 for stroke-dashoffset)
+  const startOffset = circumference * 0.25;
   
   return {
     carteira: {
-      dasharray: `${Math.max(0, carteiraLength)} ${circumference}`,
-      offset: circumference * 0.25,
+      dasharray: `${carteiraLength} ${circumference}`,
+      offset: startOffset,
     },
     cdi: {
-      dasharray: `${Math.max(0, cdiLength)} ${circumference}`,
-      offset: circumference * 0.25 - carteiraLength - gap,
+      dasharray: `${cdiLength} ${circumference}`,
+      // CDI starts after carteira segment + gap
+      offset: startOffset - carteiraLength - gap,
     },
     ipca: {
-      dasharray: `${Math.max(0, ipcaLength)} ${circumference}`,
-      offset: circumference * 0.25 - carteiraLength - cdiLength - gap * 2,
+      dasharray: `${ipcaLength} ${circumference}`,
+      // IPCA starts after carteira + cdi segments + 2 gaps
+      offset: startOffset - carteiraLength - gap - cdiLength - gap,
     },
   };
 };
@@ -431,7 +444,7 @@ const AppDashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate, refreshKey]); // Removed economicIndicators to prevent unnecessary re-fetches
 
-  // Generate monthly performance data - uses real history when available
+  // Generate monthly performance data - uses real history and economic indicators
   const generateMonthlyPerformance = (
     totalValue: number, 
     totalGain: number, 
@@ -443,17 +456,11 @@ const AppDashboard = () => {
     const currentMonth = brazilDate.getMonth();
     const currentYear = brazilDate.getFullYear();
 
-    // Calculate real return percentage of portfolio
-    const portfolioReturnPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+    // Get real accumulated values from economic indicators (12 months)
+    const cdi12m = indicators?.accumulated12m?.cdi || 14.43;
+    const ipca12m = indicators?.accumulated12m?.ipca || 4.10;
     
-    // Get real CDI and IPCA from economic indicators
-    const cdi12m = indicators?.accumulated12m?.cdi || 11.5;
-    const ipca12m = indicators?.accumulated12m?.ipca || 4.5;
-    
-    // Calculate how much % of CDI the portfolio is returning
-    const cdiPercent = cdi12m > 0 ? (portfolioReturnPercent / cdi12m) * 100 : 0;
-    
-    // Monthly data from BCB (if available)
+    // Monthly data from BCB
     const monthlyIndicators = indicators?.monthly || [];
 
     // Group history by month (get last day of each month)
@@ -462,7 +469,6 @@ const AppDashboard = () => {
       historyData.forEach(h => {
         const date = new Date(h.snapshot_date);
         const key = `${date.getFullYear()}-${date.getMonth()}`;
-        // Keep the most recent entry for each month
         if (!historyByMonth[key] || new Date(h.snapshot_date) > new Date(historyByMonth[key].snapshot_date)) {
           historyByMonth[key] = h;
         }
@@ -471,7 +477,7 @@ const AppDashboard = () => {
 
     // Generate months: current first, then going back
     return Array.from({ length: 3 }, (_, i) => {
-      const monthOffset = i; // 0 = current, 1 = last month, 2 = two months ago
+      const monthOffset = i;
       let month = currentMonth - monthOffset;
       let year = currentYear;
       
@@ -488,35 +494,34 @@ const AppDashboard = () => {
       const monthKey = `${monthNames[month]} ${year}`;
       const monthIndicator = monthlyIndicators.find(m => m.month === monthKey);
       
-      // Use real data if available, otherwise estimate
+      // Get real monthly CDI/IPCA or use average
       const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
       const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
 
-      // If we have real history data, use it
+      // Calculate portfolio monthly return
+      let portfolioMonthlyReturn: number;
+      let monthValue = totalValue;
+      let monthGain = totalGain;
+      
       if (monthHistory) {
-        const monthTotalInvested = monthHistory.total_value - monthHistory.total_gain;
-        const monthlyReturn = monthTotalInvested > 0 ? (monthHistory.total_gain / monthTotalInvested) * 100 : 0;
+        // Use real history data
+        monthValue = monthHistory.total_value;
+        monthGain = monthHistory.total_gain;
+        const monthTotalInvested = monthValue - monthGain;
+        portfolioMonthlyReturn = monthTotalInvested > 0 ? (monthGain / monthTotalInvested) * 100 / (12 - monthOffset) : 0;
+      } else {
+        // Estimate based on current data
+        const portfolioReturn12m = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+        portfolioMonthlyReturn = portfolioReturn12m / 12;
         
-        return {
-          month: `${getMonthName(month)} ${year}`,
-          value: monthHistory.total_value,
-          gain: monthHistory.total_gain,
-          cdiPercent: cdiPercent,
-          stats: {
-            carteira: monthlyReturn / 12, // Monthly return estimate
-            cdi: realCdiMonthly,
-            ipca: realIpcaMonthly,
-          },
-        };
+        // Estimate past values
+        const multiplier = Math.pow(1 + (portfolioMonthlyReturn / 100), monthOffset);
+        monthValue = totalValue / (multiplier > 0 ? multiplier : 1);
+        monthGain = totalGain / (3 - i || 1);
       }
-      
-      // Estimate portfolio monthly return based on annual return
-      const estimatedMonthlyReturn = portfolioReturnPercent / 12;
-      
-      // Calculate estimated values for each month
-      const multiplier = Math.pow(1 + (portfolioReturnPercent / 100) / 12, monthOffset);
-      const monthValue = totalValue / multiplier;
-      const monthGain = totalGain / (3 - i);
+
+      // Calculate % CDI
+      const cdiPercent = cdi12m > 0 ? ((totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0) / cdi12m) * 100 : 0;
 
       return {
         month: `${getMonthName(month)} ${year}`,
@@ -524,9 +529,10 @@ const AppDashboard = () => {
         gain: monthGain,
         cdiPercent: cdiPercent,
         stats: {
-          carteira: estimatedMonthlyReturn,
-          cdi: realCdiMonthly,
-          ipca: realIpcaMonthly,
+          // Use comparable monthly values for the chart
+          carteira: Math.max(0, portfolioMonthlyReturn),
+          cdi: Math.max(0, realCdiMonthly),
+          ipca: Math.max(0, realIpcaMonthly),
         },
       };
     });
