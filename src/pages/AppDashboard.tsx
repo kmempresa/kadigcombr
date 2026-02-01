@@ -171,6 +171,101 @@ const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: nu
   };
 };
 
+// Generate monthly performance data - uses real history and economic indicators
+// Moved outside component to avoid hoisting issues with useCallback
+const generateMonthlyPerformance = (
+  totalValue: number, 
+  totalGain: number, 
+  totalInvested: number,
+  indicators: EconomicIndicators | null,
+  historyData?: { snapshot_date: string; total_value: number; total_gain: number; gain_percent: number; cdi_accumulated: number; ipca_accumulated: number }[]
+): MonthlyData[] => {
+  const brazilDate = getBrazilDate();
+  const currentMonth = brazilDate.getMonth();
+  const currentYear = brazilDate.getFullYear();
+
+  // Get real accumulated values from economic indicators (12 months)
+  const cdi12m = indicators?.accumulated12m?.cdi || 14.43;
+  const ipca12m = indicators?.accumulated12m?.ipca || 4.10;
+  
+  // Monthly data from BCB
+  const monthlyIndicators = indicators?.monthly || [];
+
+  // Group history by month (get last day of each month)
+  const historyByMonth: { [key: string]: NonNullable<typeof historyData>[0] } = {};
+  if (historyData && historyData.length > 0) {
+    historyData.forEach(h => {
+      const date = new Date(h.snapshot_date);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      if (!historyByMonth[key] || new Date(h.snapshot_date) > new Date(historyByMonth[key].snapshot_date)) {
+        historyByMonth[key] = h;
+      }
+    });
+  }
+
+  // Generate months: current first, then going back
+  return Array.from({ length: 3 }, (_, i) => {
+    const monthOffset = i;
+    let month = currentMonth - monthOffset;
+    let year = currentYear;
+    
+    if (month < 0) {
+      month += 12;
+      year -= 1;
+    }
+
+    const historyKey = `${year}-${month}`;
+    const monthHistory = historyByMonth[historyKey];
+
+    // Find corresponding month data from BCB
+    const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+    const monthKey = `${monthNames[month]} ${year}`;
+    const monthIndicator = monthlyIndicators.find(m => m.month === monthKey);
+    
+    // Get real monthly CDI/IPCA or use average
+    const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
+    const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
+
+    // Calculate portfolio monthly return
+    let portfolioMonthlyReturn: number;
+    let monthValue = totalValue;
+    let monthGain = totalGain;
+    
+    if (monthHistory) {
+      // Use real history data
+      monthValue = monthHistory.total_value;
+      monthGain = monthHistory.total_gain;
+      const monthTotalInvested = monthValue - monthGain;
+      portfolioMonthlyReturn = monthTotalInvested > 0 ? (monthGain / monthTotalInvested) * 100 / (12 - monthOffset) : 0;
+    } else {
+      // Estimate based on current data
+      const portfolioReturn12m = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+      portfolioMonthlyReturn = portfolioReturn12m / 12;
+      
+      // Estimate past values
+      const multiplier = Math.pow(1 + (portfolioMonthlyReturn / 100), monthOffset);
+      monthValue = totalValue / (multiplier > 0 ? multiplier : 1);
+      monthGain = totalGain / (3 - i || 1);
+    }
+
+    // Calculate % CDI
+    const cdiPercent = cdi12m > 0 ? ((totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0) / cdi12m) * 100 : 0;
+
+    return {
+      month: `${getMonthName(month)} ${year}`,
+      value: monthValue,
+      gain: monthGain,
+      cdiPercent: cdiPercent,
+      stats: {
+        // Show REAL values - no clamping to 0 for accurate representation
+        carteira: portfolioMonthlyReturn, // Real portfolio return (can be negative)
+        cdi: realCdiMonthly, // Real CDI from BCB
+        ipca: realIpcaMonthly, // Real IPCA from BCB
+      },
+    };
+  });
+};
+
 const AppDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -334,7 +429,7 @@ const AppDashboard = () => {
   }, []);
 
   // Fetch all user data from database
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -351,11 +446,6 @@ const AppDashboard = () => {
       }
 
       const userId = session.user.id;
-
-      // Update investment prices in background (only on first load)
-      if (!userData) {
-        refreshPrices(false); // Silent refresh
-      }
 
       // Calculate date 3 months ago for history fetch
       const threeMonthsAgo = new Date();
@@ -429,7 +519,7 @@ const AppDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate, economicIndicators]);
 
   useEffect(() => {
     fetchUserData();
@@ -499,108 +589,14 @@ const AppDashboard = () => {
       supabase.removeChannel(portfoliosChannel);
       supabase.removeChannel(globalAssetsChannel);
     };
-  }, [navigate]); // Only subscribe once on mount
+  }, [navigate, fetchUserData]); // Include fetchUserData in dependencies
 
   // Separate effect to refetch data when refreshKey changes
   useEffect(() => {
     if (refreshKey > 0) {
       fetchUserData();
     }
-  }, [refreshKey]);
-
-  // Generate monthly performance data - uses real history and economic indicators
-  const generateMonthlyPerformance = (
-    totalValue: number, 
-    totalGain: number, 
-    totalInvested: number,
-    indicators: EconomicIndicators | null,
-    historyData?: { snapshot_date: string; total_value: number; total_gain: number; gain_percent: number; cdi_accumulated: number; ipca_accumulated: number }[]
-  ): MonthlyData[] => {
-    const brazilDate = getBrazilDate();
-    const currentMonth = brazilDate.getMonth();
-    const currentYear = brazilDate.getFullYear();
-
-    // Get real accumulated values from economic indicators (12 months)
-    const cdi12m = indicators?.accumulated12m?.cdi || 14.43;
-    const ipca12m = indicators?.accumulated12m?.ipca || 4.10;
-    
-    // Monthly data from BCB
-    const monthlyIndicators = indicators?.monthly || [];
-
-    // Group history by month (get last day of each month)
-    const historyByMonth: { [key: string]: typeof historyData extends undefined ? never : NonNullable<typeof historyData>[0] } = {};
-    if (historyData && historyData.length > 0) {
-      historyData.forEach(h => {
-        const date = new Date(h.snapshot_date);
-        const key = `${date.getFullYear()}-${date.getMonth()}`;
-        if (!historyByMonth[key] || new Date(h.snapshot_date) > new Date(historyByMonth[key].snapshot_date)) {
-          historyByMonth[key] = h;
-        }
-      });
-    }
-
-    // Generate months: current first, then going back
-    return Array.from({ length: 3 }, (_, i) => {
-      const monthOffset = i;
-      let month = currentMonth - monthOffset;
-      let year = currentYear;
-      
-      if (month < 0) {
-        month += 12;
-        year -= 1;
-      }
-
-      const historyKey = `${year}-${month}`;
-      const monthHistory = historyByMonth[historyKey];
-
-      // Find corresponding month data from BCB
-      const monthNames = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-      const monthKey = `${monthNames[month]} ${year}`;
-      const monthIndicator = monthlyIndicators.find(m => m.month === monthKey);
-      
-      // Get real monthly CDI/IPCA or use average
-      const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
-      const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
-
-      // Calculate portfolio monthly return
-      let portfolioMonthlyReturn: number;
-      let monthValue = totalValue;
-      let monthGain = totalGain;
-      
-      if (monthHistory) {
-        // Use real history data
-        monthValue = monthHistory.total_value;
-        monthGain = monthHistory.total_gain;
-        const monthTotalInvested = monthValue - monthGain;
-        portfolioMonthlyReturn = monthTotalInvested > 0 ? (monthGain / monthTotalInvested) * 100 / (12 - monthOffset) : 0;
-      } else {
-        // Estimate based on current data
-        const portfolioReturn12m = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
-        portfolioMonthlyReturn = portfolioReturn12m / 12;
-        
-        // Estimate past values
-        const multiplier = Math.pow(1 + (portfolioMonthlyReturn / 100), monthOffset);
-        monthValue = totalValue / (multiplier > 0 ? multiplier : 1);
-        monthGain = totalGain / (3 - i || 1);
-      }
-
-      // Calculate % CDI
-      const cdiPercent = cdi12m > 0 ? ((totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0) / cdi12m) * 100 : 0;
-
-      return {
-        month: `${getMonthName(month)} ${year}`,
-        value: monthValue,
-        gain: monthGain,
-        cdiPercent: cdiPercent,
-        stats: {
-          // Show REAL values - no clamping to 0 for accurate representation
-          carteira: portfolioMonthlyReturn, // Real portfolio return (can be negative)
-          cdi: realCdiMonthly, // Real CDI from BCB
-          ipca: realIpcaMonthly, // Real IPCA from BCB
-        },
-      };
-    });
-  };
+  }, [refreshKey, fetchUserData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
