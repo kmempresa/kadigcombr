@@ -529,10 +529,10 @@ const AppDashboard = () => {
         gain: monthGain,
         cdiPercent: cdiPercent,
         stats: {
-          // Use comparable monthly values for the chart
-          carteira: Math.max(0, portfolioMonthlyReturn),
-          cdi: Math.max(0, realCdiMonthly),
-          ipca: Math.max(0, realIpcaMonthly),
+          // Show REAL values - no clamping to 0 for accurate representation
+          carteira: portfolioMonthlyReturn, // Real portfolio return (can be negative)
+          cdi: realCdiMonthly, // Real CDI from BCB
+          ipca: realIpcaMonthly, // Real IPCA from BCB
         },
       };
     });
@@ -928,9 +928,12 @@ const AppDashboard = () => {
                               </>
                             ) : (
                               // Monthly data - regular chart with carteira/cdi/ipca
+                              // Carteira uses destructive color when negative, success when positive
                               <>
                                 <motion.circle
-                                  cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
+                                  cx="100" cy="100" r="85" fill="none" 
+                                  stroke={interpolatedStats.carteira >= 0 ? "hsl(var(--success))" : "hsl(var(--destructive))"} 
+                                  strokeWidth="18"
                                   strokeDasharray={interpolatedSegments.carteira.dasharray}
                                   strokeDashoffset={interpolatedSegments.carteira.offset}
                                   strokeLinecap="round"
@@ -1056,11 +1059,11 @@ const AppDashboard = () => {
               <div className="flex items-center justify-around py-4 border-y border-border">
                 <div className="text-center">
                   <div className="flex items-center gap-1 justify-center">
-                    <div className="w-2 h-2 rounded-full bg-success" />
+                    <div className={`w-2 h-2 rounded-full ${interpolatedStats.carteira >= 0 ? 'bg-success' : 'bg-destructive'}`} />
                     <span className="text-xs text-muted-foreground uppercase">Carteira</span>
                   </div>
-                  <p className="text-lg font-bold text-success tabular-nums">
-                    {showValues ? `${interpolatedStats.carteira.toFixed(2)}%` : "••%"}
+                  <p className={`text-lg font-bold tabular-nums ${interpolatedStats.carteira >= 0 ? 'text-success' : 'text-destructive'}`}>
+                    {showValues ? `${interpolatedStats.carteira >= 0 ? '+' : ''}${interpolatedStats.carteira.toFixed(2)}%` : "••%"}
                   </p>
                 </div>
                 <div className="w-px h-10 bg-border" />
@@ -1070,7 +1073,7 @@ const AppDashboard = () => {
                     <span className="text-xs text-muted-foreground uppercase">CDI</span>
                   </div>
                   <p className="text-lg font-bold text-primary tabular-nums">
-                    {showValues ? `${interpolatedStats.cdi.toFixed(2)}%` : "••%"}
+                    {showValues ? `+${interpolatedStats.cdi.toFixed(2)}%` : "••%"}
                   </p>
                 </div>
                 <div className="w-px h-10 bg-border" />
@@ -1080,7 +1083,7 @@ const AppDashboard = () => {
                     <span className="text-xs text-muted-foreground uppercase">IPCA</span>
                   </div>
                   <p className="text-lg font-bold text-warning tabular-nums">
-                    {showValues ? `${interpolatedStats.ipca.toFixed(2)}%` : "••%"}
+                    {showValues ? `+${interpolatedStats.ipca.toFixed(2)}%` : "••%"}
                   </p>
                 </div>
               </div>
