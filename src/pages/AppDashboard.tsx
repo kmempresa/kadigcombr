@@ -441,8 +441,72 @@ const AppDashboard = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, refreshKey]); // Removed economicIndicators to prevent unnecessary re-fetches
+    // Subscribe to realtime investment changes for automatic updates
+    const investmentsChannel = supabase
+      .channel('dashboard-investments-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'investments',
+        },
+        (payload) => {
+          console.log('[AppDashboard] Investment realtime update:', payload.eventType);
+          // Trigger data refresh when investments change
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to realtime portfolio changes
+    const portfoliosChannel = supabase
+      .channel('dashboard-portfolios-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'portfolios',
+        },
+        (payload) => {
+          console.log('[AppDashboard] Portfolio realtime update:', payload.eventType);
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    // Subscribe to realtime global assets changes
+    const globalAssetsChannel = supabase
+      .channel('dashboard-global-assets-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'global_assets',
+        },
+        (payload) => {
+          console.log('[AppDashboard] Global assets realtime update:', payload.eventType);
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+      supabase.removeChannel(investmentsChannel);
+      supabase.removeChannel(portfoliosChannel);
+      supabase.removeChannel(globalAssetsChannel);
+    };
+  }, [navigate]); // Only subscribe once on mount
+
+  // Separate effect to refetch data when refreshKey changes
+  useEffect(() => {
+    if (refreshKey > 0) {
+      fetchUserData();
+    }
+  }, [refreshKey]);
 
   // Generate monthly performance data - uses real history and economic indicators
   const generateMonthlyPerformance = (
