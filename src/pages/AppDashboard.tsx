@@ -126,35 +126,39 @@ const getMonthName = (monthIndex: number) => {
   return months[monthIndex];
 };
 
-// Calculate chart segments based on stats
+// Calculate chart segments based on stats - returns stable numeric values
 const calculateChartSegments = (stats: { carteira: number; cdi: number; ipca: number }) => {
   const total = stats.carteira + stats.cdi + stats.ipca;
-  if (total === 0) return {
-    carteira: { dasharray: "0 534.07", offset: 0 },
-    cdi: { dasharray: "0 534.07", offset: 0 },
-    ipca: { dasharray: "0 534.07", offset: 0 },
-  };
-  
-  const circumference = 2 * Math.PI * 85;
+  const circumference = 2 * Math.PI * 85; // ~534.07
   const gap = 8;
   
-  const carteiraLength = circumference * (stats.carteira / total) - gap;
-  const cdiLength = circumference * (stats.cdi / total) - gap;
-  const ipcaLength = circumference * (stats.ipca / total) - gap;
+  if (total <= 0) {
+    return {
+      carteira: { length: 0, offset: circumference * 0.25 },
+      cdi: { length: 0, offset: circumference * 0.25 },
+      ipca: { length: 0, offset: circumference * 0.25 },
+      circumference,
+    };
+  }
+  
+  const carteiraLength = Math.max(0, circumference * (stats.carteira / total) - gap);
+  const cdiLength = Math.max(0, circumference * (stats.cdi / total) - gap);
+  const ipcaLength = Math.max(0, circumference * (stats.ipca / total) - gap);
   
   return {
     carteira: {
-      dasharray: `${Math.max(0, carteiraLength)} ${circumference}`,
+      length: carteiraLength,
       offset: circumference * 0.25,
     },
     cdi: {
-      dasharray: `${Math.max(0, cdiLength)} ${circumference}`,
+      length: cdiLength,
       offset: circumference * 0.25 - carteiraLength - gap,
     },
     ipca: {
-      dasharray: `${Math.max(0, ipcaLength)} ${circumference}`,
+      length: ipcaLength,
       offset: circumference * 0.25 - carteiraLength - cdiLength - gap * 2,
     },
+    circumference,
   };
 };
 
@@ -921,43 +925,28 @@ const AppDashboard = () => {
                                 })()}
                               </>
                             ) : (
-                              // Monthly data - regular chart with carteira/cdi/ipca
+                              // Monthly data - regular chart with carteira/cdi/ipca (static, no animation for stability)
                               <>
-                                <motion.circle
+                                <circle
                                   cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--success))" strokeWidth="18"
-                                  strokeDasharray={interpolatedSegments.carteira.dasharray}
+                                  strokeDasharray={`${interpolatedSegments.carteira.length} ${interpolatedSegments.circumference}`}
                                   strokeDashoffset={interpolatedSegments.carteira.offset}
                                   strokeLinecap="round"
                                   style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{
-                                    strokeDasharray: interpolatedSegments.carteira.dasharray,
-                                    strokeDashoffset: interpolatedSegments.carteira.offset,
-                                  }}
-                                  transition={{ type: 'tween', duration: 0.08 }}
                                 />
-                                <motion.circle
+                                <circle
                                   cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--primary))" strokeWidth="18"
-                                  strokeDasharray={interpolatedSegments.cdi.dasharray}
+                                  strokeDasharray={`${interpolatedSegments.cdi.length} ${interpolatedSegments.circumference}`}
                                   strokeDashoffset={interpolatedSegments.cdi.offset}
                                   strokeLinecap="round"
                                   style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{
-                                    strokeDasharray: interpolatedSegments.cdi.dasharray,
-                                    strokeDashoffset: interpolatedSegments.cdi.offset,
-                                  }}
-                                  transition={{ type: 'tween', duration: 0.08 }}
                                 />
-                                <motion.circle
+                                <circle
                                   cx="100" cy="100" r="85" fill="none" stroke="hsl(var(--warning))" strokeWidth="18"
-                                  strokeDasharray={interpolatedSegments.ipca.dasharray}
+                                  strokeDasharray={`${interpolatedSegments.ipca.length} ${interpolatedSegments.circumference}`}
                                   strokeDashoffset={interpolatedSegments.ipca.offset}
                                   strokeLinecap="round"
                                   style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
-                                  animate={{
-                                    strokeDasharray: interpolatedSegments.ipca.dasharray,
-                                    strokeDashoffset: interpolatedSegments.ipca.offset,
-                                  }}
-                                  transition={{ type: 'tween', duration: 0.08 }}
                                 />
                               </>
                             )}
