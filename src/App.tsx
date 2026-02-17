@@ -30,6 +30,7 @@ import CentralAjuda from "./pages/CentralAjuda";
 import PrimeirosPassos from "./pages/PrimeirosPassos";
 import PerguntasFrequentes from "./pages/PerguntasFrequentes";
 import BiancaIAHelp from "./pages/BiancaIAHelp";
+import AnaliseCPF from "./pages/AnaliseCPF";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/primeiros-passos" element={<PrimeirosPassos />} />
               <Route path="/perguntas-frequentes" element={<PerguntasFrequentes />} />
               <Route path="/bianca-ia-help" element={<BiancaIAHelp />} />
+              <Route path="/analise-cpf" element={<AnaliseCPF />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

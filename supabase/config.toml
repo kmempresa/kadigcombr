@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.sync-pluggy-investments]
 verify_jwt = false
+
+[functions.cpf-analysis]
+verify_jwt = false
