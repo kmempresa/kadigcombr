@@ -1615,6 +1615,33 @@ const AppDashboard = () => {
                 </div>
               </motion.button>
 
+              {/* Análise de CPF */}
+              <motion.button 
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/analise-cpf')}
+                className="w-full bg-gradient-to-br from-card to-sky-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-sky-500/10 hover:border-sky-200 transition-all duration-300 group"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-sky-400 to-blue-500 rounded-2xl blur-md opacity-40 group-hover:opacity-60 transition-opacity" />
+                      <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg">
+                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="font-bold text-foreground text-base">Análise de CPF</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-sky-100 transition-colors">
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-sky-500 transition-colors" />
+                  </div>
+                </div>
+                <div className="border-t border-border/50 pt-3 pl-16">
+                  <p className="text-sm text-muted-foreground leading-relaxed">Consulte a situação do seu CPF e os CNPJs vinculados na Receita Federal.</p>
+                </div>
+              </motion.button>
+
               {/* Section Header - Recursos Premium */}
               <div className="flex items-center gap-3 pt-4 pb-1">
                 <div className="w-1.5 h-6 bg-gradient-to-b from-primary to-violet-500 rounded-full" />
