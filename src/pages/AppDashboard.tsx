@@ -55,6 +55,7 @@ import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
 import SensibilidadeAtivosDrawer from "@/components/analysis/SensibilidadeAtivosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
+import AnaliseCPFDrawer from "@/components/analysis/AnaliseCPFDrawer";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
@@ -307,6 +308,7 @@ const AppDashboard = () => {
   const [supportDrawerOpen, setSupportDrawerOpen] = useState(false);
   const [securityDrawerOpen, setSecurityDrawerOpen] = useState(false);
   const [globalPatrimonioDrawerOpen, setGlobalPatrimonioDrawerOpen] = useState(false);
+  const [analiseCPFOpen, setAnaliseCPFOpen] = useState(false);
   const [globalAssets, setGlobalAssets] = useState<{ id: string; name: string; category: string; value_brl: number }[]>([]);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
   const [premiumDrawerOpen, setPremiumDrawerOpen] = useState(false);
@@ -1618,7 +1620,7 @@ const AppDashboard = () => {
               {/* Análise de CPF */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/analise-cpf')}
+                onClick={() => setAnaliseCPFOpen(true)}
                 className="w-full bg-gradient-to-br from-card to-sky-50/30 border border-border rounded-3xl p-5 text-left hover:shadow-lg hover:shadow-sky-500/10 hover:border-sky-200 transition-all duration-300 group"
               >
                 <div className="flex items-center justify-between mb-4">
@@ -2421,6 +2423,11 @@ const AppDashboard = () => {
         onMarkAllAsRead={markAllAsRead}
         onDelete={deleteNotification}
         onClearAll={clearAllNotifications}
+      />
+
+      <AnaliseCPFDrawer
+        open={analiseCPFOpen}
+        onOpenChange={setAnaliseCPFOpen}
       />
     </div>
   );
