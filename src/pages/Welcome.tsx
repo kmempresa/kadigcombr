@@ -6,17 +6,23 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-kadig-deep text-foreground">
+    <div className="h-[100dvh] relative overflow-hidden bg-kadig-deep text-foreground">
       {/* Ambient glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -left-[20%] w-[80%] h-[40%] bg-kadig-cyan/15 blur-[120px] rounded-full" />
         <div className="absolute -bottom-[10%] -right-[20%] w-[80%] h-[40%] bg-primary/15 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 flex flex-col flex-1 min-h-screen px-8 pt-14 pb-10 safe-area-inset-bottom">
+      <div
+        className="relative z-10 flex flex-col h-full px-6 sm:px-8"
+        style={{
+          paddingTop: "max(3rem, env(safe-area-inset-top))",
+          paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+        }}
+      >
         {/* Logo */}
         <motion.div
-          className="flex justify-center"
+          className="flex justify-center shrink-0"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -27,8 +33,8 @@ const Welcome = () => {
         </motion.div>
 
         {/* Centerpiece: score rings + glass card */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="relative w-full aspect-square max-w-[260px]">
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <div className="relative aspect-square w-[min(240px,60vw)] max-h-full">
             <motion.div
               className="absolute inset-0 border border-border/40 rounded-full"
               animate={{ rotate: 360 }}
@@ -63,12 +69,12 @@ const Welcome = () => {
 
         {/* Content */}
         <motion.div
-          className="mt-auto space-y-7"
+          className="mt-auto shrink-0 space-y-5"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          <div className="space-y-3 text-center">
+          <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold leading-tight tracking-tight">
               Seu dinheiro pode{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-kadig-cyan to-primary">
