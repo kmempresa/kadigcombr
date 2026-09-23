@@ -97,7 +97,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     { id: "hoje", label: "Hoje" }, { id: "opps", label: "Oportunidades" }, { id: "whatif", label: "E se?" }, { id: "autopilot", label: "Autopilot" },
   ];
   const rec = scenarios.length ? recommendWhatIf(scenarios, whatIfAmount) : null;
-  const cols = scenarios.filter((s) => s.key !== "consorcio");
+  const cols = scenarios;
   const broken = checks.filter((c) => c.ok === false).length;
 
   return (
