@@ -1,24 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Brain, ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight } from "lucide-react";
+import { ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Sparkles, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
-  runEngine, simulateWhatIf, parseAmount, checkAutopilot, brl, formatMonths,
-  type EngineInvestment, type EngineGlobalAsset, type EngineGoal, type EngineIndicators,
+  simulateWhatIf, parseAmount, checkAutopilot, brl, formatMonths,
   type AutopilotRules, type Insight,
 } from "@/lib/opportunityEngine";
+import { useIntelligence, useIntelligenceAlerts } from "@/hooks/useIntelligence";
 
 const DEFAULT_RULES: AutopilotRules = { minLiquidity: 50000, maxDrawdownPct: 8, beatCdiPlus: 2, targetNetWorth: 10000000 };
 
-const sevStyle: Record<Insight["severity"], { label: string; cls: string; icon: any }> = {
-  risk: { label: "Risco", cls: "text-destructive bg-destructive/10 border-destructive/30", icon: ShieldAlert },
-  efficiency: { label: "Eficiência", cls: "text-warning bg-warning/10 border-warning/30", icon: Gauge },
-  opportunity: { label: "Oportunidade", cls: "text-success bg-success/10 border-success/30", icon: Lightbulb },
+const sevStyle: Record<Insight["severity"], { label: string; cls: string; dot: string; icon: any }> = {
+  risk: { label: "Risco alto", cls: "text-destructive bg-destructive/10 border-destructive/30", dot: "bg-destructive", icon: ShieldAlert },
+  efficiency: { label: "Atenção", cls: "text-warning bg-warning/10 border-warning/30", dot: "bg-warning", icon: Gauge },
+  opportunity: { label: "Oportunidade", cls: "text-success bg-success/10 border-success/30", dot: "bg-success", icon: Lightbulb },
 };
 
-interface Props { userName: string; showValues: boolean }
+const ctaFor = (i: Insight) => i.severity === "risk" ? "Entender" : i.category === "Vencimentos" || i.category === "Objetivos" ? "Planejar" : "Analisar";
+
+export type IntelView = "hoje" | "opps" | "whatif" | "autopilot";
+
+interface Props { userName: string; showValues: boolean; initialView?: IntelView; initialWhatIf?: string }
 
 export default function IntelligenceTab({ userName, showValues }: Props) {
   const [view, setView] = useState<"home" | "opps" | "whatif" | "autopilot">("home");
