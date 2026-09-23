@@ -39,8 +39,6 @@ async function getAccessToken(): Promise<string> {
 
 // Create connect token for Pluggy Widget
 async function createConnectToken(accessToken: string, itemId?: string): Promise<any> {
-  console.log('Creating connect token...', { itemId });
-
   const body: any = {};
   if (itemId) {
     body.itemId = itemId;
@@ -56,39 +54,15 @@ async function createConnectToken(accessToken: string, itemId?: string): Promise
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to create connect token:', error);
-    throw new Error(`Failed to create connect token: ${error}`);
+    throw new Error('Failed to create connect token');
   }
 
   const data = await response.json();
-  console.log('Connect token created successfully');
-  return data;
-}
-
-// List all items (connected accounts) for a user
-async function listItems(accessToken: string): Promise<any> {
-  const response = await fetch(`${PLUGGY_API_URL}/items`, {
-    method: 'GET',
-    headers: {
-      'X-API-KEY': accessToken,
-    },
-  });
-
-  const responseText = await response.text();
-  if (!response.ok) {
-    throw new Error('Failed to list items');
-  }
-
-  const data = JSON.parse(responseText);
-  console.log(`Found ${data.results?.length || 0} items`);
   return data;
 }
 
 // Get item details
 async function getItem(accessToken: string, itemId: string): Promise<any> {
-  console.log('Getting item details...', { itemId });
-
   const response = await fetch(`${PLUGGY_API_URL}/items/${itemId}`, {
     method: 'GET',
     headers: {
@@ -97,9 +71,7 @@ async function getItem(accessToken: string, itemId: string): Promise<any> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to get item:', error);
-    throw new Error(`Failed to get item: ${error}`);
+    throw new Error('Failed to get item');
   }
 
   return await response.json();
@@ -107,8 +79,6 @@ async function getItem(accessToken: string, itemId: string): Promise<any> {
 
 // Get accounts for an item
 async function getAccounts(accessToken: string, itemId: string): Promise<any> {
-  console.log('Getting accounts...', { itemId });
-
   const response = await fetch(`${PLUGGY_API_URL}/accounts?itemId=${itemId}`, {
     method: 'GET',
     headers: {
@@ -117,9 +87,7 @@ async function getAccounts(accessToken: string, itemId: string): Promise<any> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to get accounts:', error);
-    throw new Error(`Failed to get accounts: ${error}`);
+    throw new Error('Failed to get accounts');
   }
 
   return await response.json();
@@ -127,8 +95,6 @@ async function getAccounts(accessToken: string, itemId: string): Promise<any> {
 
 // Get investments for an item
 async function getInvestments(accessToken: string, itemId: string): Promise<any> {
-  console.log('Getting investments...', { itemId });
-
   const response = await fetch(`${PLUGGY_API_URL}/investments?itemId=${itemId}`, {
     method: 'GET',
     headers: {
@@ -137,9 +103,7 @@ async function getInvestments(accessToken: string, itemId: string): Promise<any>
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to get investments:', error);
-    throw new Error(`Failed to get investments: ${error}`);
+    throw new Error('Failed to get investments');
   }
 
   return await response.json();
@@ -147,8 +111,6 @@ async function getInvestments(accessToken: string, itemId: string): Promise<any>
 
 // Delete an item
 async function deleteItem(accessToken: string, itemId: string): Promise<void> {
-  console.log('Deleting item...', { itemId });
-
   const response = await fetch(`${PLUGGY_API_URL}/items/${itemId}`, {
     method: 'DELETE',
     headers: {
@@ -157,12 +119,8 @@ async function deleteItem(accessToken: string, itemId: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to delete item:', error);
-    throw new Error(`Failed to delete item: ${error}`);
+    throw new Error('Failed to delete item');
   }
-
-  console.log('Item deleted successfully');
 }
 
 serve(async (req) => {

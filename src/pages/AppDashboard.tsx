@@ -189,10 +189,6 @@ const generateMonthlyPerformance = (
   const currentMonth = brazilDate.getMonth();
   const currentYear = brazilDate.getFullYear();
 
-  // Get real accumulated values from economic indicators (12 months)
-  const cdi12m = indicators?.accumulated12m?.cdi || 14.43;
-  const ipca12m = indicators?.accumulated12m?.ipca || 4.10;
-  
   // Monthly data from BCB
   const monthlyIndicators = indicators?.monthly || [];
 
@@ -227,9 +223,9 @@ const generateMonthlyPerformance = (
     const monthKey = `${monthNames[month]} ${year}`;
     const monthIndicator = monthlyIndicators.find(m => m.month === monthKey);
     
-    // Get real monthly CDI/IPCA or use average
-    const realCdiMonthly = monthIndicator?.cdi || (cdi12m / 12);
-    const realIpcaMonthly = monthIndicator?.ipca || (ipca12m / 12);
+    // Never synthesize economic data when BCB has not returned it.
+    const realCdiMonthly = monthIndicator?.cdi ?? 0;
+    const realIpcaMonthly = monthIndicator?.ipca ?? 0;
 
     // Calculate portfolio monthly return
     let portfolioMonthlyReturn: number;
@@ -242,25 +238,20 @@ const generateMonthlyPerformance = (
       monthGain = monthHistory.total_gain;
       const monthTotalInvested = monthValue - monthGain;
       portfolioMonthlyReturn = monthTotalInvested > 0 ? (monthGain / monthTotalInvested) * 100 / (12 - monthOffset) : 0;
+    } else if (monthOffset === 0) {
+      portfolioMonthlyReturn = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
     } else {
-      // Estimate based on current data
-      const portfolioReturn12m = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
-      portfolioMonthlyReturn = portfolioReturn12m / 12;
-      
-      // Estimate past values
-      const multiplier = Math.pow(1 + (portfolioMonthlyReturn / 100), monthOffset);
-      monthValue = totalValue / (multiplier > 0 ? multiplier : 1);
-      monthGain = totalGain / (3 - i || 1);
+      // There is no reliable historical value without a stored snapshot.
+      portfolioMonthlyReturn = 0;
+      monthValue = 0;
+      monthGain = 0;
     }
-
-    // Calculate % CDI
-    const cdiPercent = cdi12m > 0 ? ((totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0) / cdi12m) * 100 : 0;
 
     return {
       month: `${getMonthName(month)} ${year}`,
       value: monthValue,
       gain: monthGain,
-      cdiPercent: cdiPercent,
+      cdiPercent: 0,
       stats: {
         // Show REAL values - no clamping to 0 for accurate representation
         carteira: portfolioMonthlyReturn, // Real portfolio return (can be negative)
@@ -1087,7 +1078,7 @@ const AppDashboard = () => {
                               {slide.type === "monthly" && (
                                 <>
                                   <span className="text-xs text-muted-foreground mt-1">
-                                    CARTEIRA <span className="text-primary font-semibold">{formatPercent(slide.cdiPercent)}</span> DO CDI
+                                    RETORNO ACUMULADO <span className="text-primary font-semibold">{formatPercent(slide.stats.carteira)}</span>
                                   </span>
                                   <div className="mt-3">
                                     <span className="text-[10px] text-muted-foreground">GANHO DE CAPITAL</span>

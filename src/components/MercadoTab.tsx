@@ -107,7 +107,6 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [showAllBaixas, setShowAllBaixas] = useState(false);
   const [showAllDividends, setShowAllDividends] = useState(false);
   const [showAllNews, setShowAllNews] = useState(false);
-  const [showAllKadig, setShowAllKadig] = useState(false);
   const [simuladorOpen, setSimuladorOpen] = useState(false);
   const [carteirasOpen, setCarteirasOpen] = useState(false);
   const [relatoriosOpen, setRelatoriosOpen] = useState(false);

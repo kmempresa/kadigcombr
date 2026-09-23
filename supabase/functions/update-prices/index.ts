@@ -251,12 +251,9 @@ serve(async (req) => {
 
       for (const [portfolioId, totals] of Object.entries(portfolioTotals)) {
         const gain = totals.value - totals.invested;
-        const cdiPercent = totals.invested > 0 ? (gain / totals.invested) * 100 : 0;
-        
         await supabase.from('portfolios').update({
           total_value: totals.value,
           total_gain: gain,
-          cdi_percent: cdiPercent,
           updated_at: new Date().toISOString(),
         }).eq('id', portfolioId).eq('user_id', userId);
       }
