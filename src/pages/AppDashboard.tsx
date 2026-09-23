@@ -902,6 +902,7 @@ const AppDashboard = () => {
           <div className="flex border-b border-border px-4 overflow-x-auto bg-card/50">
             {[
               { id: "resumo", label: "Resumo" },
+              { id: "trade", label: "Trade" },
               { id: "ativos", label: "Ativos" },
               { id: "analises", label: "Análises" },
               { id: "extrato", label: "Extrato" },
@@ -2173,8 +2174,8 @@ const AppDashboard = () => {
         </div>
       )}
 
-      {/* Trade Tab */}
-      {activeTab === "trade" && (
+      {/* Trade Tab (dentro da Carteira, ao lado de Resumo) */}
+      {activeTab === "carteira" && carteiraTab === "trade" && (
         isPremium ? (
           <TradeTab 
             showValues={showValues} 
@@ -2247,7 +2248,6 @@ const AppDashboard = () => {
           {[
             { id: "carteira", icon: Wallet, label: "Carteira" },
             { id: "intelligence", icon: Gauge, label: "Intelligence" },
-            { id: "trade", icon: TrendingUp, label: "Trade" },
             { id: "conexoes", icon: Link2, label: "Conexões" },
             { id: "mercado", icon: Store, label: "Mercado" },
             { id: "conta", icon: User, label: "Conta" },
