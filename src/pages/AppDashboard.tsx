@@ -102,6 +102,7 @@ interface UserData {
     total_invested: number;
     gain_percent: number;
     source?: string;
+    updated_at?: string;
   }[];
 }
 
