@@ -360,11 +360,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                           {c.ok === true ? "Esta regra está dentro do limite. Nenhuma ação necessária." : c.suggestion}
                         </p>
                         {c.ok === false && (
-                          <button type="button"
-                            onClick={() => { setWhatIfText(c.suggestion); setWhatIfAmount(parseAmount(c.suggestion)); setView("whatif"); }}
-                            className="inline-flex items-center gap-1 text-xs text-primary font-medium">
-                            Simular este ajuste <ChevronRight className="w-3 h-3" />
-                          </button>
+                          <p className="text-[11px] text-muted-foreground">Execute este ajuste na sua corretora. A Kadig confere de novo sozinha assim que a carteira mudar.</p>
                         )}
                       </div>
                     )}
@@ -406,10 +402,6 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                       <li key={c.id} className="text-xs">
                         <p className="font-medium text-foreground">{idx + 1}. {c.label}</p>
                         <p className="text-muted-foreground mt-0.5">{c.suggestion}</p>
-                        <button type="button" className="text-primary font-medium mt-1"
-                          onClick={() => { setWhatIfText(c.suggestion); setWhatIfAmount(parseAmount(c.suggestion)); setView("whatif"); }}>
-                          Simular este ajuste
-                        </button>
                       </li>
                     ))}
                     <p className="text-[11px] text-muted-foreground">Nenhuma operação é feita sem você. Execute os ajustes na sua corretora.</p>
