@@ -21,11 +21,8 @@ const Welcome = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-kadig-cyan to-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/25">
-              <img src={kadigLogo} alt="Kadig" className="w-4 h-4 object-contain" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Kadig</span>
+          <div className="w-14 h-14 bg-gradient-to-br from-kadig-cyan to-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
+            <img src={kadigLogo} alt="Kadig" className="w-7 h-7 object-contain" />
           </div>
         </motion.div>
 
