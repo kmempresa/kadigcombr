@@ -170,22 +170,19 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               </button>
             ))}
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="bg-card border border-border rounded-xl divide-y divide-border">
               {[
-                { icon: Calculator, label: "E se?", on: () => setView("whatif") },
-                { icon: Bot, label: "Autopilot", on: () => setView("autopilot") },
-                { icon: MessageCircle, label: "Pergunte à Kadig", on: () => navigate("/consultor-ia") },
+                { label: "Simular uma decisão", hint: "E se?", on: () => setView("whatif") },
+                { label: "Minhas regras", hint: "Autopilot", on: () => setView("autopilot") },
+                { label: "Falar com a Kadig", hint: "Consultor", on: () => navigate("/consultor-ia") },
               ].map((b) => (
-                <button key={b.label} onClick={b.on} className="bg-card border border-border rounded-xl p-3 text-left">
-                  <b.icon className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">{b.label}</p>
+                <button key={b.label} onClick={b.on} className="w-full flex items-center justify-between px-4 py-3 text-left">
+                  <span className="text-sm text-foreground">{b.label}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">{b.hint}<ChevronRight className="w-3.5 h-3.5" /></span>
                 </button>
               ))}
             </div>
 
-            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (ask.trim()) navigate("/consultor-ia", { state: { prefill: ask.trim() } }); }}>
-              <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Pergunte qualquer coisa sobre seu patrimônio..." />
-              <Button type="submit" size="icon" aria-label="Perguntar"><Send className="w-4 h-4" /></Button>
-            </form>
           </>
         )}
 
