@@ -343,8 +343,9 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {checks.map((c) => {
                 const expanded = openRule === c.id;
                 return (
-                  <button type="button" key={c.id} onClick={() => setOpenRule(expanded ? null : c.id)}
-                    className="w-full text-left bg-card border border-border rounded-xl p-3 active:bg-muted/50">
+                  <div key={c.id} className="bg-card border border-border rounded-xl">
+                    <button type="button" onClick={() => setOpenRule(expanded ? null : c.id)}
+                      className="w-full text-left p-3 active:bg-muted/50 rounded-xl">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok === null ? "bg-muted-foreground" : c.ok ? "bg-success" : "bg-destructive"}`} />
                       <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
@@ -352,21 +353,22 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                       <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`} />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
+                    </button>
                     {expanded && (
-                      <div className="mt-2 pl-4 space-y-2">
+                      <div className="px-3 pb-3 pl-7 space-y-2">
                         <p className="text-xs text-foreground">
                           {c.ok === true ? "Esta regra está dentro do limite. Nenhuma ação necessária." : c.suggestion}
                         </p>
                         {c.ok === false && (
-                          <span role="button" tabIndex={0}
-                            onClick={(e) => { e.stopPropagation(); setWhatIfText(c.suggestion); setWhatIfAmount(parseAmount(c.suggestion)); setView("whatif"); }}
+                          <button type="button"
+                            onClick={() => { setWhatIfText(c.suggestion); setWhatIfAmount(parseAmount(c.suggestion)); setView("whatif"); }}
                             className="inline-flex items-center gap-1 text-xs text-primary font-medium">
                             Simular este ajuste <ChevronRight className="w-3 h-3" />
-                          </span>
+                          </button>
                         )}
                       </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
