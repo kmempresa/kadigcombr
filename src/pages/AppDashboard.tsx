@@ -2184,6 +2184,7 @@ const AppDashboard = () => {
             onToggleValues={() => setShowValues(!showValues)}
             onAddAsset={() => setAdicionarDrawerOpen(true)}
             onAddConnection={() => navigate("/conexoes")}
+            embedded
           />
         ) : (
           <div className="flex-1 overflow-hidden">
