@@ -23,3 +23,7 @@ project_id = "purbhxibouvtmgtsoidh"
     verify_jwt = true
   [functions.update-prices]
     verify_jwt = true
+  [functions.kdg-export]
+    verify_jwt = false
+  [functions.kdg-update-plan]
+    verify_jwt = false
