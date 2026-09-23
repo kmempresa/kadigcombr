@@ -274,8 +274,8 @@ const AppDashboard = () => {
     const state = location.state as { returnToTab?: string } | null;
     return (state?.returnToTab as any) || "carteira";
   });
-  const [intelView, setIntelView] = useState<IntelView>("hoje");
-  const [intelWhatIf, setIntelWhatIf] = useState("");
+  const [intelView, setIntelView] = useState<IntelView>(() => ((location.state as any)?.whatIf ? "whatif" as IntelView : "hoje"));
+  const [intelWhatIf, setIntelWhatIf] = useState<string>(() => (location.state as any)?.whatIf || "");
   const intel = useIntelligence();
   const openIntel = (view: IntelView, whatIf = "") => { setIntelView(view); setIntelWhatIf(whatIf); setActiveTab("intelligence"); };
   const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
