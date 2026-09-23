@@ -333,7 +333,7 @@ export function subScores(investments: EngineInvestment[], r: EngineResult): Sub
 
 export function parseAmount(text: string): number {
   const t = text.toLowerCase().replace(/r\$\s?/g, "");
-  const m = t.match(/(\d+(?:[.,]\d+)*)\s*(mil|k|milh(?:ão|ao|ões|oes)|mi|m\b)?/);
+  const m = t.match(/(\d+(?:[.,]\d+)*)\s*(milh(?:ão|ao|ões|oes)|mil|k|mi|m\b)?/);
   if (!m) return 0;
   let raw = m[1];
   const unit = m[2];
