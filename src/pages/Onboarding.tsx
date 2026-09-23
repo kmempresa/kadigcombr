@@ -223,7 +223,7 @@ const Onboarding = () => {
   const Option = ({ label, selected, onClick, multi }: { label: string; selected: boolean; onClick: () => void; multi?: boolean }) => (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between p-4 rounded-xl border text-left transition-all active:scale-[0.99] ${
+      className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl border text-left transition-all active:scale-[0.99] ${
         selected ? "border-primary bg-primary/5" : "border-border bg-card"
       }`}
     >
@@ -235,9 +235,9 @@ const Onboarding = () => {
   );
 
   const Title = ({ title, sub }: { title: string; sub?: string }) => (
-    <div className="space-y-2 mb-6">
-      <h1 className="text-2xl font-bold text-foreground leading-tight">{title}</h1>
-      {sub && <p className="text-muted-foreground">{sub}</p>}
+    <div className="space-y-1.5 mb-5">
+      <h1 className="text-[22px] font-bold text-foreground leading-tight">{title}</h1>
+      {sub && <p className="text-sm text-muted-foreground">{sub}</p>}
     </div>
   );
 
@@ -260,8 +260,8 @@ const Onboarding = () => {
   })();
 
   return (
-    <div className="light-theme fixed inset-0 bg-background flex flex-col">
-      <header className="p-4 safe-area-inset-top">
+    <div className="light-theme fixed inset-0 bg-background flex flex-col overflow-hidden" style={{ height: "100dvh" }}>
+      <header className="shrink-0 px-4 pb-2" style={{ paddingTop: "max(env(safe-area-inset-top, 0px) + 4px, 16px)" }}>
         <div className="flex items-center justify-between max-w-md mx-auto h-10">
           {qIndex >= 0 ? (
             <button onClick={back} aria-label="Voltar" className="w-10 h-10 -ml-2 flex items-center justify-center text-foreground">
@@ -279,8 +279,8 @@ const Onboarding = () => {
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-5">
-        <div className="max-w-md mx-auto py-4">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5">
+        <div className="max-w-md mx-auto py-3">
           <AnimatePresence mode="wait">
             {step === "name" && (
               <motion.div key="name" {...anim}>
@@ -437,8 +437,8 @@ const Onboarding = () => {
       </main>
 
       {footerButton && (
-        <footer className="p-5 safe-area-inset-bottom">
-          <Button onClick={footerButton.onClick} disabled={footerButton.disabled} className="w-full h-14 text-base font-semibold max-w-md mx-auto flex">
+        <footer className="shrink-0 px-5 pt-3 border-t border-border/60 bg-background" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px) + 8px, 20px)" }}>
+          <Button onClick={footerButton.onClick} disabled={footerButton.disabled} className="w-full h-[52px] text-base font-semibold max-w-md mx-auto flex rounded-xl">
             {(saving || connecting) && step !== "analyzing" ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{footerButton.label}<ArrowRight className="w-4 h-4 ml-2" /></>}
           </Button>
         </footer>
