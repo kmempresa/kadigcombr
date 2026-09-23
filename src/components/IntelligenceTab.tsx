@@ -3,23 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Sparkles, Send } from "lucide-react";
+import { Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
-  simulateWhatIf, parseAmount, checkAutopilot, brl, formatMonths,
+  simulateWhatIf, parseAmount, checkAutopilot, recommendWhatIf, brl, formatMonths, BUCKETS,
   type AutopilotRules, type Insight,
 } from "@/lib/opportunityEngine";
 import { useIntelligence, useIntelligenceAlerts } from "@/hooks/useIntelligence";
 
-const DEFAULT_RULES: AutopilotRules = { minLiquidity: 50000, maxDrawdownPct: 8, beatCdiPlus: 2, targetNetWorth: 10000000 };
-
-const sevStyle: Record<Insight["severity"], { label: string; cls: string; dot: string; icon: any }> = {
-  risk: { label: "Risco alto", cls: "text-destructive bg-destructive/10 border-destructive/30", dot: "bg-destructive", icon: ShieldAlert },
-  efficiency: { label: "Atenção", cls: "text-warning bg-warning/10 border-warning/30", dot: "bg-warning", icon: Gauge },
-  opportunity: { label: "Oportunidade", cls: "text-success bg-success/10 border-success/30", dot: "bg-success", icon: Lightbulb },
+const DEFAULT_RULES: AutopilotRules = {
+  minLiquidity: 300000, maxRisk: 6, beatCdiPlus: 2, maxConcentrationPct: 20, targetNetWorth: 10000000, targetYear: 2030,
 };
 
-const ctaFor = (i: Insight) => i.severity === "risk" ? "Entender" : i.category === "Vencimentos" || i.category === "Objetivos" ? "Planejar" : "Analisar";
+const sev: Record<Insight["severity"], { label: string; dot: string }> = {
+  risk: { label: "Risco alto", dot: "bg-destructive" },
+  efficiency: { label: "Atenção", dot: "bg-warning" },
+  opportunity: { label: "Oportunidade", dot: "bg-success" },
+};
 
 export type IntelView = "hoje" | "opps" | "whatif" | "autopilot";
 
@@ -27,18 +27,20 @@ interface Props { userName: string; showValues: boolean; initialView?: IntelView
 
 export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
   const navigate = useNavigate();
-  const { loading, userId, investments, connections, globals, ind, result } = useIntelligence();
+  const { loading, userId, investments, connections, globals, ind, result, analyzedAt } = useIntelligence();
   const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
   const [whatIfAmount, setWhatIfAmount] = useState(() => parseAmount(initialWhatIf));
   const [ask, setAsk] = useState("");
+  const [, tick] = useState(0);
 
   useEffect(() => { setView(initialView); }, [initialView]);
   useEffect(() => { if (initialWhatIf) { setWhatIfText(initialWhatIf); setWhatIfAmount(parseAmount(initialWhatIf)); } }, [initialWhatIf]);
+  useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 30000); return () => clearInterval(t); }, []);
   useEffect(() => {
     if (!userId) return;
-    const saved = localStorage.getItem(`kadig-autopilot-${userId}`);
+    const saved = localStorage.getItem(`kadig-autopilot-v2-${userId}`);
     if (saved) try { setRules({ ...DEFAULT_RULES, ...JSON.parse(saved) }); } catch { /* ignore */ }
   }, [userId]);
 
@@ -48,27 +50,32 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   }, [investments, result.netWorth]);
   useIntelligenceAlerts(userId, topShare);
 
-  const dayGain = result.invested * (Math.pow(1 + ind.cdi12m / 100, 1 / 252) - 1);
   const checks = useMemo(() => checkAutopilot(result, investments, rules, ind), [result, investments, rules, ind]);
   const scenarios = useMemo(
     () => whatIfAmount > 0 ? simulateWhatIf(whatIfAmount, result.netWorth, result.liquid, result.invested, ind, rules.targetNetWorth) : [],
     [whatIfAmount, result, ind, rules.targetNetWorth],
   );
-  const attention = result.insights.filter((i) => !(i.id === "stress" && i.severity !== "risk"));
+  const feed = result.insights.filter((i) => !(i.id === "stress" && i.severity !== "risk"));
+  const found = result.insights.filter((i) => i.annualImpact > 0);
+  const buckets = BUCKETS.map((b) => ({ b, v: found.filter((i) => i.bucket === b).reduce((s, i) => s + i.annualImpact, 0) }));
 
   const v = (n: number, compact = false) => (showValues ? brl(n, compact) : "R$ •••••");
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = (userName || "").split(" ")[0];
-  const health = result.score >= 70 ? "saudável" : result.score >= 40 ? "estável, com pontos a melhorar" : "exposto a riscos importantes";
+  const ago = (() => {
+    if (!analyzedAt) return "agora";
+    const m = Math.floor((Date.now() - analyzedAt.getTime()) / 60000);
+    return m < 1 ? "agora" : m < 60 ? `há ${m} min` : `há ${Math.floor(m / 60)}h`;
+  })();
 
   const saveRules = (r: AutopilotRules) => {
     setRules(r);
-    if (userId) localStorage.setItem(`kadig-autopilot-${userId}`, JSON.stringify(r));
+    if (userId) localStorage.setItem(`kadig-autopilot-v2-${userId}`, JSON.stringify(r));
   };
 
   const openInsight = (i: Insight) => {
-    if (i.id === "concentration" || i.id === "crypto" || i.id === "stress") setView("autopilot");
+    if (["concentration", "crypto", "stress"].includes(i.id)) setView("autopilot");
     else if (i.id.startsWith("goal-")) setView("whatif");
     else setView("opps");
   };
@@ -77,24 +84,12 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     return <div className="flex-1 flex items-center justify-center py-24"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   }
 
-  const InsightCard = ({ i }: { i: Insight }) => {
-    const s = sevStyle[i.severity];
-    return (
-      <div className="bg-card border border-border rounded-xl p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`w-2 h-2 rounded-full ${s.dot}`} />{i.category}</span>
-          {i.annualImpact > 0 && <span className="text-xs font-semibold text-success">+{v(i.annualImpact)}/ano</span>}
-        </div>
-        <p className="font-semibold text-foreground text-sm">{i.title}</p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{i.detail}</p>
-        <p className="text-xs text-primary mt-2 font-medium">{i.action}</p>
-      </div>
-    );
-  };
-
   const tabs: { id: IntelView; label: string }[] = [
     { id: "hoje", label: "Hoje" }, { id: "opps", label: "Oportunidades" }, { id: "whatif", label: "E se?" }, { id: "autopilot", label: "Autopilot" },
   ];
+  const rec = scenarios.length ? recommendWhatIf(scenarios, whatIfAmount) : null;
+  const cols = scenarios.filter((s) => s.key !== "consorcio");
+  const broken = checks.filter((c) => !c.ok).length;
 
   return (
     <div className="flex-1 pb-20">
@@ -118,151 +113,234 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
       </div>
 
       <div className="p-4 space-y-4">
-      {view === "hoje" && (
-        <>
-          <p className="text-sm text-muted-foreground">
-            Seu patrimônio está {health}{attention.length ? `, e encontramos ${attention.length} ponto${attention.length > 1 ? "s" : ""} importante${attention.length > 1 ? "s" : ""}.` : "."}
-          </p>
-          <p className="text-[11px] text-muted-foreground mt-2">
-            Analisamos {investments.length} ativo{investments.length !== 1 ? "s" : ""}, {connections} conta{connections !== 1 ? "s" : ""} conectada{connections !== 1 ? "s" : ""} e {globals.length} bem{globals.length !== 1 ? "ns" : ""} do patrimônio global.
-          </p>
-
-          <div className="grid grid-cols-5 gap-3 mt-5">
-            <div className="col-span-3 bg-card border border-border rounded-xl p-4">
-              <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
-              <p className="text-xs text-muted-foreground mt-1">em oportunidades identificadas</p>
+        {view === "hoje" && (
+          <>
+            <div className="flex items-start gap-2">
+              <span className="relative flex w-2 h-2 mt-1.5">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-60 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-success" />
+              </span>
+              <div>
+                <p className="text-sm text-foreground">Kadig analisou seu patrimônio {ago}</p>
+                <p className="text-xs text-muted-foreground">
+                  {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
+                </p>
+              </div>
             </div>
-            <div className="col-span-2 bg-card border border-border rounded-xl p-4">
-              <p className="text-xs text-muted-foreground">Kadig Score</p>
-              <p className={`text-2xl font-bold ${result.score >= 70 ? "text-success" : result.score >= 40 ? "text-warning" : "text-destructive"}`}>{result.score}</p>
-              <div className="h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden"><div className="h-full bg-primary" style={{ width: `${result.score}%` }} /></div>
-            </div>
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-2">Patrimônio líquido {v(result.netWorth)} · <span className="text-success">+{v(dayGain)} estimado hoje</span></p>
 
-          <div className="space-y-2.5 mt-5">
-            {attention.length === 0 && (
+            <button onClick={() => setView("opps")} className="w-full text-left bg-card border border-border rounded-xl p-5">
+              {result.totalOpportunity > 0 ? (
+                <>
+                  <p className="text-3xl font-bold text-foreground">{v(result.totalOpportunity)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">potencial identificado nos próximos 12 meses</p>
+                  <p className="text-xs text-primary font-medium mt-3 flex items-center gap-0.5">
+                    {found.length} oportunidade{found.length !== 1 ? "s" : ""} encontrada{found.length !== 1 ? "s" : ""} <ChevronRight className="w-3 h-3" />
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-base font-semibold text-foreground">Nenhum ganho financeiro direto encontrado hoje</p>
+                  <p className="text-sm text-muted-foreground mt-1">A Kadig segue monitorando e avisa quando surgir algo.</p>
+                </>
+              )}
+              <div className="flex items-center justify-between border-t border-border mt-4 pt-3 text-xs text-muted-foreground">
+                <span>Kadig Score <span className="text-foreground font-semibold">{result.score}</span>/100</span>
+                <span>Patrimônio {v(result.netWorth, true)}</span>
+              </div>
+            </button>
+
+            {feed.length === 0 && (
               <p className="text-sm text-muted-foreground">Adicione investimentos ou conecte um banco para a Kadig analisar seu patrimônio.</p>
             )}
-            {attention.slice(0, 3).map((i) => {
-              const s = sevStyle[i.severity];
-              return (
-                <button key={i.id} onClick={() => openInsight(i)} className="w-full text-left bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-                    <span className="text-xs text-muted-foreground">{s.label}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-foreground mt-1.5">{i.title}</p>
-                  {i.annualImpact > 0 && <p className="text-xs text-success mt-0.5">Potencial estimado: +{v(i.annualImpact)}/ano</p>}
-                  <p className="text-xs font-medium text-primary mt-2 flex items-center gap-0.5">{ctaFor(i)} <ChevronRight className="w-3 h-3" /></p>
+            {feed.slice(0, 5).map((i) => (
+              <button key={i.id} onClick={() => openInsight(i)} className="w-full text-left bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className={`w-2 h-2 rounded-full ${sev[i.severity].dot}`} />
+                  {sev[i.severity].label}
+                  {i.annualImpact > 0 && <span className="text-success font-medium">· +{v(i.annualImpact)}/ano</span>}
+                </div>
+                <p className="text-sm font-semibold text-foreground mt-1.5">{i.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed line-clamp-2">{i.detail}</p>
+                <p className="text-xs font-medium text-primary mt-2 flex items-center gap-0.5">{i.cta || "Ver detalhes"} <ChevronRight className="w-3 h-3" /></p>
+              </button>
+            ))}
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { icon: Calculator, label: "E se?", on: () => setView("whatif") },
+                { icon: Bot, label: "Autopilot", on: () => setView("autopilot") },
+                { icon: MessageCircle, label: "Pergunte à Kadig", on: () => navigate("/consultor-ia") },
+              ].map((b) => (
+                <button key={b.label} onClick={b.on} className="bg-card border border-border rounded-xl p-3 text-left">
+                  <b.icon className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">{b.label}</p>
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <button onClick={() => setView("whatif")} className="bg-card border border-border rounded-xl p-3 text-left">
-              <Calculator className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">E se?</p>
-            </button>
-            <button onClick={() => setView("autopilot")} className="bg-card border border-border rounded-xl p-3 text-left">
-              <Bot className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">Autopilot</p>
-            </button>
-            <button onClick={() => navigate("/consultor-ia")} className="bg-card border border-border rounded-xl p-3 text-left">
-              <MessageCircle className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">Pergunte à Kadig</p>
-            </button>
-          </div>
+            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (ask.trim()) navigate("/consultor-ia", { state: { prefill: ask.trim() } }); }}>
+              <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Pergunte qualquer coisa sobre seu patrimônio..." />
+              <Button type="submit" size="icon" aria-label="Perguntar"><Send className="w-4 h-4" /></Button>
+            </form>
+          </>
+        )}
 
-          <form className="flex gap-2 mt-4" onSubmit={(e) => { e.preventDefault(); if (ask.trim()) navigate("/consultor-ia", { state: { prefill: ask.trim() } }); }}>
-            <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Pergunte qualquer coisa sobre seu patrimônio..." />
-            <Button type="submit" size="icon" aria-label="Perguntar"><Send className="w-4 h-4" /></Button>
-          </form>
-        </>
-      )}
-
-      {view === "opps" && (
-        <>
-          <div className="bg-card border border-border rounded-xl p-4">
-            <p className="text-xs text-muted-foreground">Encontramos no seu patrimônio</p>
-            <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
-            <p className="text-xs text-muted-foreground mt-1">em oportunidades, priorizadas por impacto.</p>
-          </div>
-          <div className="space-y-3 mt-4">{result.insights.map((i) => <InsightCard key={i.id} i={i} />)}</div>
-        </>
-      )}
-
-      {view === "whatif" && (
-        <>
-          <p className="text-sm text-muted-foreground">Descreva uma compra ou decisão. Ex: "Quero comprar uma Porsche de R$ 600 mil".</p>
-          <form className="flex gap-2 mt-4" onSubmit={(e) => {
-            e.preventDefault();
-            const a = parseAmount(whatIfText);
-            if (!a) { toast.error("Informe um valor, por exemplo R$ 600 mil"); return; }
-            setWhatIfAmount(a);
-          }}>
-            <Input value={whatIfText} onChange={(e) => setWhatIfText(e.target.value)} placeholder="Quero comprar um apartamento de R$ 1,2 milhão" />
-            <Button type="submit">Simular</Button>
-          </form>
-
-          {scenarios.length > 0 && (
-            <div className="space-y-3 mt-5">
-              <p className="text-xs text-muted-foreground">Valor considerado: <span className="text-foreground font-semibold">{brl(whatIfAmount)}</span></p>
-              {scenarios.map((s) => (
-                <div key={s.key} className="bg-card border border-border rounded-xl p-4">
-                  <p className="font-semibold text-foreground">{s.label}</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
-                    <div><p className="text-muted-foreground">Patrimônio</p><p className="text-foreground font-medium">{v(s.netWorth, true)}</p></div>
-                    <div><p className="text-muted-foreground">Liquidez</p><p className={`font-medium ${s.liquid < 0 ? "text-destructive" : "text-foreground"}`}>{v(s.liquid, true)}</p></div>
-                    <div><p className="text-muted-foreground">Renda passiva/mês</p><p className="text-foreground font-medium">{v(s.passiveMonthly)}</p></div>
-                    <div><p className="text-muted-foreground">Custo total</p><p className="text-foreground font-medium">{v(s.totalCost, true)}</p></div>
-                    <div className="col-span-2"><p className="text-muted-foreground">Meta de {brl(rules.targetNetWorth, true)}</p><p className="text-foreground font-medium">{formatMonths(s.goalMonths)}</p></div>
+        {view === "opps" && (
+          <>
+            <div className="bg-card border border-border rounded-xl p-5">
+              <p className="text-xs text-muted-foreground">Potencial identificado</p>
+              <p className="text-3xl font-bold text-success mt-1">+{v(result.totalOpportunity)}<span className="text-base text-muted-foreground font-medium">/ano</span></p>
+              <div className="mt-4 space-y-2">
+                {buckets.map(({ b, v: val }) => (
+                  <div key={b} className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{b}</span>
+                    <span className={val > 0 ? "text-success font-medium" : "text-muted-foreground"}>{val > 0 ? `+${v(val)}/ano` : "—"}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-3 leading-relaxed">{s.note}</p>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-3">Juros e taxas passam a ser analisados quando você conecta cartões, empréstimos e fundos.</p>
+            </div>
+
+            {found.map((i) => (
+              <div key={i.id} className="bg-card border border-border rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{i.bucket}</span>
+                  <span className="text-sm font-semibold text-success">+{v(i.annualImpact)}/ano</span>
+                </div>
+                <p className="text-sm font-semibold text-foreground mt-1">{i.title}</p>
+                <div className="mt-3 space-y-2 text-xs">
+                  {[["Situação atual", i.current], ["Sugestão", i.suggestion], ["Impacto estimado", `+${v(i.annualImpact)} por ano`], ["Risco", i.risk]].map(([k, val]) => (
+                    <div key={k} className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">{k}</span><span className="text-foreground">{val}</span></div>
+                  ))}
+                </div>
+                <Button size="sm" className="w-full mt-3" onClick={() => toast.success("Adicionado ao seu plano de ação.")}>{i.action}</Button>
+              </div>
+            ))}
+
+            {result.insights.filter((i) => i.annualImpact === 0).length > 0 && (
+              <>
+                <p className="text-sm font-semibold text-foreground pt-2">Outros pontos analisados</p>
+                {result.insights.filter((i) => i.annualImpact === 0).map((i) => (
+                  <div key={i.id} className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground"><span className={`w-2 h-2 rounded-full ${sev[i.severity].dot}`} />{i.category}</div>
+                    <p className="text-sm font-semibold text-foreground mt-1">{i.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{i.detail}</p>
+                  </div>
+                ))}
+              </>
+            )}
+          </>
+        )}
+
+        {view === "whatif" && (
+          <>
+            <p className="text-base font-semibold text-foreground">O que você está pensando em fazer?</p>
+            <form className="flex gap-2" onSubmit={(e) => {
+              e.preventDefault();
+              const a = parseAmount(whatIfText);
+              if (!a) { toast.error("Informe um valor, por exemplo R$ 600 mil"); return; }
+              setWhatIfAmount(a);
+            }}>
+              <Input value={whatIfText} onChange={(e) => setWhatIfText(e.target.value)} placeholder="Comprar um carro de R$ 600 mil" />
+              <Button type="submit">Simular</Button>
+            </form>
+            <div className="flex gap-2 flex-wrap">
+              {["Comprar um carro de R$ 600 mil", "Comprar um apartamento de R$ 1,5 milhão", "Viagem de R$ 80 mil"].map((ex) => (
+                <button key={ex} onClick={() => { setWhatIfText(ex); setWhatIfAmount(parseAmount(ex)); }}
+                  className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground">{ex}</button>
+              ))}
+            </div>
+
+            {cols.length > 0 && (
+              <>
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <div className="grid grid-cols-4 text-xs">
+                    <div className="p-3" />
+                    {cols.map((c) => (
+                      <div key={c.key} className={`p-3 text-center font-semibold ${rec?.key === c.key ? "text-primary" : "text-foreground"}`}>
+                        {c.key === "financiamento" ? "Financiar" : c.label}
+                      </div>
+                    ))}
+                    {[
+                      ["Liquidez depois", (c: typeof cols[0]) => v(c.liquid, true)],
+                      ["Custo 5 anos", (c: typeof cols[0]) => (c.totalCost ? v(c.totalCost, true) : "—")],
+                      ["Renda passiva/ano", (c: typeof cols[0]) => v(c.passiveMonthly * 12, true)],
+                      [`Meta ${brl(rules.targetNetWorth, true)}`, (c: typeof cols[0]) => (isFinite(c.goalMonths) ? `${(c.goalMonths / 12).toFixed(1).replace(".", ",")} anos` : "—")],
+                    ].map(([label, fn]) => (
+                      <div key={label as string} className="contents">
+                        <div className="p-3 border-t border-border text-muted-foreground">{label as string}</div>
+                        {cols.map((c) => (
+                          <div key={c.key} className={`p-3 border-t border-border text-center ${rec?.key === c.key ? "text-primary font-semibold" : "text-foreground"}`}>
+                            {(fn as (c: typeof cols[0]) => string)(c)}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {rec && (
+                  <div className="bg-card border border-border rounded-xl p-4">
+                    <p className="text-xs text-muted-foreground">Kadig Intelligence recomenda</p>
+                    <p className="text-sm font-semibold text-foreground mt-1">
+                      {rec.key === "avista" ? "À vista" : rec.key === "financiamento" ? "Financiar" : "Não comprar agora"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{rec.reason}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {view === "autopilot" && (
+          <>
+            <div className="bg-card border border-border rounded-xl p-4">
+              <p className="text-base font-semibold text-foreground">
+                {broken === 0 ? "Todas as regras dentro do limite" : `${broken} regra${broken > 1 ? "s" : ""} saíram do limite`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">A Kadig monitora sua carteira e recomenda ajustes. Nenhuma operação é feita sem você.</p>
+            </div>
+
+            <div className="space-y-2">
+              {checks.map((c) => (
+                <div key={c.id} className="bg-card border border-border rounded-xl p-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${c.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
+                      {c.ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    </div>
+                    <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
+                    <p className="text-xs text-muted-foreground text-right">{c.target}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5 pl-8">Atual: {showValues ? c.current : "•••"}</p>
+                  {!c.ok && <p className="text-xs text-primary mt-1 pl-8">{c.suggestion}</p>}
                 </div>
               ))}
             </div>
-          )}
-        </>
-      )}
 
-      {view === "autopilot" && (
-        <>
-          <p className="text-sm text-muted-foreground">Defina sua estratégia. A Kadig monitora sua carteira e sugere ajustes quando algo sai da regra.</p>
-          <div className="bg-card border border-border rounded-xl p-4 mt-4 space-y-3">
-            {([
-              ["minLiquidity", "Liquidez mínima (R$)"],
-              ["maxDrawdownPct", "Perda máxima em crise (%)"],
-              ["beatCdiPlus", "Superar CDI + (%)"],
-              ["targetNetWorth", "Meta de patrimônio (R$)"],
-            ] as [keyof AutopilotRules, string][]).map(([k, label]) => (
-              <div key={k} className="flex items-center justify-between gap-3">
-                <label className="text-xs text-muted-foreground">{label}</label>
-                <Input type="number" className="w-36 h-9 text-right" value={rules[k]}
-                  onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
-              </div>
-            ))}
-          </div>
-          <h2 className="text-sm font-semibold text-foreground mt-5 mb-3">Situação atual</h2>
-          <div className="space-y-2">
-            {checks.map((c) => (
-              <div key={c.id} className="bg-card border border-border rounded-xl p-3">
-                <div className="flex items-center gap-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${c.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-                    {c.ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                  </div>
-                  <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
-                  <p className="text-xs text-muted-foreground">{showValues ? c.current : "•••"} / {c.target}</p>
+            <p className="text-sm font-semibold text-foreground pt-2">Suas regras</p>
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              {([
+                ["minLiquidity", "Reserva mínima (R$)"],
+                ["maxRisk", "Risco máximo (0–10)"],
+                ["beatCdiPlus", "Meta de retorno: CDI + (%)"],
+                ["maxConcentrationPct", "Concentração máxima por ativo (%)"],
+                ["targetNetWorth", "Meta patrimonial (R$)"],
+                ["targetYear", "Até o ano"],
+              ] as [keyof AutopilotRules, string][]).map(([k, label]) => (
+                <div key={k} className="flex items-center justify-between gap-3">
+                  <label className="text-xs text-muted-foreground">{label}</label>
+                  <Input type="number" className="w-32 h-9 text-right" value={rules[k]}
+                    onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
                 </div>
-                {!c.ok && <p className="text-xs text-primary mt-2 pl-8">{c.suggestion}</p>}
-              </div>
-            ))}
-          </div>
-          {checks.some((c) => !c.ok) && (
-            <Button className="w-full mt-4" onClick={() => toast.success("Alterações aprovadas. Você receberá o passo a passo para executá-las na sua corretora.")}>
-              Aprovar alterações
-            </Button>
-          )}
-        </>
-      )}
+              ))}
+            </div>
+
+            {broken > 0 && (
+              <Button className="w-full" onClick={() => toast.success("Recomendações salvas. Você recebe o passo a passo para executar na sua corretora.")}>
+                Ver o que alterar
+              </Button>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

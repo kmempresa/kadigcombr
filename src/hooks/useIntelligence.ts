@@ -15,6 +15,7 @@ export function useIntelligence() {
   const [goals, setGoals] = useState<EngineGoal[]>([]);
   const [connections, setConnections] = useState(0);
   const [ind, setInd] = useState<EngineIndicators>({ cdi12m: 14.4, ipca12m: 4.1, selic: 15 });
+  const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
   const chId = useRef(`intel-${++channelSeq}`);
 
   const load = useCallback(async () => {
@@ -40,6 +41,7 @@ export function useIntelligence() {
     if (e?.accumulated12m) {
       setInd({ cdi12m: Number(e.accumulated12m.cdi) || 14.4, ipca12m: Number(e.accumulated12m.ipca) || 4.1, selic: Number(e.current?.selic) || 15 });
     }
+    setAnalyzedAt(new Date());
     setLoading(false);
   }, []);
 
@@ -62,7 +64,7 @@ export function useIntelligence() {
     [investments, result.netWorth],
   );
 
-  return { loading, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
+  return { analyzedAt, loading, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
 }
 
 /** Push a notification when concentration rises significantly (once per day per level). */
