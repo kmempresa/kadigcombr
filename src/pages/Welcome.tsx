@@ -27,9 +27,7 @@ const Welcome = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="w-14 h-14 bg-gradient-to-br from-kadig-cyan to-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
-            <img src={kadigLogo} alt="Kadig" className="w-7 h-7 object-contain" />
-          </div>
+          <img src={kadigLogo} alt="Kadig" className="h-16 w-auto object-contain" />
         </motion.div>
 
         {/* Centerpiece: score rings + glass card */}
