@@ -325,7 +325,7 @@ export function parseAmount(text: string): number {
 }
 
 export interface WhatIfScenario {
-  key: "avista" | "financiamento" | "consorcio" | "nao";
+  key: "avista" | "financiamento" | "nao";
   label: string;
   netWorth: number;
   liquid: number;
@@ -356,10 +356,6 @@ export function simulateWhatIf(
   const pmt = i > 0 ? (fin * i) / (1 - Math.pow(1 + i, -n)) : 0;
   const finTotal = down + pmt * n;
 
-  // Consortium: 80 months, 16% admin fee
-  const consTotal = amount * 1.16;
-  const consPmt = consTotal / 80;
-
   const mk = (key: WhatIfScenario["key"], label: string, nw: number, liq: number, inv: number, cost: number, pay: number, note: string): WhatIfScenario => ({
     key, label, netWorth: nw, liquid: liq, passiveMonthly: passive(inv), totalCost: cost, monthlyPayment: pay,
     goalMonths: monthsToTarget(nw, goal, realRate, -pay), note,
@@ -370,8 +366,6 @@ export function simulateWhatIf(
       liquid < amount ? "Sua liquidez atual não cobre a compra sem vender outros ativos." : "Menor custo total, mas reduz sua liquidez imediatamente."),
     mk("financiamento", "Financiamento", annualFin > 0 ? netWorth - down - (finTotal - amount) * 0.2 : netWorth, annualFin > 0 ? liquid - down : liquid, annualFin > 0 ? invested - down : invested, finTotal, pmt,
       annualFin > 0 ? `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.` : "Taxa média de financiamento indisponível no Banco Central."),
-    mk("consorcio", "Consórcio", netWorth - consTotal * 0.1, liquid, invested, consTotal, consPmt,
-      `80x de ${brl(consPmt)} com taxa de administração de 16%. Sem garantia de data de contemplação.`),
     mk("nao", "Não comprar", netWorth, liquid, invested, 0, 0,
       `Mantendo o valor investido a 100% do CDI atual, o rendimento bruto projetado seria ${brl(amount * netRate)} em 12 meses.`),
   ];

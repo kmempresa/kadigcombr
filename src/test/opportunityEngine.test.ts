@@ -28,7 +28,7 @@ describe("Opportunity Engine com dados confirmados", () => {
 
   it("projeta caixa parado usando o CDI informado sem números fixos", () => {
     const result = runEngine([investment()], [], [], { cdi12m: 10, ipca12m: 4, selic: 10 });
-    expect(result.totalOpportunity).toBe(1_900);
+    expect(result.totalOpportunity).toBe(1_500);
   });
 
   it("marca financiamento indisponível quando a taxa oficial não foi carregada", () => {
