@@ -1,100 +1,80 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Brain, ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight } from "lucide-react";
+import { ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Sparkles, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
-  runEngine, simulateWhatIf, parseAmount, checkAutopilot, brl, formatMonths,
-  type EngineInvestment, type EngineGlobalAsset, type EngineGoal, type EngineIndicators,
+  simulateWhatIf, parseAmount, checkAutopilot, brl, formatMonths,
   type AutopilotRules, type Insight,
 } from "@/lib/opportunityEngine";
+import { useIntelligence, useIntelligenceAlerts } from "@/hooks/useIntelligence";
 
 const DEFAULT_RULES: AutopilotRules = { minLiquidity: 50000, maxDrawdownPct: 8, beatCdiPlus: 2, targetNetWorth: 10000000 };
 
-const sevStyle: Record<Insight["severity"], { label: string; cls: string; icon: any }> = {
-  risk: { label: "Risco", cls: "text-destructive bg-destructive/10 border-destructive/30", icon: ShieldAlert },
-  efficiency: { label: "Eficiência", cls: "text-warning bg-warning/10 border-warning/30", icon: Gauge },
-  opportunity: { label: "Oportunidade", cls: "text-success bg-success/10 border-success/30", icon: Lightbulb },
+const sevStyle: Record<Insight["severity"], { label: string; cls: string; dot: string; icon: any }> = {
+  risk: { label: "Risco alto", cls: "text-destructive bg-destructive/10 border-destructive/30", dot: "bg-destructive", icon: ShieldAlert },
+  efficiency: { label: "Atenção", cls: "text-warning bg-warning/10 border-warning/30", dot: "bg-warning", icon: Gauge },
+  opportunity: { label: "Oportunidade", cls: "text-success bg-success/10 border-success/30", dot: "bg-success", icon: Lightbulb },
 };
 
-interface Props { userName: string; showValues: boolean }
+const ctaFor = (i: Insight) => i.severity === "risk" ? "Entender" : i.category === "Vencimentos" || i.category === "Objetivos" ? "Planejar" : "Analisar";
 
-export default function IntelligenceTab({ userName, showValues }: Props) {
-  const [view, setView] = useState<"home" | "opps" | "whatif" | "autopilot">("home");
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [investments, setInvestments] = useState<EngineInvestment[]>([]);
-  const [globals, setGlobals] = useState<EngineGlobalAsset[]>([]);
-  const [goals, setGoals] = useState<EngineGoal[]>([]);
-  const [ind, setInd] = useState<EngineIndicators>({ cdi12m: 14.4, ipca12m: 4.1, selic: 15 });
+export type IntelView = "hoje" | "opps" | "whatif" | "autopilot";
+
+interface Props { userName: string; showValues: boolean; initialView?: IntelView; initialWhatIf?: string }
+
+export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
+  const navigate = useNavigate();
+  const { loading, userId, investments, connections, globals, ind, result } = useIntelligence();
+  const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
-  const [whatIfText, setWhatIfText] = useState("");
-  const [whatIfAmount, setWhatIfAmount] = useState(0);
+  const [whatIfText, setWhatIfText] = useState(initialWhatIf);
+  const [whatIfAmount, setWhatIfAmount] = useState(() => parseAmount(initialWhatIf));
+  const [ask, setAsk] = useState("");
 
-  const load = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setLoading(false); return; }
-    const uid = session.user.id;
-    setUserId(uid);
-    const saved = localStorage.getItem(`kadig-autopilot-${uid}`);
-    if (saved) try { setRules({ ...DEFAULT_RULES, ...JSON.parse(saved) }); } catch { /* ignore */ }
-
-    const [inv, ga, gl, econ] = await Promise.all([
-      supabase.from("investments").select("*").eq("user_id", uid),
-      supabase.from("global_assets").select("*").eq("user_id", uid),
-      supabase.from("goals").select("*").eq("user_id", uid),
-      supabase.functions.invoke("market-data", { body: { type: "economic-indicators" } }),
-    ]);
-    setInvestments((inv.data || []).map((i) => ({
-      id: i.id, asset_name: i.asset_name, asset_type: i.asset_type, ticker: i.ticker,
-      current_value: Number(i.current_value) || 0, total_invested: Number(i.total_invested) || 0, maturity_date: i.maturity_date,
-    })));
-    setGlobals((ga.data || []).map((a) => ({ id: a.id, name: a.name, category: a.category, value_brl: Number(a.value_brl) || 0 })));
-    setGoals((gl.data || []).map((g) => ({ id: g.id, type: g.type, target_value: Number(g.target_value) || 0, target_date: g.target_date })));
-    const e = econ.data as any;
-    if (e?.accumulated12m) {
-      setInd({ cdi12m: Number(e.accumulated12m.cdi) || 14.4, ipca12m: Number(e.accumulated12m.ipca) || 4.1, selic: Number(e.current?.selic) || 15 });
-    }
-    setLoading(false);
-  }, []);
-
+  useEffect(() => { setView(initialView); }, [initialView]);
+  useEffect(() => { if (initialWhatIf) { setWhatIfText(initialWhatIf); setWhatIfAmount(parseAmount(initialWhatIf)); } }, [initialWhatIf]);
   useEffect(() => {
-    load();
-    const ch = supabase.channel("intelligence-sync")
-      .on("postgres_changes", { event: "*", schema: "public", table: "investments" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "global_assets" }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [load]);
+    if (!userId) return;
+    const saved = localStorage.getItem(`kadig-autopilot-${userId}`);
+    if (saved) try { setRules({ ...DEFAULT_RULES, ...JSON.parse(saved) }); } catch { /* ignore */ }
+  }, [userId]);
 
-  const result = useMemo(() => runEngine(investments, globals, goals, ind), [investments, globals, goals, ind]);
-  const dayGain = useMemo(() => result.invested * (Math.pow(1 + ind.cdi12m / 100, 1 / 252) - 1), [result.invested, ind]);
+  const topShare = useMemo(() => {
+    const max = investments.reduce((m, i) => Math.max(m, i.current_value), 0);
+    return result.netWorth ? (max / result.netWorth) * 100 : 0;
+  }, [investments, result.netWorth]);
+  useIntelligenceAlerts(userId, topShare);
+
+  const dayGain = result.invested * (Math.pow(1 + ind.cdi12m / 100, 1 / 252) - 1);
   const checks = useMemo(() => checkAutopilot(result, investments, rules, ind), [result, investments, rules, ind]);
   const scenarios = useMemo(
     () => whatIfAmount > 0 ? simulateWhatIf(whatIfAmount, result.netWorth, result.liquid, result.invested, ind, rules.targetNetWorth) : [],
     [whatIfAmount, result, ind, rules.targetNetWorth],
   );
+  const attention = result.insights.filter((i) => !(i.id === "stress" && i.severity !== "risk"));
 
   const v = (n: number, compact = false) => (showValues ? brl(n, compact) : "R$ •••••");
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const firstName = (userName || "").split(" ")[0];
+  const health = result.score >= 70 ? "saudável" : result.score >= 40 ? "estável, com pontos a melhorar" : "exposto a riscos importantes";
 
   const saveRules = (r: AutopilotRules) => {
     setRules(r);
     if (userId) localStorage.setItem(`kadig-autopilot-${userId}`, JSON.stringify(r));
   };
 
+  const openInsight = (i: Insight) => {
+    if (i.id === "concentration" || i.id === "crypto" || i.id === "stress") setView("autopilot");
+    else if (i.id.startsWith("goal-")) setView("whatif");
+    else setView("opps");
+  };
+
   if (loading) {
     return <div className="flex-1 flex items-center justify-center py-24"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
   }
-
-  const Header = ({ title }: { title: string }) => (
-    <button onClick={() => setView("home")} className="text-sm text-muted-foreground mb-4 flex items-center gap-1">
-      <ChevronRight className="w-4 h-4 rotate-180" /> {title}
-    </button>
-  );
 
   const InsightCard = ({ i }: { i: Insight }) => {
     const s = sevStyle[i.severity];
@@ -111,76 +91,93 @@ export default function IntelligenceTab({ userName, showValues }: Props) {
     );
   };
 
+  const tabs: { id: IntelView; label: string }[] = [
+    { id: "hoje", label: "Hoje" }, { id: "opps", label: "Oportunidades" }, { id: "whatif", label: "E se?" }, { id: "autopilot", label: "Autopilot" },
+  ];
+
   return (
     <div className="flex-1 overflow-y-auto pb-28 px-4 pt-6 max-w-2xl mx-auto w-full">
-      {view === "home" && (
+      <div className="flex items-center gap-2 mb-4">
+        <Sparkles className="w-5 h-5 text-primary" />
+        <span className="text-lg font-bold text-foreground">Kadig Intelligence</span>
+      </div>
+      <div className="flex gap-1 bg-muted/50 p-1 rounded-xl mb-5 overflow-x-auto">
+        {tabs.map((t) => (
+          <button key={t.id} onClick={() => setView(t.id)}
+            className={`flex-1 whitespace-nowrap text-xs font-medium py-2 px-2 rounded-lg transition-colors ${view === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "hoje" && (
         <>
-          <p className="text-sm text-muted-foreground">{greeting}{firstName ? `, ${firstName}` : ""}.</p>
-          <h1 className="text-2xl font-bold text-foreground mt-1 flex items-center gap-2"><Brain className="w-6 h-6 text-primary" /> Kadig Intelligence</h1>
+          <h1 className="text-2xl font-bold text-foreground">{greeting}{firstName ? `, ${firstName}` : ""}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Seu patrimônio está {health}{attention.length ? `, e encontramos ${attention.length} ponto${attention.length > 1 ? "s" : ""} importante${attention.length > 1 ? "s" : ""}.` : "."}
+          </p>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Analisamos {investments.length} ativo{investments.length !== 1 ? "s" : ""}, {connections} conta{connections !== 1 ? "s" : ""} conectada{connections !== 1 ? "s" : ""} e {globals.length} bem{globals.length !== 1 ? "ns" : ""} do patrimônio global.
+          </p>
 
-          <div className="grid grid-cols-2 gap-3 mt-5">
-            <div className="bg-card border border-border rounded-2xl p-4 col-span-2">
-              <p className="text-xs text-muted-foreground">Patrimônio líquido</p>
-              <p className="text-3xl font-bold text-foreground mt-1">{v(result.netWorth)}</p>
-              <p className="text-xs text-success mt-1">+{v(dayGain)} estimado hoje</p>
+          <div className="grid grid-cols-5 gap-3 mt-5">
+            <div className="col-span-3 bg-card border border-border rounded-2xl p-4">
+              <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
+              <p className="text-xs text-muted-foreground mt-1">em oportunidades identificadas</p>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="col-span-2 bg-card border border-border rounded-2xl p-4">
               <p className="text-xs text-muted-foreground">Kadig Score</p>
-              <p className={`text-3xl font-bold mt-1 ${result.score >= 70 ? "text-success" : result.score >= 40 ? "text-warning" : "text-destructive"}`}>{result.score}</p>
-              <div className="h-1.5 bg-muted rounded-full mt-2 overflow-hidden"><div className="h-full bg-primary" style={{ width: `${result.score}%` }} /></div>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-4">
-              <p className="text-xs text-muted-foreground">Oportunidades/ano</p>
-              <p className="text-2xl font-bold text-success mt-1">{v(result.totalOpportunity, true)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{result.insights.length} pontos analisados</p>
+              <p className={`text-2xl font-bold ${result.score >= 70 ? "text-success" : result.score >= 40 ? "text-warning" : "text-destructive"}`}>{result.score}</p>
+              <div className="h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden"><div className="h-full bg-primary" style={{ width: `${result.score}%` }} /></div>
             </div>
           </div>
+          <p className="text-[11px] text-muted-foreground mt-2">Patrimônio líquido {v(result.netWorth)} · <span className="text-success">+{v(dayGain)} estimado hoje</span></p>
 
-          <h2 className="text-sm font-semibold text-foreground mt-6 mb-3">Precisa da sua atenção</h2>
-          {result.insights.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Adicione investimentos ou conecte um banco para a Kadig analisar seu patrimônio.</p>
-          ) : (
-            <div className="space-y-2">
-              {result.insights.slice(0, 3).map((i) => {
-                const s = sevStyle[i.severity];
-                return (
-                  <div key={i.id} className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
-                    <div className={`w-9 h-9 rounded-lg border flex items-center justify-center ${s.cls}`}><s.icon className="w-4 h-4" /></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.label}</p>
-                      <p className="text-sm font-medium text-foreground truncate">{i.title}</p>
-                    </div>
+          <div className="space-y-2.5 mt-5">
+            {attention.length === 0 && (
+              <p className="text-sm text-muted-foreground">Adicione investimentos ou conecte um banco para a Kadig analisar seu patrimônio.</p>
+            )}
+            {attention.slice(0, 3).map((i) => {
+              const s = sevStyle[i.severity];
+              return (
+                <button key={i.id} onClick={() => openInsight(i)} className="w-full text-left bg-card border border-border rounded-2xl p-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${s.dot}`} />
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <p className="text-sm font-semibold text-foreground mt-1.5">{i.title}</p>
+                  {i.annualImpact > 0 && <p className="text-xs text-success mt-0.5">Potencial estimado: +{v(i.annualImpact)}/ano</p>}
+                  <p className="text-xs font-medium text-primary mt-2 flex items-center gap-0.5">{ctaFor(i)} <ChevronRight className="w-3 h-3" /></p>
+                </button>
+              );
+            })}
+          </div>
 
-          <Button className="w-full mt-4" onClick={() => setView("opps")}>Analisar oportunidades</Button>
-
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <button onClick={() => setView("whatif")} className="bg-card border border-border rounded-2xl p-4 text-left">
-              <Calculator className="w-5 h-5 text-primary" />
-              <p className="text-sm font-semibold text-foreground mt-2">E se?</p>
-              <p className="text-xs text-muted-foreground">Simule uma grande decisão</p>
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            <button onClick={() => setView("whatif")} className="bg-card border border-border rounded-xl p-3 text-left">
+              <Calculator className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">E se?</p>
             </button>
-            <button onClick={() => setView("autopilot")} className="bg-card border border-border rounded-2xl p-4 text-left">
-              <Bot className="w-5 h-5 text-primary" />
-              <p className="text-sm font-semibold text-foreground mt-2">Autopilot</p>
-              <p className="text-xs text-muted-foreground">{checks.filter((c) => !c.ok).length} regra(s) fora da estratégia</p>
+            <button onClick={() => setView("autopilot")} className="bg-card border border-border rounded-xl p-3 text-left">
+              <Bot className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">Autopilot</p>
+            </button>
+            <button onClick={() => navigate("/consultor-ia")} className="bg-card border border-border rounded-xl p-3 text-left">
+              <MessageCircle className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">Pergunte à Kadig</p>
             </button>
           </div>
+
+          <form className="flex gap-2 mt-4" onSubmit={(e) => { e.preventDefault(); if (ask.trim()) navigate("/consultor-ia", { state: { prefill: ask.trim() } }); }}>
+            <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Pergunte qualquer coisa sobre seu patrimônio..." />
+            <Button type="submit" size="icon" aria-label="Perguntar"><Send className="w-4 h-4" /></Button>
+          </form>
         </>
       )}
 
       {view === "opps" && (
         <>
-          <Header title="Kadig Intelligence" />
-          <h1 className="text-xl font-bold text-foreground">Motor de Oportunidades</h1>
-          <div className="bg-success/10 border border-success/30 rounded-2xl p-4 mt-4">
+          <div className="bg-success/10 border border-success/30 rounded-2xl p-4">
             <p className="text-xs text-muted-foreground">Encontramos no seu patrimônio</p>
             <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
-            <p className="text-xs text-muted-foreground mt-1">em oportunidades mensuráveis, além de riscos a revisar.</p>
+            <p className="text-xs text-muted-foreground mt-1">em oportunidades, priorizadas por impacto.</p>
           </div>
           <div className="space-y-3 mt-4">{result.insights.map((i) => <InsightCard key={i.id} i={i} />)}</div>
         </>
@@ -188,9 +185,7 @@ export default function IntelligenceTab({ userName, showValues }: Props) {
 
       {view === "whatif" && (
         <>
-          <Header title="Kadig Intelligence" />
-          <h1 className="text-xl font-bold text-foreground">E se?</h1>
-          <p className="text-sm text-muted-foreground mt-1">Descreva uma compra ou decisão. Ex: "Quero comprar uma Porsche de R$ 600 mil".</p>
+          <p className="text-sm text-muted-foreground">Descreva uma compra ou decisão. Ex: "Quero comprar uma Porsche de R$ 600 mil".</p>
           <form className="flex gap-2 mt-4" onSubmit={(e) => {
             e.preventDefault();
             const a = parseAmount(whatIfText);
@@ -224,10 +219,7 @@ export default function IntelligenceTab({ userName, showValues }: Props) {
 
       {view === "autopilot" && (
         <>
-          <Header title="Kadig Intelligence" />
-          <h1 className="text-xl font-bold text-foreground">Kadig Autopilot</h1>
-          <p className="text-sm text-muted-foreground mt-1">Defina sua estratégia. A Kadig monitora sua carteira e sugere ajustes quando algo sai da regra.</p>
-
+          <p className="text-sm text-muted-foreground">Defina sua estratégia. A Kadig monitora sua carteira e sugere ajustes quando algo sai da regra.</p>
           <div className="bg-card border border-border rounded-2xl p-4 mt-4 space-y-3">
             {([
               ["minLiquidity", "Liquidez mínima (R$)"],
@@ -242,7 +234,6 @@ export default function IntelligenceTab({ userName, showValues }: Props) {
               </div>
             ))}
           </div>
-
           <h2 className="text-sm font-semibold text-foreground mt-5 mb-3">Situação atual</h2>
           <div className="space-y-2">
             {checks.map((c) => (
@@ -258,7 +249,6 @@ export default function IntelligenceTab({ userName, showValues }: Props) {
               </div>
             ))}
           </div>
-
           {checks.some((c) => !c.ok) && (
             <Button className="w-full mt-4" onClick={() => toast.success("Alterações aprovadas. Você receberá o passo a passo para executá-las na sua corretora.")}>
               Aprovar alterações

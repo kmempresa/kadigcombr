@@ -1,3 +1,6 @@
+import IntelligenceHint from "@/components/IntelligenceHint";
+import { useIntelligence } from "@/hooks/useIntelligence";
+import { brl } from "@/lib/opportunityEngine";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -157,6 +160,15 @@ const StockDetailDrawer = ({
   const [stockDetails, setStockDetails] = useState<StockDetails | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
+  const { result: intel } = useIntelligence();
+  const tradeRisk = (() => {
+    if (!intel.invested) return null;
+    const amount = Math.max(intel.invested * 0.1, 1000);
+    const before = Math.min(10, ((intel.stress / intel.invested) * 100) / 2);
+    const after = Math.min(10, (((intel.stress + amount * 0.2) / (intel.invested + amount)) * 100) / 2);
+    const owned = 0;
+    return { amount, before, after, owned };
+  })();
   const [activeInfoTab, setActiveInfoTab] = useState<"indicadores" | "empresa" | "financeiro">("indicadores");
   
   useEffect(() => {
@@ -285,6 +297,14 @@ const StockDetailDrawer = ({
               </div>
             ) : (
               <>
+                {tradeRisk && (
+                  <div className="px-4 pt-4">
+                    <IntelligenceHint
+                      tone={tradeRisk.after > tradeRisk.before + 0.3 ? "risk" : "default"}
+                      message={`Comprar ${showValues ? brl(tradeRisk.amount) : "R$ •••"} deste ativo mudaria seu risco de ${tradeRisk.before.toFixed(1)} para ${tradeRisk.after.toFixed(1)} (escala 0–10).`}
+                    />
+                  </div>
+                )}
                 {/* Header with gradient */}
                 <div className="bg-gradient-to-b from-muted to-background pt-8 pb-6 px-4">
                   {/* Company Logo */}

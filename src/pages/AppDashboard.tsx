@@ -60,7 +60,10 @@ import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import ConexoesTab from "@/components/ConexoesTab";
-import IntelligenceTab from "@/components/IntelligenceTab";
+import IntelligenceTab, { type IntelView } from "@/components/IntelligenceTab";
+import IntelligenceHint from "@/components/IntelligenceHint";
+import { useIntelligence } from "@/hooks/useIntelligence";
+import { brl } from "@/lib/opportunityEngine";
 import { ConnectedBanksCard } from "@/components/ConnectedBanksCard";
 import useEmblaCarousel from "embla-carousel-react";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -279,6 +282,10 @@ const AppDashboard = () => {
     const state = location.state as { returnToTab?: string } | null;
     return (state?.returnToTab as any) || "carteira";
   });
+  const [intelView, setIntelView] = useState<IntelView>("hoje");
+  const [intelWhatIf, setIntelWhatIf] = useState("");
+  const intel = useIntelligence();
+  const openIntel = (view: IntelView, whatIf = "") => { setIntelView(view); setIntelWhatIf(whatIf); setActiveTab("intelligence"); };
   const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
   const [showValues, setShowValues] = useState(true);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // 0 = current month (first slide)
@@ -925,6 +932,16 @@ const AppDashboard = () => {
           {/* Resumo Content */}
           {carteiraTab === "resumo" && (
             <div className="p-4 space-y-6">
+              {intel.result.insights.length > 0 && (
+                <IntelligenceHint
+                  title="Kadig Intelligence"
+                  message={intel.result.totalOpportunity > 0
+                    ? `Encontramos ${showValues ? brl(intel.result.totalOpportunity) : "R$ •••"}/ano em oportunidades.`
+                    : `Encontramos ${intel.result.insights.length} pontos que merecem sua atenção.`}
+                  cta="Ver análise"
+                  onClick={() => openIntel("hoje")}
+                />
+              )}
               {/* Swipeable Chart Section */}
               <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
@@ -2189,7 +2206,7 @@ const AppDashboard = () => {
       )}
 
       {activeTab === "intelligence" && (
-        <IntelligenceTab userName={userName} showValues={showValues} />
+        <IntelligenceTab userName={userName} showValues={showValues} initialView={intelView} initialWhatIf={intelWhatIf} />
       )}
 
       {/* Conexoes Tab - Open Finance via Pluggy */}
@@ -2266,6 +2283,8 @@ const AppDashboard = () => {
         onOpenChange={setEditDrawerOpen}
         investment={editingInvestment}
         onSuccess={() => setRefreshKey(prev => prev + 1)}
+        sharePct={editingInvestment ? intel.assetShare(editingInvestment.id) : 0}
+        netWorth={intel.result.netWorth}
       />
 
       {/* Analysis Drawers */}
