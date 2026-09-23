@@ -223,21 +223,12 @@ Deno.serve(async (req) => {
         
         console.log('Requesting AwesomeAPI for currencies');
         
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        console.log('AwesomeAPI response:', JSON.stringify(data).slice(0, 200));
-        
-        // Check if API returned an error (quota exceeded, etc)
-        if (data.status === 429 || data.code === 'QuotaExceeded' || !data.USDBRL) {
-          console.log('AwesomeAPI quota exceeded or returned an invalid response');
-          return new Response(
-            JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
-            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        // Mapear para nomes amigáveis
+        let data: any = {};
+        try {
+          const response = await fetch(url);
+          data = await response.json();
+        } catch (_) { data = {}; }
+
         const currencyNameMap: { [key: string]: string } = {
           'USDBRL': 'DÓLAR AMERICANO (USD)',
           'EURBRL': 'EURO (EUR)',
@@ -250,18 +241,45 @@ Deno.serve(async (req) => {
           'CNYBRL': 'YUAN CHINÊS (CNY)',
           'MXNBRL': 'PESO MEXICANO (MXN)',
         };
-        
+
         const prices: { [key: string]: { price: number; change24h: number } } = {};
-        
-        Object.entries(data).forEach(([key, values]: [string, any]) => {
-          const name = currencyNameMap[key];
-          if (name) {
-            prices[name] = {
-              price: parseFloat(values.bid) || 0,
-              change24h: parseFloat(values.pctChange) || 0,
-            };
+
+        if (data && data.USDBRL) {
+          Object.entries(data).forEach(([key, values]: [string, any]) => {
+            const name = currencyNameMap[key];
+            if (name) {
+              prices[name] = {
+                price: parseFloat(values.bid) || 0,
+                change24h: parseFloat(values.pctChange) || 0,
+              };
+            }
+          });
+        } else {
+          // Fallback real: BRAPI (cotações reais de câmbio)
+          console.log('AwesomeAPI unavailable, using BRAPI for currencies');
+          try {
+            const token = Deno.env.get('BRAPI_TOKEN') ?? '';
+            const bRes = await fetch(`https://brapi.dev/api/v2/currency?currency=${currencies}&token=${token}`);
+            const bData = await bRes.json();
+            for (const c of bData?.currency ?? []) {
+              const key = `${c.fromCurrency}${c.toCurrency}`;
+              const name = currencyNameMap[key];
+              const price = parseFloat(c.bidPrice);
+              if (name && price > 0) {
+                prices[name] = { price, change24h: parseFloat(c.percentageChange) || 0 };
+              }
+            }
+          } catch (e) {
+            console.error('BRAPI currency error');
           }
-        });
+        }
+
+        if (Object.keys(prices).length === 0) {
+          return new Response(
+            JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         
         return new Response(
           JSON.stringify({ prices, lastUpdate: new Date().toISOString() }),
