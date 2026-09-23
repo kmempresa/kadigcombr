@@ -289,7 +289,7 @@ Deno.serve(async (req) => {
         console.error('Error fetching currency prices:', error);
         return new Response(
           JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
-          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -1111,7 +1111,7 @@ Deno.serve(async (req) => {
         console.error('Error fetching top dividend banks:', error);
         return new Response(
           JSON.stringify({ banks: [], error: 'Dividend data unavailable' }),
-          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
