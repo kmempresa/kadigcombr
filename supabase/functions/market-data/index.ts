@@ -345,8 +345,14 @@ serve(async (req) => {
         const googleNewsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=pt-BR&gl=BR&ceid=BR:pt-419`;
         console.log(`Requesting Google News RSS: ${googleNewsUrl}`);
 
-        const rssResponse = await fetch(googleNewsUrl);
-        const xmlText = await rssResponse.text();
+        const feeds = [googleNewsUrl, 'https://www.moneytimes.com.br/feed/', 'https://br.investing.com/rss/news.rss'];
+        const xmlParts = await Promise.all(feeds.map(async (u) => {
+          try {
+            const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; KadigBot/1.0)' }, signal: AbortSignal.timeout(8000) });
+            return r.ok ? await r.text() : '';
+          } catch { return ''; }
+        }));
+        const xmlText = xmlParts.join('\n');
 
         const googleItems: any[] = [];
         const itemRegex = /<item>([\s\S]*?)<\/item>/g;
@@ -357,7 +363,7 @@ serve(async (req) => {
 
         let match;
         let count = 0;
-        while ((match = itemRegex.exec(xmlText)) !== null && count < 30) {
+        while ((match = itemRegex.exec(xmlText)) !== null && count < 40) {
           const itemContent = match[1];
           const titleMatch = itemContent.match(titleRegex);
           const linkMatch = itemContent.match(linkRegex);
@@ -369,7 +375,7 @@ serve(async (req) => {
             googleItems.push({
               title,
               text: '',
-              source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+              source_name: sourceMatch ? sourceMatch[1] : (linkMatch[1].includes('moneytimes') ? 'Money Times' : linkMatch[1].includes('investing.com') ? 'Investing.com' : 'Notícias'),
               date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
               news_url: linkMatch[1],
               image_url: null,
@@ -881,7 +887,7 @@ serve(async (req) => {
               news.push({
                 title: title,
                 text: '',
-                source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+                source_name: sourceMatch ? sourceMatch[1] : (linkMatch[1].includes('moneytimes') ? 'Money Times' : linkMatch[1].includes('investing.com') ? 'Investing.com' : 'Notícias'),
                 date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
                 news_url: linkMatch[1],
                 image_url: null,
