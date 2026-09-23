@@ -1602,7 +1602,7 @@ const AppDashboard = () => {
                 </div>
               </motion.button>
 
-              {/* Projeção 12 Meses */}
+              {/* Simulação 12 meses */}
               <motion.button 
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setProjecaoOpen(true)}
@@ -1616,7 +1616,7 @@ const AppDashboard = () => {
                         <TrendingUp className="w-6 h-6 text-white" />
                       </div>
                     </div>
-                    <span className="font-bold text-foreground text-base">Projeção 12 Meses</span>
+                    <span className="font-bold text-foreground text-base">Simulação 12 meses</span>
                   </div>
                   <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center group-hover:bg-cyan-100 transition-colors">
                     <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-cyan-500 transition-colors" />

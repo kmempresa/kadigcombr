@@ -575,7 +575,7 @@ const ProjecaoDrawer = ({
           <div className="flex items-center justify-between">
             <DrawerTitle className="flex items-center gap-2 text-foreground">
               <TrendingUp className="w-5 h-5 text-primary" />
-              Projeção 12 Meses
+              Simulação 12 meses
             </DrawerTitle>
             <DrawerClose asChild>
               <button className="p-2 hover:bg-muted rounded-full transition-colors">
