@@ -330,7 +330,7 @@ const TradeTab = ({
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Última atualização: {lastUpdate}
+                  Última atualização: {assetsLastUpdate}
                 </span>
               </div>
               <div className="h-px bg-border" />
@@ -402,9 +402,9 @@ const TradeTab = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {userAssets.map((asset, index) => (
+                  {groupedAssets.map((asset, index) => (
                     <motion.div 
-                      key={index}
+                      key={asset.key}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
