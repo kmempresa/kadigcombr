@@ -187,6 +187,33 @@ const TradeTab = ({
   const filteredAltas = maioresAltas.length > 0 ? maioresAltas : [...filteredMarketStocks].sort((a, b) => b.regularMarketChangePercent - a.regularMarketChangePercent).slice(0, 10);
   const filteredBaixas = maioresBaixas.length > 0 ? maioresBaixas : [...filteredMarketStocks].sort((a, b) => a.regularMarketChangePercent - b.regularMarketChangePercent).slice(0, 10);
 
+  const formatStamp = (d: Date) =>
+    d.toLocaleDateString("pt-BR") + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+  const groupedAssets = Object.values(
+    userAssets.reduce((acc: Record<string, any>, a: any) => {
+      const key = String(a.ticker || a.asset_name || "").trim().toUpperCase();
+      const cur = acc[key];
+      if (!cur) {
+        acc[key] = { ...a, key, current_value: Number(a.current_value || 0), total_invested: Number(a.total_invested || 0) };
+      } else {
+        cur.current_value += Number(a.current_value || 0);
+        cur.total_invested += Number(a.total_invested || 0);
+        if (new Date(a.updated_at) > new Date(cur.updated_at)) cur.updated_at = a.updated_at;
+      }
+      return acc;
+    }, {})
+  ).map((a: any) => ({
+    ...a,
+    gain_percent: a.total_invested > 0 ? ((a.current_value - a.total_invested) / a.total_invested) * 100 : Number(a.gain_percent || 0),
+  }));
+
+  const latestAssetTime = userAssets.reduce((max: number, a: any) => {
+    const t = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+    return t > max ? t : max;
+  }, 0);
+  const assetsLastUpdate = latestAssetTime ? formatStamp(new Date(latestAssetTime)) : "-";
+
   // Mini chart component
   const MiniChart = ({ positive }: { positive: boolean }) => (
     <svg viewBox="0 0 80 24" className="w-full h-6">
@@ -330,7 +357,7 @@ const TradeTab = ({
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
-                  Última atualização: {lastUpdate}
+                  Última atualização: {assetsLastUpdate}
                 </span>
               </div>
               <div className="h-px bg-border" />
@@ -402,9 +429,9 @@ const TradeTab = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {userAssets.map((asset, index) => (
+                  {groupedAssets.map((asset, index) => (
                     <motion.div 
-                      key={index}
+                      key={asset.key}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
