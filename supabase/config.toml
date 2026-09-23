@@ -1,31 +1,25 @@
 project_id = "purbhxibouvtmgtsoidh"
 
-[functions.kadig-ai-chat]
-verify_jwt = false
-
-[functions.market-data]
-verify_jwt = false
-
-[functions.market-analysis]
-verify_jwt = false
-
-[functions.update-prices]
-verify_jwt = true
-
-[functions.portfolio-snapshot]
-verify_jwt = true
-
-[functions.recommended-portfolios]
-verify_jwt = false
-
-[functions.market-reports]
-verify_jwt = false
-
-[functions.kadig-index]
-verify_jwt = false
-
-[functions.pluggy]
-verify_jwt = true
-
-[functions.sync-pluggy-investments]
-verify_jwt = true
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.kadig-ai-chat]
+    verify_jwt = false
+  [functions.kadig-index]
+    verify_jwt = false
+  [functions.market-analysis]
+    verify_jwt = false
+  [functions.market-data]
+    verify_jwt = false
+  [functions.market-reports]
+    verify_jwt = false
+  [functions.pluggy]
+    verify_jwt = true
+  [functions.portfolio-snapshot]
+    verify_jwt = true
+  [functions.recommended-portfolios]
+    verify_jwt = false
+  [functions.sync-pluggy-investments]
+    verify_jwt = true
+  [functions.update-prices]
+    verify_jwt = true
