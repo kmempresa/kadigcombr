@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Send } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   simulateWhatIf, parseAmount, checkAutopilot, recommendWhatIf, brl, formatMonths, BUCKETS,
@@ -32,7 +32,6 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
   const [whatIfAmount, setWhatIfAmount] = useState(() => parseAmount(initialWhatIf));
-  const [ask, setAsk] = useState("");
   const [, tick] = useState(0);
 
   useEffect(() => { setView(initialView); }, [initialView]);
@@ -125,18 +124,13 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
       <div className="p-4 space-y-4">
         {view === "hoje" && (
           <>
-            <div className="flex items-start gap-2">
-              <span className="relative flex w-2 h-2 mt-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-60 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 rounded-full bg-success" />
-              </span>
-              <div>
-                <p className="text-sm text-foreground">Kadig analisou seu patrimônio {ago}</p>
-                <p className="text-xs text-muted-foreground">
-                  {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
+              </p>
             </div>
+
 
             <button onClick={() => setView("opps")} className="w-full text-left bg-card border border-border rounded-xl p-5">
               {result.totalOpportunity > 0 ? (
@@ -175,22 +169,19 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               </button>
             ))}
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="bg-card border border-border rounded-xl divide-y divide-border">
               {[
-                { icon: Calculator, label: "E se?", on: () => setView("whatif") },
-                { icon: Bot, label: "Autopilot", on: () => setView("autopilot") },
-                { icon: MessageCircle, label: "Pergunte à Kadig", on: () => navigate("/consultor-ia") },
+                { label: "Simular uma decisão", hint: "E se?", on: () => setView("whatif") },
+                { label: "Minhas regras", hint: "Autopilot", on: () => setView("autopilot") },
+                { label: "Falar com a Kadig", hint: "Consultor", on: () => navigate("/consultor-ia") },
               ].map((b) => (
-                <button key={b.label} onClick={b.on} className="bg-card border border-border rounded-xl p-3 text-left">
-                  <b.icon className="w-4 h-4 text-primary" /><p className="text-xs font-semibold text-foreground mt-1.5">{b.label}</p>
+                <button key={b.label} onClick={b.on} className="w-full flex items-center justify-between px-4 py-3 text-left">
+                  <span className="text-sm text-foreground">{b.label}</span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">{b.hint}<ChevronRight className="w-3.5 h-3.5" /></span>
                 </button>
               ))}
             </div>
 
-            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (ask.trim()) navigate("/consultor-ia", { state: { prefill: ask.trim() } }); }}>
-              <Input value={ask} onChange={(e) => setAsk(e.target.value)} placeholder="Pergunte qualquer coisa sobre seu patrimônio..." />
-              <Button type="submit" size="icon" aria-label="Perguntar"><Send className="w-4 h-4" /></Button>
-            </form>
           </>
         )}
 
@@ -314,14 +305,13 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {checks.map((c) => (
                 <div key={c.id} className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${c.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-                      {c.ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                    </div>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok ? "bg-success" : "bg-destructive"}`} />
                     <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
                     <p className="text-xs text-muted-foreground text-right">{c.target}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 pl-8">Atual: {showValues ? c.current : "•••"}</p>
-                  {!c.ok && <p className="text-xs text-primary mt-1 pl-8">{c.suggestion}</p>}
+                  <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
+                  {!c.ok && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
+
                 </div>
               ))}
             </div>

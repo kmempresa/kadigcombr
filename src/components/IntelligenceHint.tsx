@@ -1,4 +1,4 @@
-import { Lightbulb as Sparkles, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface Props {
   title?: string;
@@ -14,9 +14,9 @@ export default function IntelligenceHint({ title, message, cta, onClick, tone = 
   return (
     <button type="button" onClick={onClick} disabled={!onClick}
       className={`w-full text-left rounded-2xl border ${border} p-3.5 flex items-start gap-3`}>
-      <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+      <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${tone === "risk" ? "bg-destructive" : "bg-primary"}`} />
       <div className="flex-1 min-w-0">
-        {title && <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">{title}</p>}
+        {title && <p className="text-xs font-medium text-muted-foreground">{title}</p>}
         <p className="text-sm text-foreground leading-snug">{message}</p>
         {cta && <p className="text-xs font-medium text-primary mt-1 flex items-center gap-0.5">{cta} <ChevronRight className="w-3 h-3" /></p>}
       </div>
