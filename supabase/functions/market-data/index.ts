@@ -375,7 +375,7 @@ serve(async (req) => {
             googleItems.push({
               title,
               text: '',
-              source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+              source_name: sourceMatch ? sourceMatch[1] : (linkMatch[1].includes('moneytimes') ? 'Money Times' : linkMatch[1].includes('investing.com') ? 'Investing.com' : 'Notícias'),
               date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
               news_url: linkMatch[1],
               image_url: null,
@@ -887,7 +887,7 @@ serve(async (req) => {
               news.push({
                 title: title,
                 text: '',
-                source_name: sourceMatch ? sourceMatch[1] : 'Google News',
+                source_name: sourceMatch ? sourceMatch[1] : (linkMatch[1].includes('moneytimes') ? 'Money Times' : linkMatch[1].includes('investing.com') ? 'Investing.com' : 'Notícias'),
                 date: pubDateMatch ? pubDateMatch[1] : new Date().toISOString(),
                 news_url: linkMatch[1],
                 image_url: null,
