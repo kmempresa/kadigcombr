@@ -42,6 +42,7 @@ interface TradeTabProps {
   onToggleValues?: () => void;
   onAddAsset?: () => void;
   onAddConnection?: () => void;
+  embedded?: boolean;
 }
 
 const TradeTab = ({ 
@@ -50,7 +51,8 @@ const TradeTab = ({
   userAssets = [],
   onToggleValues,
   onAddAsset,
-  onAddConnection
+  onAddConnection,
+  embedded = false
 }: TradeTabProps) => {
   const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
   const { 
@@ -231,8 +233,9 @@ const TradeTab = ({
   );
 
   return (
-    <div className="flex-1 pb-20 bg-background">
-      {/* Header Premium */}
+    <div className={`flex-1 bg-background ${embedded ? "" : "pb-20"}`}>
+      {/* Header Premium (oculto quando embutido na Carteira) */}
+      {!embedded && (
       <header className="relative pt-safe">
         
         <div className="relative px-4 pb-4 pt-2">
@@ -291,6 +294,7 @@ const TradeTab = ({
           </div>
         </div>
       </header>
+      )}
 
       {/* Search Bar */}
       <AnimatePresence>
@@ -311,6 +315,19 @@ const TradeTab = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Busca embutida (quando dentro da Carteira) */}
+      {embedded && (
+        <div className="px-4 pt-1 pb-3">
+          <Input
+            placeholder="Buscar ativo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-11 bg-muted/30 border-border"
+            aria-label="Buscar ativo"
+          />
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex px-4 gap-1 overflow-x-auto scrollbar-hide">

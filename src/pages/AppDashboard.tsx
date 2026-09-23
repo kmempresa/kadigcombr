@@ -926,6 +926,25 @@ const AppDashboard = () => {
             ))}
           </div>
 
+          {/* Trade Content */}
+          {carteiraTab === "trade" && (
+            isPremium ? (
+              <TradeTab 
+                showValues={showValues} 
+                userName={selectedPortfolio?.name || userName}
+                userAssets={filteredInvestments}
+                onToggleValues={() => setShowValues(!showValues)}
+                onAddAsset={() => setAdicionarDrawerOpen(true)}
+                onAddConnection={() => navigate("/conexoes")}
+                embedded
+              />
+            ) : (
+              <div className="flex-1 overflow-hidden">
+                <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
+              </div>
+            )
+          )}
+
           {/* Resumo Content */}
           {carteiraTab === "resumo" && (
             <div className="p-4 space-y-6">
@@ -2172,24 +2191,6 @@ const AppDashboard = () => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Trade Tab (dentro da Carteira, ao lado de Resumo) */}
-      {activeTab === "carteira" && carteiraTab === "trade" && (
-        isPremium ? (
-          <TradeTab 
-            showValues={showValues} 
-            userName={selectedPortfolio?.name || userName}
-            userAssets={filteredInvestments}
-            onToggleValues={() => setShowValues(!showValues)}
-            onAddAsset={() => setAdicionarDrawerOpen(true)}
-            onAddConnection={() => navigate("/conexoes")}
-          />
-        ) : (
-          <div className="flex-1 overflow-hidden">
-            <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
-          </div>
-        )
       )}
 
       {/* Mercado Tab */}
