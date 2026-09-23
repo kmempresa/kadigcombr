@@ -52,8 +52,12 @@ serve(async (req) => {
     // Agrupar investimentos por tipo
     const cryptoInvestments = investments.filter(inv => inv.asset_type === 'Criptoativos');
     const currencyInvestments = investments.filter(inv => inv.asset_type === 'Moedas');
-    const stockInvestments = investments.filter(inv => 
-      ['Ações, Stocks e ETF', 'BDRs', 'FIIs e REITs', 'Fundos'].includes(inv.asset_type) && inv.ticker
+    const b3Ticker = /^[A-Z]{4}\d{1,2}F?$/;
+    const stockInvestments = investments.filter(inv =>
+      inv.ticker && (
+        ['Ações, Stocks e ETF', 'Ação', 'Ações', 'BDRs', 'FIIs e REITs', 'Fundos'].includes(inv.asset_type) ||
+        b3Ticker.test(String(inv.ticker).toUpperCase())
+      )
     );
 
     let updatedCount = 0;
