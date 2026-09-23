@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Send } from "lucide-react";
+import { Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
   simulateWhatIf, parseAmount, checkAutopilot, recommendWhatIf, brl, formatMonths, BUCKETS,
@@ -125,18 +125,13 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
       <div className="p-4 space-y-4">
         {view === "hoje" && (
           <>
-            <div className="flex items-start gap-2">
-              <span className="relative flex w-2 h-2 mt-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-60 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 rounded-full bg-success" />
-              </span>
-              <div>
-                <p className="text-sm text-foreground">Kadig analisou seu patrimônio {ago}</p>
-                <p className="text-xs text-muted-foreground">
-                  {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
-                </p>
-              </div>
+            <div>
+              <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
+              </p>
             </div>
+
 
             <button onClick={() => setView("opps")} className="w-full text-left bg-card border border-border rounded-xl p-5">
               {result.totalOpportunity > 0 ? (
