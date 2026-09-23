@@ -233,8 +233,9 @@ const TradeTab = ({
   );
 
   return (
-    <div className="flex-1 pb-20 bg-background">
-      {/* Header Premium */}
+    <div className={`flex-1 bg-background ${embedded ? "" : "pb-20"}`}>
+      {/* Header Premium (oculto quando embutido na Carteira) */}
+      {!embedded && (
       <header className="relative pt-safe">
         
         <div className="relative px-4 pb-4 pt-2">
