@@ -306,14 +306,13 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {checks.map((c) => (
                 <div key={c.id} className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${c.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"}`}>
-                      {c.ok ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
-                    </div>
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok ? "bg-success" : "bg-destructive"}`} />
                     <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
                     <p className="text-xs text-muted-foreground text-right">{c.target}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 pl-8">Atual: {showValues ? c.current : "•••"}</p>
-                  {!c.ok && <p className="text-xs text-primary mt-1 pl-8">{c.suggestion}</p>}
+                  <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
+                  {!c.ok && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
+
                 </div>
               ))}
             </div>
