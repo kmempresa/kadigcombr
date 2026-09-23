@@ -128,6 +128,12 @@ const Onboarding = () => {
     setAnalysisDone(true);
   }, [loadSnapshot]);
 
+  useEffect(() => {
+    if (!resume || !userId || resumed.current) return;
+    resumed.current = true;
+    if (resume === "added") startAnalysis(); else setStep("connect");
+  }, [resume, userId, startAnalysis]);
+
   const handleConnect = async () => {
     if (!(await saveProfile())) return;
     try {
