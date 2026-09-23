@@ -1137,8 +1137,14 @@ Deno.serve(async (req) => {
       
       try {
         const response = await fetch(url);
-        const data = await response.json();
-        
+        const text = await response.text();
+        let data: any = {};
+        try { data = JSON.parse(text); } catch { /* non json */ }
+
+        if (!response.ok || !data.results) {
+          console.error(`BRAPI batch status=${response.status} body=${text.slice(0, 300)}`);
+        }
+
         if (data.results) {
           results.push(...data.results);
         }
@@ -1146,6 +1152,7 @@ Deno.serve(async (req) => {
         console.error(`Error fetching batch: ${batchError}`);
       }
     }
+
 
     // Ordenar por variação para maiores altas e baixas
     const stocks = results.map((stock: any) => ({
