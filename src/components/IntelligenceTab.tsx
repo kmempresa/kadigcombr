@@ -78,9 +78,26 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     return m < 1 ? "agora" : m < 60 ? `há ${m} min` : `há ${Math.floor(m / 60)}h`;
   })();
 
+  const [openRule, setOpenRule] = useState<string | null>(null);
+  const [showPlan, setShowPlan] = useState(false);
+  const [draft, setDraft] = useState<Partial<Record<keyof AutopilotRules, string>>>({});
+
   const saveRules = (r: AutopilotRules) => {
     setRules(r);
     if (userId) localStorage.setItem(`kadig-autopilot-v3-${userId}`, JSON.stringify(r));
+  };
+
+  const commitRule = (k: keyof AutopilotRules) => {
+    const raw = draft[k];
+    setDraft((d) => { const n = { ...d }; delete n[k]; return n; });
+    if (raw === undefined) return;
+    let n = Number(raw.replace(/\./g, "").replace(",", "."));
+    if (!Number.isFinite(n) || raw.trim() === "") return;
+    if (k === "maxRisk") n = Math.min(10, Math.max(0, n));
+    if (k === "maxConcentrationPct") n = Math.min(100, Math.max(1, n));
+    if (k === "targetYear") n = Math.max(new Date().getFullYear(), Math.round(n));
+    if (n < 0) n = 0;
+    if (n !== rules[k]) { saveRules({ ...rules, [k]: n }); toast.success("Regra atualizada"); }
   };
 
   const openInsight = (i: Insight) => {
