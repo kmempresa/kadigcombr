@@ -265,8 +265,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     fetchDividends();
     fetchAgenda();
     // Atualizações controladas para preservar as cotas dos fornecedores.
-    const marketInterval = setInterval(fetchMarketData, 10 * 60 * 1000);
-    const newsInterval = setInterval(fetchMarketNews, 15 * 60 * 1000);
+    const marketInterval = setInterval(fetchMarketData, 60 * 1000);
+    const newsInterval = setInterval(fetchMarketNews, 5 * 60 * 1000);
     return () => {
       clearInterval(marketInterval);
       clearInterval(newsInterval);

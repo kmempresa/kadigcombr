@@ -162,7 +162,7 @@ const PatrimonioTotalCarousel = ({
     
     const interval = setInterval(() => {
       fetchExchangeRates(globalAssets);
-    }, 5 * 60 * 1000);
+    }, 60 * 1000);
     
     return () => clearInterval(interval);
   }, [globalAssets]);

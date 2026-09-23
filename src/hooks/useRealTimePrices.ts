@@ -22,7 +22,7 @@ interface UseRealTimePricesOptions {
 export const useRealTimePrices = (options: UseRealTimePricesOptions = {}) => {
   const { 
     autoRefresh = true, 
-    refreshInterval = 5 * 60 * 1000, // 5 minutes
+    refreshInterval = 60 * 1000, // 1 minute
     onUpdate 
   } = options;
 

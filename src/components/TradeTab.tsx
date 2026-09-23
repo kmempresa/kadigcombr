@@ -118,7 +118,7 @@ const TradeTab = ({
   useEffect(() => {
     if (activeTab === "mercado" || activeTab === "favoritos") {
       fetchMarketStocks();
-      const interval = setInterval(fetchMarketStocks, 10 * 60 * 1000);
+      const interval = setInterval(fetchMarketStocks, 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [activeTab]);
