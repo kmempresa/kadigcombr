@@ -508,6 +508,7 @@ const AppDashboard = () => {
           asset_type: inv.asset_type,
           ticker: inv.ticker,
           portfolio_id: inv.portfolio_id,
+          updated_at: inv.updated_at,
           current_value: Number(inv.current_value) || 0,
           total_invested: Number(inv.total_invested) || 0,
           gain_percent: Number(inv.gain_percent) || 0,
