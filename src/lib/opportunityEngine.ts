@@ -87,7 +87,8 @@ export function stressLoss(investments: EngineInvestment[]) {
 
 export function liquidity(investments: EngineInvestment[]) {
   return investments
-    .filter((i) => ["cash", "fixed"].includes(classify(i.asset_type)))
+    // Fixed income may have lockups; only balances explicitly classified as cash are certainly liquid.
+    .filter((i) => classify(i.asset_type) === "cash")
     .reduce((s, i) => s + i.current_value, 0);
 }
 
@@ -161,18 +162,18 @@ export function runEngine(
   const cash = byClass.get("cash") || 0;
   const reserve = Math.max(invested * 0.05, 5000);
   const idle = cash - reserve;
-  if (idle > 1000) {
-    const impact = idle * (ind.cdi12m / 100) * 0.85; // net of IR estimate
+  if (idle > 1000 && ind.cdi12m > 0) {
+    const impact = idle * (ind.cdi12m / 100);
     insights.push({
       id: "idle-cash",
       severity: "efficiency",
       category: "Caixa parado",
       title: `${brl(idle)} parados sem rendimento`,
-      detail: `Esse valor está em conta corrente, acima de uma reserva de ${brl(reserve)}. Aplicado a 100% do CDI (${ind.cdi12m.toFixed(2)}% a.a.), renderia cerca de ${brl(impact)} por ano.`,
+      detail: `Esse valor está em conta corrente, acima de uma reserva de ${brl(reserve)}. A 100% do CDI atual (${ind.cdi12m.toFixed(2)}% nos últimos 12 meses), o rendimento bruto projetado seria ${brl(impact)} em 12 meses.`,
       annualImpact: impact,
       action: "Mover para um CDB de liquidez diária ou Tesouro Selic",
       bucket: "Caixa parado",
-      current: `${brl(idle)} em conta corrente rendendo 0%`,
+      current: `${brl(idle)} classificado como saldo em conta`,
       suggestion: "CDB com liquidez diária a 100% do CDI",
       risk: "Baixo · coberto pelo FGC até R$ 250 mil por banco",
       cta: "Ver oportunidade",
@@ -255,30 +256,7 @@ export function runEngine(
     });
   }
 
-  // 6. Tax-loss harvesting
-  const losers = investments.filter((i) => i.total_invested > 0 && i.current_value < i.total_invested && ["equity", "realestate", "crypto"].includes(classify(i.asset_type)));
-  const winners = investments.filter((i) => i.current_value > i.total_invested && ["equity", "realestate", "crypto"].includes(classify(i.asset_type)));
-  const lossTotal = losers.reduce((s, i) => s + (i.total_invested - i.current_value), 0);
-  const gainTotal = winners.reduce((s, i) => s + (i.current_value - i.total_invested), 0);
-  if (lossTotal > 500 && gainTotal > 0) {
-    const saving = Math.min(lossTotal, gainTotal) * 0.15;
-    insights.push({
-      id: "tax",
-      severity: "opportunity",
-      category: "Impostos",
-      title: `Economia de até ${brl(saving)} em IR`,
-      detail: `Você tem ${brl(lossTotal)} em prejuízos que podem compensar ${brl(gainTotal)} de lucros em outros ativos de renda variável.`,
-      annualImpact: saving,
-      action: "Usar prejuízos para compensar lucros ao vender",
-      bucket: "Impostos",
-      current: `${brl(lossTotal)} em prejuízo não compensado`,
-      suggestion: "Realizar prejuízo e compensar no IR de vendas com lucro",
-      risk: "Baixo · não altera a exposição se recomprar depois",
-      cta: "Ver oportunidade",
-    });
-  }
-
-  // 7. Low diversification
+  // 6. Low diversification
   if (allocation.length <= 2) {
     penalty += 10;
     insights.push({
@@ -292,9 +270,9 @@ export function runEngine(
     });
   }
 
-  // 8. Goals
+  // 7. Goals. Only calculate when both official benchmark values are available.
   goals.forEach((g) => {
-    if (!g.target_value) return;
+    if (!g.target_value || ind.cdi12m <= 0 || ind.ipca12m <= 0) return;
     const m = monthsToTarget(netWorth, g.target_value, ind.cdi12m - ind.ipca12m);
     insights.push({
       id: `goal-${g.id}`,
@@ -347,7 +325,7 @@ export function parseAmount(text: string): number {
 }
 
 export interface WhatIfScenario {
-  key: "avista" | "financiamento" | "consorcio" | "nao";
+  key: "avista" | "financiamento" | "nao";
   label: string;
   netWorth: number;
   liquid: number;
@@ -366,21 +344,17 @@ export function simulateWhatIf(
   ind: EngineIndicators,
   goal: number,
 ): WhatIfScenario[] {
-  const netRate = (ind.cdi12m / 100) * 0.85;
+  const netRate = ind.cdi12m / 100;
   const passive = (v: number) => (Math.max(0, v) * netRate) / 12;
   const realRate = ind.cdi12m - ind.ipca12m;
 
   // Financing: 20% down, 60x at real BCB average rate
   const down = amount * 0.2;
   const fin = amount - down;
-  const annualFin = ind.financing && ind.financing > 0 ? ind.financing : ind.selic + 10;
-  const i = Math.pow(1 + annualFin / 100, 1 / 12) - 1, n = 60;
-  const pmt = (fin * i) / (1 - Math.pow(1 + i, -n));
+  const annualFin = ind.financing && ind.financing > 0 ? ind.financing : 0;
+  const i = annualFin > 0 ? Math.pow(1 + annualFin / 100, 1 / 12) - 1 : 0, n = 60;
+  const pmt = i > 0 ? (fin * i) / (1 - Math.pow(1 + i, -n)) : 0;
   const finTotal = down + pmt * n;
-
-  // Consortium: 80 months, 16% admin fee
-  const consTotal = amount * 1.16;
-  const consPmt = consTotal / 80;
 
   const mk = (key: WhatIfScenario["key"], label: string, nw: number, liq: number, inv: number, cost: number, pay: number, note: string): WhatIfScenario => ({
     key, label, netWorth: nw, liquid: liq, passiveMonthly: passive(inv), totalCost: cost, monthlyPayment: pay,
@@ -390,12 +364,10 @@ export function simulateWhatIf(
   return [
     mk("avista", "À vista", netWorth - amount, liquid - amount, invested - amount, amount, 0,
       liquid < amount ? "Sua liquidez atual não cobre a compra sem vender outros ativos." : "Menor custo total, mas reduz sua liquidez imediatamente."),
-    mk("financiamento", "Financiamento", netWorth - down - (finTotal - amount) * 0.2, liquid - down, invested - down, finTotal, pmt,
-      `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.`),
-    mk("consorcio", "Consórcio", netWorth - consTotal * 0.1, liquid, invested, consTotal, consPmt,
-      `80x de ${brl(consPmt)} com taxa de administração de 16%. Sem garantia de data de contemplação.`),
+    mk("financiamento", "Financiamento", annualFin > 0 ? netWorth - down - (finTotal - amount) * 0.2 : netWorth, annualFin > 0 ? liquid - down : liquid, annualFin > 0 ? invested - down : invested, finTotal, pmt,
+      annualFin > 0 ? `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.` : "Taxa média de financiamento indisponível no Banco Central."),
     mk("nao", "Não comprar", netWorth, liquid, invested, 0, 0,
-      `Mantendo o valor investido, ele renderia cerca de ${brl(amount * netRate)} no próximo ano.`),
+      `Mantendo o valor investido a 100% do CDI atual, o rendimento bruto projetado seria ${brl(amount * netRate)} em 12 meses.`),
   ];
 }
 
@@ -404,7 +376,7 @@ export function simulateWhatIf(
 export interface RuleCheck {
   id: string;
   label: string;
-  ok: boolean;
+  ok: boolean | null;
   current: string;
   target: string;
   suggestion: string;
@@ -412,8 +384,6 @@ export interface RuleCheck {
 
 export function checkAutopilot(r: EngineResult, investments: EngineInvestment[], rules: AutopilotRules, ind: EngineIndicators): RuleCheck[] {
   const risk = riskScore(r.stress, r.invested);
-  const totalCost = investments.reduce((s, i) => s + i.total_invested, 0);
-  const ret = totalCost ? ((r.invested - totalCost) / totalCost) * 100 : 0;
   const bench = ind.cdi12m + rules.beatCdiPlus;
   const top = investments.reduce((m, i) => (i.current_value > (m?.current_value || 0) ? i : m), null as EngineInvestment | null);
   const topPct = top && r.invested ? (top.current_value / r.invested) * 100 : 0;
@@ -428,19 +398,21 @@ export function checkAutopilot(r: EngineResult, investments: EngineInvestment[],
       suggestion: ok(risk <= rules.maxRisk, `Realocar cerca de ${brl(((risk - rules.maxRisk) * 2 / 100) * r.invested * 2.5)} de ativos voláteis para renda fixa`) },
     { id: "conc", label: "Concentração máxima", ok: topPct <= rules.maxConcentrationPct, current: `${topPct.toFixed(0)}%${top ? ` em ${top.asset_name}` : ""}`, target: `${rules.maxConcentrationPct}% por ativo`,
       suggestion: ok(topPct <= rules.maxConcentrationPct, `Reduzir ${top?.asset_name} em ${brl(((topPct - rules.maxConcentrationPct) / 100) * r.invested)}`) },
-    { id: "ret", label: "Meta de retorno", ok: ret >= bench, current: `${ret.toFixed(1)}%`, target: `CDI + ${rules.beatCdiPlus}% (${bench.toFixed(1)}%)`,
-      suggestion: ok(ret >= bench, "Revisar ativos com retorno abaixo do benchmark") },
+    { id: "ret", label: "Meta de retorno", ok: null, current: "Aguardando histórico anual completo", target: ind.cdi12m > 0 ? `CDI + ${rules.beatCdiPlus}% (${bench.toFixed(1)}%)` : `CDI + ${rules.beatCdiPlus}%`,
+      suggestion: "A comparação será ativada quando houver histórico suficiente, sem confundir retorno desde a compra com retorno anual." },
     { id: "goal", label: "Meta patrimonial", ok: months <= monthsLeft, current: `${formatMonths(months)} no ritmo atual`, target: `${brl(rules.targetNetWorth, true)} até ${rules.targetYear}`,
       suggestion: ok(months <= monthsLeft, "Aumentar aportes mensais ou revisar o prazo da meta") },
   ];
 }
 
 export function recommendWhatIf(sc: WhatIfScenario[], amount: number): { key: WhatIfScenario["key"]; reason: string } {
-  const av = sc.find((s) => s.key === "avista")!;
-  const fin = sc.find((s) => s.key === "financiamento")!;
-  const nao = sc.find((s) => s.key === "nao")!;
+  const av = sc.find((s) => s.key === "avista");
+  const fin = sc.find((s) => s.key === "financiamento");
+  const nao = sc.find((s) => s.key === "nao");
+  if (!av || !fin || !nao) return { key: "nao", reason: "Dados insuficientes para comparar os cenários." };
   if (av.liquid < 0 && fin.liquid < 0) return { key: "nao", reason: "Nenhuma forma de compra é viável sem vender ativos e zerar sua reserva." };
   if (amount > nao.netWorth * 0.3) return { key: "nao", reason: `A compra representa ${((amount / nao.netWorth) * 100).toFixed(0)}% do seu patrimônio e atrasaria sua meta de ${formatMonths(nao.goalMonths)} para ${formatMonths(av.goalMonths)}.` };
-  if (av.liquid >= 0) return { key: "avista", reason: `Você tem liquidez para pagar à vista e evita ${brl(fin.totalCost - amount)} em juros do financiamento.` };
+  if (av.liquid >= 0 && fin.totalCost > amount) return { key: "avista", reason: `Você tem liquidez para pagar à vista e evita ${brl(fin.totalCost - amount)} em juros do financiamento.` };
+  if (fin.totalCost <= amount) return { key: "nao", reason: "A taxa oficial de financiamento está indisponível; não é seguro recomendar crédito agora." };
   return { key: "financiamento", reason: "Preserva sua liquidez, já que pagar à vista consumiria toda a reserva." };
 }

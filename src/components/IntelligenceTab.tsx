@@ -27,7 +27,7 @@ interface Props { userName: string; showValues: boolean; initialView?: IntelView
 
 export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
   const navigate = useNavigate();
-  const { loading, userId, investments, connections, globals, goals, ind, result, analyzedAt } = useIntelligence();
+  const { loading, dataWarning, userId, investments, connections, globals, goals, ind, result, analyzedAt, reload } = useIntelligence();
   const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
@@ -55,8 +55,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
 
   const topShare = useMemo(() => {
     const max = investments.reduce((m, i) => Math.max(m, i.current_value), 0);
-    return result.netWorth ? (max / result.netWorth) * 100 : 0;
-  }, [investments, result.netWorth]);
+    return result.invested ? (max / result.invested) * 100 : 0;
+  }, [investments, result.invested]);
   useIntelligenceAlerts(userId, topShare);
 
   const checks = useMemo(() => checkAutopilot(result, investments, rules, ind), [result, investments, rules, ind]);
@@ -97,8 +97,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     { id: "hoje", label: "Hoje" }, { id: "opps", label: "Oportunidades" }, { id: "whatif", label: "E se?" }, { id: "autopilot", label: "Autopilot" },
   ];
   const rec = scenarios.length ? recommendWhatIf(scenarios, whatIfAmount) : null;
-  const cols = scenarios.filter((s) => s.key !== "consorcio");
-  const broken = checks.filter((c) => !c.ok).length;
+  const cols = scenarios;
+  const broken = checks.filter((c) => c.ok === false).length;
 
   return (
     <div className="flex-1 pb-20">
@@ -125,18 +125,23 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
         {view === "hoje" && (
           <>
             <div>
-              <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+                <button className="text-xs text-primary" onClick={() => reload()}>Atualizar</button>
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
+                 {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conexão{connections !== 1 ? "ões" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
               </p>
             </div>
+
+            {dataWarning && <p className="text-xs text-destructive">{dataWarning} Tente atualizar novamente.</p>}
 
 
             <button onClick={() => setView("opps")} className="w-full text-left bg-card border border-border rounded-xl p-5">
               {result.totalOpportunity > 0 ? (
                 <>
                   <p className="text-3xl font-bold text-foreground">{v(result.totalOpportunity)}</p>
-                  <p className="text-sm text-muted-foreground mt-1">potencial identificado nos próximos 12 meses</p>
+                  <p className="text-sm text-muted-foreground mt-1">potencial bruto projetado em 12 meses com as taxas atuais</p>
                   <p className="text-xs text-primary font-medium mt-3 flex items-center gap-0.5">
                     {found.length} oportunidade{found.length !== 1 ? "s" : ""} encontrada{found.length !== 1 ? "s" : ""} <ChevronRight className="w-3 h-3" />
                   </p>
@@ -198,7 +203,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground mt-3">Juros e taxas passam a ser analisados quando você conecta cartões, empréstimos e fundos.</p>
+              <p className="text-[11px] text-muted-foreground mt-3">Hoje a Kadig analisa investimentos, saldos, bens e metas cadastrados. Dívidas, impostos realizados e taxas não são somados sem dados confirmados.</p>
             </div>
 
             {found.map((i) => (
@@ -213,7 +218,10 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                     <div key={k} className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">{k}</span><span className="text-foreground">{val}</span></div>
                   ))}
                 </div>
-                <Button size="sm" className="w-full mt-3" onClick={() => toast.success("Adicionado ao seu plano de ação.")}>{i.action}</Button>
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-xs text-muted-foreground">Ação sugerida</p>
+                  <p className="text-sm text-foreground mt-0.5">{i.action}</p>
+                </div>
               </div>
             ))}
 
@@ -235,6 +243,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
         {view === "whatif" && (
           <>
             <p className="text-base font-semibold text-foreground">O que você está pensando em fazer?</p>
+            <p className="text-xs text-muted-foreground">Simulação financeira com seu patrimônio atual e taxas oficiais disponíveis. Não é uma cotação de crédito.</p>
             <form className="flex gap-2" onSubmit={(e) => {
               e.preventDefault();
               const a = parseAmount(whatIfText);
@@ -271,7 +280,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                         <div className="p-3 border-t border-border text-muted-foreground">{label as string}</div>
                         {cols.map((c) => (
                           <div key={c.key} className={`p-3 border-t border-border text-center ${rec?.key === c.key ? "text-primary font-semibold" : "text-foreground"}`}>
-                            {(fn as (c: typeof cols[0]) => string)(c)}
+                             {c.key === "financiamento" && c.monthlyPayment === 0 ? "Indisponível" : (fn as (c: typeof cols[0]) => string)(c)}
                           </div>
                         ))}
                       </div>
@@ -305,12 +314,12 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {checks.map((c) => (
                 <div key={c.id} className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok ? "bg-success" : "bg-destructive"}`} />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok === null ? "bg-muted-foreground" : c.ok ? "bg-success" : "bg-destructive"}`} />
                     <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
                     <p className="text-xs text-muted-foreground text-right">{c.target}</p>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
-                  {!c.ok && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
+                   {c.ok !== true && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
 
                 </div>
               ))}
@@ -329,6 +338,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                 <div key={k} className="flex items-center justify-between gap-3">
                   <label className="text-xs text-muted-foreground">{label}</label>
                   <Input type="number" className="w-32 h-9 text-right" value={rules[k]}
+                    min={k === "targetYear" ? new Date().getFullYear() : 0}
+                    max={k === "maxRisk" ? 10 : k === "maxConcentrationPct" ? 100 : undefined}
                     onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
                 </div>
               ))}
