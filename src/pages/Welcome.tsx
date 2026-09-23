@@ -22,7 +22,7 @@ const Welcome = () => {
       >
         {/* Logo */}
         <motion.div
-          className="flex justify-center"
+          className="flex justify-center shrink-0"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -33,8 +33,8 @@ const Welcome = () => {
         </motion.div>
 
         {/* Centerpiece: score rings + glass card */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="relative w-full aspect-square max-w-[260px]">
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <div className="relative aspect-square w-[min(240px,60vw)] max-h-full">
             <motion.div
               className="absolute inset-0 border border-border/40 rounded-full"
               animate={{ rotate: 360 }}
@@ -69,12 +69,12 @@ const Welcome = () => {
 
         {/* Content */}
         <motion.div
-          className="mt-auto space-y-7"
+          className="mt-auto shrink-0 space-y-5"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          <div className="space-y-3 text-center">
+          <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold leading-tight tracking-tight">
               Seu dinheiro pode{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-kadig-cyan to-primary">
