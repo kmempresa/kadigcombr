@@ -11,9 +11,11 @@ import {
   runEngine, subScores, brl, parseAmount, monthsToTarget,
   type EngineResult, type EngineInvestment, type SubScores,
 } from "@/lib/opportunityEngine";
+import { useTheme } from "@/hooks/useTheme";
+import { Sun, Moon } from "lucide-react";
 import kadigLogo from "@/assets/kadig-logo.png";
 
-type Step = "name" | "goal" | "range" | "owns" | "connect" | "analyzing" | "reveal" | "discovery" | "ask" | "goalCreated";
+type Step = "name" | "goal" | "range" | "owns" | "connect" | "analyzing" | "reveal" | "discovery" | "ask" | "goalCreated" | "theme";
 const QUESTION_STEPS: Step[] = ["name", "goal", "range", "owns", "connect"];
 
 const GOALS = ["Aumentar patrimônio", "Gerar renda", "Preservar patrimônio", "Organizar minha vida financeira", "Ainda não sei"];
@@ -34,6 +36,8 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState<Step>("name");
+  const { theme, setTheme } = useTheme();
+  const [exitState, setExitState] = useState<Record<string, string>>({ returnToTab: "intelligence" });
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
@@ -166,7 +170,8 @@ const Onboarding = () => {
     if (await saveProfile()) setStep("ask");
   };
 
-  const finish = () => navigate("/app", { state: { returnToTab: "intelligence" } });
+  const finish = () => { setExitState({ returnToTab: "intelligence" }); setStep("theme"); };
+  const enterApp = () => navigate("/app", { state: exitState });
 
   const handleAsk = async () => {
     const text = ask.trim();
@@ -175,7 +180,7 @@ const Onboarding = () => {
     const amount = parseAmount(text);
     const isPurchase = /compr|carro|casa|apartamento|viagem/i.test(text);
     if (isPurchase && amount > 0) {
-      return navigate("/app", { state: { returnToTab: "intelligence", whatIf: text } });
+      setExitState({ returnToTab: "intelligence", whatIf: text }); return setStep("theme");
     }
     if (amount <= 0 || !userId) return finish();
     setSaving(true);
@@ -280,6 +285,7 @@ const Onboarding = () => {
       case "discovery": return { label: "Continuar", disabled: false, onClick: () => setStep("ask") };
       case "ask": return { label: ask.trim() ? "Criar minha meta" : "Pular", disabled: saving, onClick: handleAsk };
       case "goalCreated": return { label: "Acompanhar meta", disabled: false, onClick: finish };
+      case "theme": return { label: "Entrar na Kadig", disabled: false, onClick: enterApp };
     }
   })();
 
@@ -340,7 +346,37 @@ const Onboarding = () => {
                       <p className="text-sm text-muted-foreground mt-1">Em menos de 1 minuto a Kadig monta seu diagnóstico.</p>
                     </motion.div>
                   )}
-                </AnimatePresence>
+                  {step === "theme" && (
+              <motion.div key="theme" {...anim}>
+                <Title kicker="Último passo" title="Como você prefere ver a Kadig?" />
+                <div className="grid grid-cols-2 gap-3">
+                  {([["light", "Claro", Sun], ["dark", "Escuro", Moon]] as const).map(([v, label, Icon], i) => {
+                    const on = theme === v;
+                    return (
+                      <motion.button key={v} {...stagger(i)} whileTap={{ scale: 0.96 }}
+                        onClick={() => { setTheme(v); navigator.vibrate?.(10); }}
+                        className={`rounded-3xl border p-3 text-left backdrop-blur-xl transition-colors ${on ? "border-kadig-cyan bg-kadig-cyan/10" : "border-border/60 bg-card/40"}`}>
+                        <div className={`${v} rounded-2xl border border-border bg-background p-3 space-y-2 aspect-[3/4] flex flex-col`}>
+                          <div className="h-2 w-10 rounded-full bg-muted-foreground/40" />
+                          <div className="rounded-xl bg-card border border-border p-2 space-y-1.5">
+                            <div className="h-1.5 w-8 rounded-full bg-muted-foreground/40" />
+                            <div className="h-3 w-14 rounded bg-foreground/80" />
+                          </div>
+                          <div className="flex-1 rounded-xl bg-gradient-to-t from-primary/30 to-transparent" />
+                          <div className="flex justify-around">{[0,1,2,3].map(k => <div key={k} className={`h-1.5 w-1.5 rounded-full ${k===0?"bg-primary":"bg-muted-foreground/40"}`} />)}</div>
+                        </div>
+                        <div className="flex items-center justify-between mt-3 px-1">
+                          <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="w-4 h-4" />{label}</span>
+                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${on ? "bg-kadig-cyan border-kadig-cyan" : "border-border"}`}>{on && <Check className="w-3 h-3 text-primary-foreground" />}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center">Você pode trocar quando quiser em Conta.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
               </motion.div>
             )}
 
