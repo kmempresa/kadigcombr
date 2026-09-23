@@ -91,7 +91,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     const raw = draft[k];
     setDraft((d) => { const n = { ...d }; delete n[k]; return n; });
     if (raw === undefined) return;
-    let n = Number(raw.replace(/\./g, "").replace(",", "."));
+    let n = raw.includes(",") ? Number(raw.replace(/\./g, "").replace(",", ".")) : Number(raw);
     if (!Number.isFinite(n) || raw.trim() === "") return;
     if (k === "maxRisk") n = Math.min(10, Math.max(0, n));
     if (k === "maxConcentrationPct") n = Math.min(100, Math.max(1, n));
