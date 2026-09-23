@@ -24,14 +24,17 @@ export const Footer = () => {
             <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto">
               Baixe grátis e consolide todos os seus investimentos em um só lugar.
             </p>
-            <motion.button
+            <motion.a
+              href="https://testflight.apple.com/join/rXBEzD6m"
+              target="_blank"
+              rel="noopener noreferrer"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               className="group px-6 sm:px-8 py-3 sm:py-4 bg-primary text-primary-foreground rounded-xl sm:rounded-2xl font-medium inline-flex items-center gap-2 glow-blue text-sm sm:text-base"
             >
               Baixar Grátis na App Store
               <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </motion.button>
+            </motion.a>
           </div>
         </motion.div>
       </div>
@@ -61,18 +64,18 @@ export const Footer = () => {
             >
               Privacidade
             </Link>
-            <a
-              href="#"
+            <Link
+              to="/termos-de-uso"
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Termos de Uso
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              to="/suporte"
               className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Contato
-            </a>
+            </Link>
           </div>
 
           {/* Kadig Logo and Copyright */}

@@ -27,7 +27,7 @@ export const Header = () => {
             {["Patrimônio", "Análises", "Segurança"].map((item, i) => (
               <motion.a
                 key={item}
-                href="#"
+                href={item === "Patrimônio" ? "#patrimonio" : item === "Análises" ? "#analises" : "#seguranca"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 + i * 0.1 }}
@@ -79,14 +79,15 @@ export const Header = () => {
             {["Patrimônio", "Análises", "Segurança"].map((item) => (
               <a
                 key={item}
-                href="#"
+                href={item === "Patrimônio" ? "#patrimonio" : item === "Análises" ? "#analises" : "#seguranca"}
+                onClick={() => setMobileMenuOpen(false)}
                 className="block px-4 py-3 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-secondary/50"
               >
                 {item}
               </a>
             ))}
             <a 
-              href="https://apps.apple.com/app/kadig" 
+              href="https://testflight.apple.com/join/rXBEzD6m" 
               target="_blank" 
               rel="noopener noreferrer"
               className="block mt-3 px-4"

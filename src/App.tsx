@@ -31,6 +31,7 @@ import PrimeirosPassos from "./pages/PrimeirosPassos";
 import PerguntasFrequentes from "./pages/PerguntasFrequentes";
 import BiancaIAHelp from "./pages/BiancaIAHelp";
 import NotFound from "./pages/NotFound";
+import RequireAuth from "./components/RequireAuth";
 
 const queryClient = new QueryClient();
 
@@ -47,21 +48,23 @@ const App = () => (
               <Route path="/site" element={<Index />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/app" element={<AppDashboard />} />
-              <Route path="/consultor-ia" element={<ConsultorIA />} />
-              <Route path="/adicionar-investimento" element={<AdicionarInvestimento />} />
-              <Route path="/adicionar-carteira" element={<AdicionarCarteira />} />
-              <Route path="/adicionar-aplicacao" element={<AdicionarAplicacao />} />
-              <Route path="/adicionar-resgate" element={<AdicionarResgate />} />
-              <Route path="/adicionar-evento" element={<AdicionarEvento />} />
-              <Route path="/adicionar-patrimonio-global" element={<AdicionarPatrimonioGlobal />} />
-              <Route path="/transferir-ativo" element={<TransferirAtivo />} />
-              <Route path="/excluir-ativos" element={<ExcluirAtivos />} />
-              <Route path="/preferencias" element={<Preferencias />} />
-              <Route path="/suporte" element={<Suporte />} />
+              <Route element={<RequireAuth />}>
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/app" element={<AppDashboard />} />
+                <Route path="/consultor-ia" element={<ConsultorIA />} />
+                <Route path="/adicionar-investimento" element={<AdicionarInvestimento />} />
+                <Route path="/adicionar-carteira" element={<AdicionarCarteira />} />
+                <Route path="/adicionar-aplicacao" element={<AdicionarAplicacao />} />
+                <Route path="/adicionar-resgate" element={<AdicionarResgate />} />
+                <Route path="/adicionar-evento" element={<AdicionarEvento />} />
+                <Route path="/adicionar-patrimonio-global" element={<AdicionarPatrimonioGlobal />} />
+                <Route path="/transferir-ativo" element={<TransferirAtivo />} />
+                <Route path="/excluir-ativos" element={<ExcluirAtivos />} />
+                <Route path="/preferencias" element={<Preferencias />} />
+                <Route path="/suporte" element={<Suporte />} />
+                <Route path="/sobre" element={<Sobre />} />
+              </Route>
               <Route path="/privacidade" element={<Privacidade />} />
-              <Route path="/sobre" element={<Sobre />} />
               <Route path="/termos-de-uso" element={<TermosDeUso />} />
               <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
               <Route path="/central-ajuda" element={<CentralAjuda />} />
