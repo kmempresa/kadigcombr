@@ -6,119 +6,98 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Gradient background - Kadig colors */}
-      <div className="absolute inset-0 bg-gradient-to-b from-kadig-navy via-background to-kadig-deep" />
-      
-      {/* Animated geometric shapes - Kadig blue/cyan theme */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Large floating rectangles */}
-        <motion.div
-          className="absolute -top-16 -left-8 w-32 h-64 sm:w-40 sm:h-80 bg-gradient-to-b from-primary/25 to-kadig-cyan/15 rounded-3xl rotate-12"
-          animate={{
-            y: [0, 20, 0],
-            rotate: [12, 15, 12],
-          }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute top-8 left-16 w-24 h-48 sm:w-32 sm:h-64 bg-gradient-to-b from-kadig-light/20 to-primary/10 rounded-3xl rotate-6"
-          animate={{
-            y: [0, -15, 0],
-            rotate: [6, 3, 6],
-          }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        />
-        <motion.div
-          className="absolute -top-8 right-4 w-28 h-56 sm:w-36 sm:h-72 bg-gradient-to-b from-kadig-cyan/15 to-primary/10 rounded-3xl -rotate-6"
-          animate={{
-            y: [0, 25, 0],
-            rotate: [-6, -10, -6],
-          }}
-          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        <motion.div
-          className="absolute top-24 right-20 w-20 h-40 sm:w-28 sm:h-56 bg-gradient-to-b from-primary/15 to-kadig-light/10 rounded-3xl rotate-3"
-          animate={{
-            y: [0, -20, 0],
-            rotate: [3, 8, 3],
-          }}
-          transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-        />
-        
-        {/* Logo icon floating */}
-        <motion.div
-          className="absolute top-60 sm:top-80 left-4 sm:left-8 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary/30 to-kadig-cyan/25 rounded-2xl flex items-center justify-center backdrop-blur-sm"
-          animate={{
-            y: [0, -10, 0],
-            rotate: [0, 5, 0],
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <motion.img
-            src={kadigLogo}
-            alt=""
-            className="w-8 h-8 sm:w-10 sm:h-10 object-contain opacity-80"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          />
-        </motion.div>
+    <div className="min-h-screen relative overflow-hidden bg-kadig-deep text-foreground">
+      {/* Ambient glows */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[10%] -left-[20%] w-[80%] h-[40%] bg-kadig-cyan/15 blur-[120px] rounded-full" />
+        <div className="absolute -bottom-[10%] -right-[20%] w-[80%] h-[40%] bg-primary/15 blur-[120px] rounded-full" />
       </div>
 
-      {/* Bottom gradient overlay */}
-      <div className="absolute bottom-0 left-0 right-0 h-2/3">
-        <div className="absolute inset-0 bg-gradient-to-t from-kadig-deep via-background/80 to-transparent" />
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-end pb-8 sm:pb-12 px-5 sm:px-6 safe-area-inset-bottom">
+      <div className="relative z-10 flex flex-col flex-1 min-h-screen px-8 pt-14 pb-10 safe-area-inset-bottom">
+        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          className="flex justify-center"
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="space-y-4 sm:space-y-6 mb-6 sm:mb-8"
+          transition={{ duration: 0.5 }}
         >
-          <motion.h1
-            className="text-foreground text-3xl sm:text-4xl font-bold leading-tight tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            Seu dinheiro pode estar trabalhando melhor.
-          </motion.h1>
-
-          <motion.p
-            className="text-muted-foreground text-base sm:text-lg leading-relaxed"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-          >
-            A Kadig analisa seu patrimônio, encontra riscos e oportunidades e mostra o impacto de cada decisão financeira.
-          </motion.p>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-kadig-cyan to-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/25">
+              <img src={kadigLogo} alt="Kadig" className="w-4 h-4 object-contain" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">Kadig</span>
+          </div>
         </motion.div>
 
-        <motion.div
-          className="flex flex-col gap-3"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-        >
-          <button
-            onClick={() => navigate("/auth")}
-            className="w-full py-4 px-6 bg-gradient-to-r from-primary to-kadig-cyan text-primary-foreground font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-primary/30"
-          >
-            Descobrir meu Kadig Score
-          </button>
-          <button
-            onClick={() => navigate("/auth")}
-            className="w-full py-3 text-foreground/80 font-medium active:scale-[0.98] transition-all"
-          >
-            Já tenho conta
-          </button>
-        </motion.div>
+        {/* Centerpiece: score rings + glass card */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="relative w-full aspect-square max-w-[260px]">
+            <motion.div
+              className="absolute inset-0 border border-border/40 rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+            />
+            <div className="absolute inset-4 border border-border/60 rounded-full" />
+            <motion.div
+              className="absolute inset-8 border border-kadig-cyan/25 rounded-full"
+              animate={{ scale: [1, 1.04, 1], opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
 
-        {/* Bottom safe area for mobile */}
-        <div className="h-6 sm:h-4" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <motion.div
+                className="w-44 h-32 bg-card/40 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col p-4 justify-between"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="w-8 h-5 bg-muted rounded-sm" />
+                  <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG SCORE</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold tracking-tighter">?</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Descubra o seu</div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <motion.div
+          className="mt-auto space-y-7"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.45 }}
+        >
+          <div className="space-y-3">
+            <h1 className="text-2xl font-bold leading-tight tracking-tight">
+              Seu dinheiro pode{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-kadig-cyan to-primary">
+                trabalhar melhor.
+              </span>
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+              Descubra o potencial do seu patrimônio com inteligência e controle total.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => navigate("/auth")}
+              className="w-full py-4 px-6 bg-gradient-to-r from-kadig-cyan to-primary text-primary-foreground font-semibold text-sm rounded-2xl shadow-xl shadow-primary/25 hover:opacity-90 active:scale-[0.98] transition-all"
+            >
+              Descobrir meu Kadig Score
+            </button>
+            <button
+              onClick={() => navigate("/auth")}
+              className="w-full py-2 text-sm font-medium text-muted-foreground hover:text-foreground active:scale-[0.98] transition-all"
+            >
+              Já tenho conta
+            </button>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
