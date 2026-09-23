@@ -38,7 +38,7 @@ const Onboarding = () => {
   const saved = (() => { try { return JSON.parse(sessionStorage.getItem("kadig-onb") || "{}"); } catch { return {}; } })();
   const [step, setStep] = useState<Step>(QUESTION_STEPS.includes(saved.step) ? saved.step : "name");
   const { theme, setTheme } = useTheme();
-  const [exitState, setExitState] = useState<Record<string, string>>({ returnToTab: "intelligence" });
+  const [exitState, setExitState] = useState<Record<string, string>>({ returnToTab: "carteira" });
   const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState<string>(saved.name || "");
   const [goal, setGoal] = useState<string>(saved.goal || "");
@@ -182,7 +182,7 @@ const Onboarding = () => {
     if (await saveProfile()) setStep("ask");
   };
 
-  const finish = () => { setExitState({ returnToTab: "intelligence" }); setStep("theme"); };
+  const finish = () => { setExitState({ returnToTab: "carteira" }); setStep("theme"); };
   const enterApp = () => { sessionStorage.removeItem("kadig-onb"); navigate("/app", { state: exitState }); };
 
   const handleAsk = async () => {
