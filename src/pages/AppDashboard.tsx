@@ -281,7 +281,7 @@ const AppDashboard = () => {
   const [intelWhatIf, setIntelWhatIf] = useState<string>(() => (location.state as any)?.whatIf || "");
   const intel = useIntelligence();
   const openIntel = (view: IntelView, whatIf = "") => { setIntelView(view); setIntelWhatIf(whatIf); setActiveTab("intelligence"); };
-  const [carteiraTab, setCarteiraTab] = useState<"resumo" | "ativos" | "analises" | "extrato">("resumo");
+  const [carteiraTab, setCarteiraTab] = useState<"resumo" | "trade" | "ativos" | "analises" | "extrato">("resumo");
   const [showValues, setShowValues] = useState(true);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // 0 = current month (first slide)
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
