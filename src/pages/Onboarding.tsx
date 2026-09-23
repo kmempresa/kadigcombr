@@ -35,14 +35,18 @@ const scoreLabel = (s: number) => (s >= 80 ? "Muito bom" : s >= 65 ? "Bom" : s >
 const Onboarding = () => {
   const navigate = useNavigate();
   const { refreshPortfolios } = usePortfolio();
-  const [step, setStep] = useState<Step>("name");
+  const saved = (() => { try { return JSON.parse(sessionStorage.getItem("kadig-onb") || "{}"); } catch { return {}; } })();
+  const [step, setStep] = useState<Step>(QUESTION_STEPS.includes(saved.step) ? saved.step : "name");
   const { theme, setTheme } = useTheme();
   const [exitState, setExitState] = useState<Record<string, string>>({ returnToTab: "intelligence" });
   const [userId, setUserId] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [goal, setGoal] = useState("");
-  const [range, setRange] = useState("");
-  const [owns, setOwns] = useState<string[]>([]);
+  const [name, setName] = useState<string>(saved.name || "");
+  const [goal, setGoal] = useState<string>(saved.goal || "");
+  const [range, setRange] = useState<string>(saved.range || "");
+  const [owns, setOwns] = useState<string[]>(saved.owns || []);
+  useEffect(() => {
+    if (QUESTION_STEPS.includes(step)) sessionStorage.setItem("kadig-onb", JSON.stringify({ step, name, goal, range, owns }));
+  }, [step, name, goal, range, owns]);
   const [saving, setSaving] = useState(false);
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -61,7 +65,7 @@ const Onboarding = () => {
       if (!session?.user) return navigate("/auth");
       setUserId(session.user.id);
       const metaName = (session.user.user_metadata?.full_name || session.user.user_metadata?.name || "") as string;
-      if (metaName) setName(metaName.split(" ")[0]);
+      if (metaName && !saved.name) setName(metaName.split(" ")[0]);
     });
     return () => { cancelled.current = true; };
   }, [navigate]);
@@ -179,7 +183,7 @@ const Onboarding = () => {
   };
 
   const finish = () => { setExitState({ returnToTab: "intelligence" }); setStep("theme"); };
-  const enterApp = () => navigate("/app", { state: exitState });
+  const enterApp = () => { sessionStorage.removeItem("kadig-onb"); navigate("/app", { state: exitState }); };
 
   const handleAsk = async () => {
     const text = ask.trim();
