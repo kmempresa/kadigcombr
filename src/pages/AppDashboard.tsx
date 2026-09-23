@@ -935,7 +935,7 @@ const AppDashboard = () => {
                 userAssets={filteredInvestments}
                 onToggleValues={() => setShowValues(!showValues)}
                 onAddAsset={() => setAdicionarDrawerOpen(true)}
-                onAddConnection={() => navigate("/conexoes")}
+                onAddConnection={() => setActiveTab("conexoes")}
                 embedded
               />
             ) : (
