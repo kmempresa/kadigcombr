@@ -294,6 +294,7 @@ const TradeTab = ({
           </div>
         </div>
       </header>
+      )}
 
       {/* Search Bar */}
       <AnimatePresence>
