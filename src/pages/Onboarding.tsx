@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { PluggyConnect } from "react-pluggy-connect";
 import { ArrowRight, Check, ChevronLeft, Loader2, Lock, TrendingUp, Wallet, Shield, LayoutGrid, Compass, Landmark, Bitcoin, Home, Building2, Car, CreditCard, LineChart, FileUp, PenLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,8 @@ const Onboarding = () => {
   const [ask, setAsk] = useState("");
   const [createdGoal, setCreatedGoal] = useState<{ target: number; current: string; optimized: string | null } | null>(null);
   const cancelled = useRef(false);
+  const resume = (useLocation().state as { resume?: "connect" | "added" } | null)?.resume;
+  const resumed = useRef(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -163,7 +165,7 @@ const Onboarding = () => {
   };
 
   const handleManual = async () => {
-    if (await saveProfile()) navigate("/adicionar-investimento");
+    if (await saveProfile()) navigate("/adicionar-investimento", { state: { fromOnboarding: true } });
   };
 
   const handleLater = async () => {

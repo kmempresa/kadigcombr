@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowLeft, X, Search, ChevronLeft, Loader2, Check, TrendingUp, TrendingDown, ChevronRight, HelpCircle, FileEdit, BarChart3, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -256,6 +256,9 @@ const instituicoesFinanceiras = [
 
 const AdicionarInvestimento = () => {
   const navigate = useNavigate();
+  const fromOnboarding = !!(useLocation().state as { fromOnboarding?: boolean } | null)?.fromOnboarding;
+  const exitTo = (resume: "connect" | "added") =>
+    fromOnboarding ? navigate("/onboarding", { replace: true, state: { resume } }) : navigate("/app");
   const { theme } = useTheme();
   const { selectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [step, setStep] = useState(1);
@@ -731,7 +734,7 @@ const AdicionarInvestimento = () => {
           await refreshPortfolios();
         }
         
-        navigate("/app");
+        exitTo("added");
       } catch (error) {
         console.error("Error saving investment:", error);
         toast.error("Erro ao salvar investimento");
@@ -740,7 +743,7 @@ const AdicionarInvestimento = () => {
   };
 
   const handleCancel = () => {
-    navigate("/app");
+    exitTo("connect");
   };
 
   const formatCurrency = (value: number) => {
@@ -760,7 +763,7 @@ const AdicionarInvestimento = () => {
       <header className="p-4 border-b border-border safe-area-inset-top bg-card">
         <div className="flex items-center justify-center relative">
           <button 
-            onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
+            onClick={() => step > 1 ? setStep(step - 1) : exitTo("connect")}
             className="absolute left-0 p-2 text-muted-foreground"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -1885,7 +1888,7 @@ const AdicionarInvestimento = () => {
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-border safe-area-inset-bottom">
         <div className="flex gap-3">
           <button
-            onClick={() => step > 1 ? setStep(step - 1) : navigate("/app")}
+            onClick={() => step > 1 ? setStep(step - 1) : exitTo("connect")}
             className="flex-1 h-14 bg-card border border-border rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
           >
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
