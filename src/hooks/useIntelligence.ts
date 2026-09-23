@@ -23,12 +23,15 @@ export function useIntelligence() {
     if (!session) { setLoading(false); return; }
     const uid = session.user.id;
     setUserId(uid);
-    const [inv, ga, gl, cn, econ] = await Promise.all([
+    const finP = fetch("https://api.bcb.gov.br/dados/serie/bcdata.sgs.20749/dados/ultimos/1?formato=json")
+      .then((r) => r.json()).then((d) => Number(d?.[0]?.valor) || 0).catch(() => 0);
+    const [inv, ga, gl, cn, econ, fin] = await Promise.all([
       supabase.from("investments").select("*").eq("user_id", uid),
       supabase.from("global_assets").select("*").eq("user_id", uid),
       supabase.from("goals").select("*").eq("user_id", uid),
       supabase.from("pluggy_connections" as any).select("id", { count: "exact", head: true }).eq("user_id", uid),
       supabase.functions.invoke("market-data", { body: { type: "economic-indicators" } }),
+      finP,
     ]);
     setInvestments((inv.data || []).map((i) => ({
       id: i.id, asset_name: i.asset_name, asset_type: i.asset_type, ticker: i.ticker,
@@ -38,9 +41,12 @@ export function useIntelligence() {
     setGoals((gl.data || []).map((g) => ({ id: g.id, type: g.type, target_value: Number(g.target_value) || 0, target_date: g.target_date })));
     setConnections((cn as any).count || 0);
     const e = econ.data as any;
-    if (e?.accumulated12m) {
-      setInd({ cdi12m: Number(e.accumulated12m.cdi) || 14.4, ipca12m: Number(e.accumulated12m.ipca) || 4.1, selic: Number(e.current?.selic) || 15 });
-    }
+    setInd((p) => ({
+      cdi12m: Number(e?.accumulated12m?.cdi) || p.cdi12m,
+      ipca12m: Number(e?.accumulated12m?.ipca) || p.ipca12m,
+      selic: Number(e?.current?.selic) || p.selic,
+      financing: fin || p.financing,
+    }));
     setAnalyzedAt(new Date());
     setLoading(false);
   }, []);

@@ -27,7 +27,7 @@ interface Props { userName: string; showValues: boolean; initialView?: IntelView
 
 export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
   const navigate = useNavigate();
-  const { loading, userId, investments, connections, globals, ind, result, analyzedAt } = useIntelligence();
+  const { loading, userId, investments, connections, globals, goals, ind, result, analyzedAt } = useIntelligence();
   const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
@@ -40,9 +40,19 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 30000); return () => clearInterval(t); }, []);
   useEffect(() => {
     if (!userId) return;
-    const saved = localStorage.getItem(`kadig-autopilot-v2-${userId}`);
-    if (saved) try { setRules({ ...DEFAULT_RULES, ...JSON.parse(saved) }); } catch { /* ignore */ }
-  }, [userId]);
+    // Defaults derived from the user's real data (goals + current portfolio)
+    const g = goals.filter((x) => x.target_value > 0).sort((a, b) => b.target_value - a.target_value)[0];
+    const base: AutopilotRules = {
+      ...DEFAULT_RULES,
+      minLiquidity: Math.round(Math.max(result.invested * 0.1, 0) / 1000) * 1000 || DEFAULT_RULES.minLiquidity,
+      targetNetWorth: g?.target_value || (result.netWorth > 0 ? Math.round(result.netWorth * 2 / 10000) * 10000 : DEFAULT_RULES.targetNetWorth),
+      targetYear: g?.target_date ? new Date(g.target_date).getFullYear() : new Date().getFullYear() + 5,
+    };
+    const saved = localStorage.getItem(`kadig-autopilot-v3-${userId}`);
+    let r = base;
+    if (saved) try { r = { ...base, ...JSON.parse(saved) }; } catch { /* ignore */ }
+    setRules(r);
+  }, [userId, goals, result.invested, result.netWorth]);
 
   const topShare = useMemo(() => {
     const max = investments.reduce((m, i) => Math.max(m, i.current_value), 0);
@@ -71,7 +81,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
 
   const saveRules = (r: AutopilotRules) => {
     setRules(r);
-    if (userId) localStorage.setItem(`kadig-autopilot-v2-${userId}`, JSON.stringify(r));
+    if (userId) localStorage.setItem(`kadig-autopilot-v3-${userId}`, JSON.stringify(r));
   };
 
   const openInsight = (i: Insight) => {

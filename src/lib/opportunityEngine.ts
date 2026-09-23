@@ -28,6 +28,7 @@ export interface EngineIndicators {
   cdi12m: number; // % a.a.
   ipca12m: number; // % a.a.
   selic: number; // % a.a.
+  financing?: number; // % a.a. taxa média BCB (série 20749)
 }
 
 export interface AutopilotRules {
@@ -369,10 +370,11 @@ export function simulateWhatIf(
   const passive = (v: number) => (Math.max(0, v) * netRate) / 12;
   const realRate = ind.cdi12m - ind.ipca12m;
 
-  // Financing: 20% down, 60x at ~1.6% a.m.
+  // Financing: 20% down, 60x at real BCB average rate
   const down = amount * 0.2;
   const fin = amount - down;
-  const i = 0.016, n = 60;
+  const annualFin = ind.financing && ind.financing > 0 ? ind.financing : ind.selic + 10;
+  const i = Math.pow(1 + annualFin / 100, 1 / 12) - 1, n = 60;
   const pmt = (fin * i) / (1 - Math.pow(1 + i, -n));
   const finTotal = down + pmt * n;
 
@@ -389,7 +391,7 @@ export function simulateWhatIf(
     mk("avista", "À vista", netWorth - amount, liquid - amount, invested - amount, amount, 0,
       liquid < amount ? "Sua liquidez atual não cobre a compra sem vender outros ativos." : "Menor custo total, mas reduz sua liquidez imediatamente."),
     mk("financiamento", "Financiamento", netWorth - down - (finTotal - amount) * 0.2, liquid - down, invested - down, finTotal, pmt,
-      `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (1,6% a.m.). Juros totais de ${brl(finTotal - amount)}.`),
+      `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.`),
     mk("consorcio", "Consórcio", netWorth - consTotal * 0.1, liquid, invested, consTotal, consPmt,
       `80x de ${brl(consPmt)} com taxa de administração de 16%. Sem garantia de data de contemplação.`),
     mk("nao", "Não comprar", netWorth, liquid, invested, 0, 0,
