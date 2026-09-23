@@ -304,6 +304,31 @@ export function runEngine(
   };
 }
 
+export interface SubScores {
+  rentabilidade: number;
+  risco: number;
+  diversificacao: number;
+  liquidez: number;
+  eficiencia: number;
+}
+
+/** Sub-scores (0-100) derived only from the user's real positions. */
+export function subScores(investments: EngineInvestment[], r: EngineResult): SubScores | null {
+  if (r.invested <= 0) return null;
+  const cost = investments.reduce((s, i) => s + i.total_invested, 0);
+  const gainPct = cost > 0 ? ((r.invested - cost) / cost) * 100 : 0;
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const topPct = Math.max(...investments.map((i) => i.current_value)) / r.invested * 100;
+  const idle = r.insights.find((i) => i.id === "idle-cash")?.annualImpact || 0;
+  return {
+    rentabilidade: clamp(60 + gainPct * 2),
+    risco: clamp(100 - riskScore(r.stress, r.invested) * 10),
+    diversificacao: clamp(Math.min(r.allocation.length, 5) * 16 + (100 - topPct) * 0.2),
+    liquidez: clamp((r.liquid / r.invested) * 1000),
+    eficiencia: clamp(100 - (idle / r.invested) * 1000),
+  };
+}
+
 // ----- What If -----
 
 export function parseAmount(text: string): number {
