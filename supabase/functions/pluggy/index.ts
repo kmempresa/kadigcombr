@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,18 +13,9 @@ async function getAccessToken(): Promise<string> {
   const clientId = Deno.env.get('PLUGGY_CLIENT_ID');
   const clientSecret = Deno.env.get('PLUGGY_CLIENT_SECRET');
 
-  console.log('Checking credentials...', { 
-    hasClientId: !!clientId, 
-    hasClientSecret: !!clientSecret,
-    clientIdLength: clientId?.length,
-    clientSecretLength: clientSecret?.length
-  });
-
   if (!clientId || !clientSecret) {
     throw new Error('Pluggy credentials not configured');
   }
-
-  console.log('Getting Pluggy access token...');
 
   const response = await fetch(`${PLUGGY_API_URL}/auth`, {
     method: 'POST',
@@ -37,16 +29,11 @@ async function getAccessToken(): Promise<string> {
   });
 
   const responseText = await response.text();
-  console.log('Auth response status:', response.status);
-  console.log('Auth response body:', responseText);
-
   if (!response.ok) {
-    console.error('Failed to get access token:', responseText);
-    throw new Error(`Failed to authenticate with Pluggy: ${responseText}`);
+    throw new Error('Failed to authenticate with Pluggy');
   }
 
   const data = JSON.parse(responseText);
-  console.log('Got Pluggy access token successfully, apiKey length:', data.apiKey?.length);
   return data.apiKey;
 }
 
@@ -81,8 +68,6 @@ async function createConnectToken(accessToken: string, itemId?: string): Promise
 
 // List all items (connected accounts) for a user
 async function listItems(accessToken: string): Promise<any> {
-  console.log('Listing items with token length:', accessToken?.length);
-
   const response = await fetch(`${PLUGGY_API_URL}/items`, {
     method: 'GET',
     headers: {
@@ -91,12 +76,8 @@ async function listItems(accessToken: string): Promise<any> {
   });
 
   const responseText = await response.text();
-  console.log('List items response status:', response.status);
-  console.log('List items response body:', responseText);
-
   if (!response.ok) {
-    console.error('Failed to list items:', responseText);
-    throw new Error(`Failed to list items: ${responseText}`);
+    throw new Error('Failed to list items');
   }
 
   const data = JSON.parse(responseText);
@@ -191,8 +172,50 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseAnonKey) throw new Error('Backend configuration missing');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { action, itemId } = await req.json();
-    console.log('Pluggy action:', action, { itemId });
+
+    if (action === 'list-items') {
+      return new Response(JSON.stringify({ error: 'Unsupported action' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (itemId) {
+      const { data: ownedConnection } = await supabase
+        .from('pluggy_connections')
+        .select('id')
+        .eq('item_id', itemId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (!ownedConnection) {
+        return new Response(JSON.stringify({ error: 'Connection not found' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Get access token for all operations
     const accessToken = await getAccessToken();
@@ -202,10 +225,6 @@ serve(async (req) => {
     switch (action) {
       case 'create-connect-token':
         result = await createConnectToken(accessToken, itemId);
-        break;
-
-      case 'list-items':
-        result = await listItems(accessToken);
         break;
 
       case 'get-item':

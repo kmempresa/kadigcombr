@@ -12,11 +12,18 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) throw new Error('Backend configuration missing');
     
     // Use service role to access all users' data
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     console.log('Starting portfolio snapshot job...');
 
@@ -73,7 +80,8 @@ serve(async (req) => {
     // Get all portfolios with their investments
     const { data: portfolios, error: portfoliosError } = await supabase
       .from('portfolios')
-      .select('id, user_id, total_value, total_gain');
+      .select('id, user_id, total_value, total_gain')
+      .eq('user_id', user.id);
 
     if (portfoliosError) {
       throw portfoliosError;
