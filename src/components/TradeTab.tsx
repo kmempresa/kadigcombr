@@ -42,6 +42,7 @@ interface TradeTabProps {
   onToggleValues?: () => void;
   onAddAsset?: () => void;
   onAddConnection?: () => void;
+  embedded?: boolean;
 }
 
 const TradeTab = ({ 
@@ -50,7 +51,8 @@ const TradeTab = ({
   userAssets = [],
   onToggleValues,
   onAddAsset,
-  onAddConnection
+  onAddConnection,
+  embedded = false
 }: TradeTabProps) => {
   const { portfolios, selectedPortfolioId, setSelectedPortfolioId, activePortfolio } = usePortfolio();
   const { 
