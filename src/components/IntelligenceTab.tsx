@@ -130,7 +130,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                 <button className="text-xs text-primary" onClick={() => reload()}>Atualizar</button>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
+                 {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conexão{connections !== 1 ? "ões" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
               </p>
             </div>
 
@@ -141,7 +141,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {result.totalOpportunity > 0 ? (
                 <>
                   <p className="text-3xl font-bold text-foreground">{v(result.totalOpportunity)}</p>
-                  <p className="text-sm text-muted-foreground mt-1">potencial identificado nos próximos 12 meses</p>
+                  <p className="text-sm text-muted-foreground mt-1">potencial bruto projetado em 12 meses com as taxas atuais</p>
                   <p className="text-xs text-primary font-medium mt-3 flex items-center gap-0.5">
                     {found.length} oportunidade{found.length !== 1 ? "s" : ""} encontrada{found.length !== 1 ? "s" : ""} <ChevronRight className="w-3 h-3" />
                   </p>
@@ -203,7 +203,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                   </div>
                 ))}
               </div>
-              <p className="text-[11px] text-muted-foreground mt-3">Juros e taxas passam a ser analisados quando você conecta cartões, empréstimos e fundos.</p>
+              <p className="text-[11px] text-muted-foreground mt-3">Hoje a Kadig analisa investimentos, saldos, bens e metas cadastrados. Dívidas, impostos realizados e taxas não são somados sem dados confirmados.</p>
             </div>
 
             {found.map((i) => (
@@ -243,6 +243,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
         {view === "whatif" && (
           <>
             <p className="text-base font-semibold text-foreground">O que você está pensando em fazer?</p>
+            <p className="text-xs text-muted-foreground">Simulação financeira com seu patrimônio atual e taxas oficiais disponíveis. Não é uma cotação de crédito.</p>
             <form className="flex gap-2" onSubmit={(e) => {
               e.preventDefault();
               const a = parseAmount(whatIfText);

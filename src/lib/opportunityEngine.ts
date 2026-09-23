@@ -163,17 +163,17 @@ export function runEngine(
   const reserve = Math.max(invested * 0.05, 5000);
   const idle = cash - reserve;
   if (idle > 1000 && ind.cdi12m > 0) {
-    const impact = idle * (ind.cdi12m / 100) * 0.85; // net of IR estimate
+    const impact = idle * (ind.cdi12m / 100);
     insights.push({
       id: "idle-cash",
       severity: "efficiency",
       category: "Caixa parado",
       title: `${brl(idle)} parados sem rendimento`,
-      detail: `Esse valor está em conta corrente, acima de uma reserva de ${brl(reserve)}. Aplicado a 100% do CDI (${ind.cdi12m.toFixed(2)}% a.a.), renderia cerca de ${brl(impact)} por ano.`,
+      detail: `Esse valor está em conta corrente, acima de uma reserva de ${brl(reserve)}. A 100% do CDI atual (${ind.cdi12m.toFixed(2)}% nos últimos 12 meses), o rendimento bruto projetado seria ${brl(impact)} em 12 meses.`,
       annualImpact: impact,
       action: "Mover para um CDB de liquidez diária ou Tesouro Selic",
       bucket: "Caixa parado",
-      current: `${brl(idle)} em conta corrente rendendo 0%`,
+      current: `${brl(idle)} classificado como saldo em conta`,
       suggestion: "CDB com liquidez diária a 100% do CDI",
       risk: "Baixo · coberto pelo FGC até R$ 250 mil por banco",
       cta: "Ver oportunidade",
@@ -344,7 +344,7 @@ export function simulateWhatIf(
   ind: EngineIndicators,
   goal: number,
 ): WhatIfScenario[] {
-  const netRate = (ind.cdi12m / 100) * 0.85;
+  const netRate = ind.cdi12m / 100;
   const passive = (v: number) => (Math.max(0, v) * netRate) / 12;
   const realRate = ind.cdi12m - ind.ipca12m;
 
@@ -373,7 +373,7 @@ export function simulateWhatIf(
     mk("consorcio", "Consórcio", netWorth - consTotal * 0.1, liquid, invested, consTotal, consPmt,
       `80x de ${brl(consPmt)} com taxa de administração de 16%. Sem garantia de data de contemplação.`),
     mk("nao", "Não comprar", netWorth, liquid, invested, 0, 0,
-      `Mantendo o valor investido, ele renderia cerca de ${brl(amount * netRate)} no próximo ano.`),
+      `Mantendo o valor investido a 100% do CDI atual, o rendimento bruto projetado seria ${brl(amount * netRate)} em 12 meses.`),
   ];
 }
 
