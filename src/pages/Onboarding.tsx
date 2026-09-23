@@ -356,7 +356,7 @@ const Onboarding = () => {
                       <motion.button key={v} {...stagger(i)} whileTap={{ scale: 0.96 }}
                         onClick={() => { setTheme(v); navigator.vibrate?.(10); }}
                         className={`rounded-3xl border p-3 text-left backdrop-blur-xl transition-colors ${on ? "border-kadig-cyan bg-kadig-cyan/10" : "border-border/60 bg-card/40"}`}>
-                        <div className={`${v} rounded-2xl border border-border bg-background p-3 space-y-2 aspect-[3/4] flex flex-col`}>
+                        <div className={`${v === "light" ? "light-theme" : ""} rounded-2xl border border-border bg-background p-3 space-y-2 aspect-[3/4] flex flex-col`}>
                           <div className="h-2 w-10 rounded-full bg-muted-foreground/40" />
                           <div className="rounded-xl bg-card border border-border p-2 space-y-1.5">
                             <div className="h-1.5 w-8 rounded-full bg-muted-foreground/40" />
