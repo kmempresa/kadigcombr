@@ -143,11 +143,13 @@ serve(async (req) => {
         );
       } catch (error) {
         console.error('Error fetching economic indicators:', error);
+        // Sem números inventados: retorna zerado com flag de erro
         return new Response(
           JSON.stringify({ 
             error: 'Failed to fetch economic indicators',
-            current: { cdi: 0.05, ipca: 0.4, selic: 14.25 },
-            accumulated12m: { cdi: 11.5, ipca: 4.5 },
+            current: { cdi: 0, ipca: 0, selic: 0 },
+            accumulated12m: { cdi: 0, ipca: 0 },
+            monthly: [],
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
