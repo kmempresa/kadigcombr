@@ -2193,25 +2193,6 @@ const AppDashboard = () => {
         </div>
       )}
 
-      {/* Trade Tab (dentro da Carteira, ao lado de Resumo) */}
-      {activeTab === "carteira" && carteiraTab === "trade" && (
-        isPremium ? (
-          <TradeTab 
-            showValues={showValues} 
-            userName={selectedPortfolio?.name || userName}
-            userAssets={filteredInvestments}
-            onToggleValues={() => setShowValues(!showValues)}
-            onAddAsset={() => setAdicionarDrawerOpen(true)}
-            onAddConnection={() => navigate("/conexoes")}
-            embedded
-          />
-        ) : (
-          <div className="flex-1 overflow-hidden">
-            <PremiumPaywall type="trade" onSubscribe={() => setPremiumDrawerOpen(true)} />
-          </div>
-        )
-      )}
-
       {/* Mercado Tab */}
       {activeTab === "mercado" && (
         isPremium ? (
