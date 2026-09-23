@@ -64,6 +64,7 @@ export const NotificationsDrawer = ({
           {/* Backdrop - hidden on mobile for full screen effect */}
           {!isMobile && (
             <motion.div
+              key="notifications-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -72,6 +73,7 @@ export const NotificationsDrawer = ({
             />
           )}
           <motion.div
+            key="notifications-panel"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
