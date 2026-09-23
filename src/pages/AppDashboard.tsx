@@ -26,6 +26,7 @@ import {
   Info,
   LogOut,
   Sparkles,
+  Gauge,
   Loader2,
   Search,
   Globe,
@@ -2249,7 +2250,7 @@ const AppDashboard = () => {
         <div className="flex items-center justify-around py-2">
           {[
             { id: "carteira", icon: Wallet, label: "Carteira" },
-            { id: "intelligence", icon: Sparkles, label: "Intelligence" },
+            { id: "intelligence", icon: Gauge, label: "Intelligence" },
             { id: "trade", icon: TrendingUp, label: "Trade" },
             { id: "conexoes", icon: Link2, label: "Conexões" },
             { id: "mercado", icon: Store, label: "Mercado" },
