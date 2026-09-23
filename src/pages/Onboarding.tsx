@@ -449,7 +449,7 @@ const Onboarding = () => {
           connectToken={connectToken}
           includeSandbox={false}
           onSuccess={handleConnectionSuccess}
-          onError={(err) => toast.error(err?.message || "Erro ao conectar instituição")}
+          onError={(err) => { toast.error(err?.message || "Erro ao conectar instituição"); }}
           onClose={() => setConnectToken(null)}
         />
       )}
