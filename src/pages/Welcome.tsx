@@ -6,14 +6,20 @@ const Welcome = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-kadig-deep text-foreground">
+    <div className="h-[100dvh] relative overflow-hidden bg-kadig-deep text-foreground">
       {/* Ambient glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[10%] -left-[20%] w-[80%] h-[40%] bg-kadig-cyan/15 blur-[120px] rounded-full" />
         <div className="absolute -bottom-[10%] -right-[20%] w-[80%] h-[40%] bg-primary/15 blur-[120px] rounded-full" />
       </div>
 
-      <div className="relative z-10 flex flex-col flex-1 min-h-screen px-8 pt-14 pb-10 safe-area-inset-bottom">
+      <div
+        className="relative z-10 flex flex-col h-full px-6 sm:px-8"
+        style={{
+          paddingTop: "max(3rem, env(safe-area-inset-top))",
+          paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+        }}
+      >
         {/* Logo */}
         <motion.div
           className="flex justify-center"
