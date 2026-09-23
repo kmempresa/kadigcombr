@@ -60,6 +60,7 @@ import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
 import ProfileDrawer from "@/components/ProfileDrawer";
 import ConexoesTab from "@/components/ConexoesTab";
+import IntelligenceTab from "@/components/IntelligenceTab";
 import { ConnectedBanksCard } from "@/components/ConnectedBanksCard";
 import useEmblaCarousel from "embla-carousel-react";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -273,7 +274,7 @@ const AppDashboard = () => {
   const { selectedPortfolioId, setSelectedPortfolioId, refreshPortfolios } = usePortfolio();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"carteira" | "trade" | "conexoes" | "mercado" | "conta">(() => {
+  const [activeTab, setActiveTab] = useState<"carteira" | "intelligence" | "trade" | "conexoes" | "mercado" | "conta">(() => {
     // Check if we're returning from another page with a specific tab
     const state = location.state as { returnToTab?: string } | null;
     return (state?.returnToTab as any) || "carteira";
@@ -2187,6 +2188,10 @@ const AppDashboard = () => {
         )
       )}
 
+      {activeTab === "intelligence" && (
+        <IntelligenceTab userName={userName} showValues={showValues} />
+      )}
+
       {/* Conexoes Tab - Open Finance via Pluggy */}
       {activeTab === "conexoes" && (
         <ConexoesTab theme={theme} />
@@ -2227,6 +2232,7 @@ const AppDashboard = () => {
         <div className="flex items-center justify-around py-2">
           {[
             { id: "carteira", icon: Wallet, label: "Carteira" },
+            { id: "intelligence", icon: Sparkles, label: "Intelligence" },
             { id: "trade", icon: TrendingUp, label: "Trade" },
             { id: "conexoes", icon: Link2, label: "Conexões" },
             { id: "mercado", icon: Store, label: "Mercado" },
@@ -2235,7 +2241,7 @@ const AppDashboard = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-col items-center py-2 px-4 ${
+              className={`flex flex-col items-center py-2 px-2 ${
                 activeTab === tab.id ? "text-primary" : "text-muted-foreground"
               }`}
             >
