@@ -27,25 +27,9 @@ export const useApplePurchase = (): UsePurchaseResult => {
         return false;
       }
 
-      const { error } = await supabase
-        .from("subscriptions")
-        .upsert({
-          user_id: session.user.id,
-          status: "active",
-          plan: "premium",
-          price_monthly: 39.90,
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        }, {
-          onConflict: "user_id",
-        });
-
-      if (error) {
-        console.error("Error activating subscription:", error);
-        return false;
-      }
-
-      return true;
+      // Subscription status must only be granted after server-side StoreKit validation.
+      console.error("Server-side StoreKit validation is not configured");
+      return false;
     } catch (error) {
       console.error("Subscription activation error:", error);
       return false;
@@ -93,16 +77,9 @@ export const useApplePurchase = (): UsePurchaseResult => {
         setIsProcessing(false);
         return activated;
       } else {
-        // Web fallback for testing
-        console.log('[IAP] Web fallback - activating subscription directly');
-        const activated = await activateSubscription();
-        if (activated) {
-          toast.success("🎉 Bem-vindo ao Kadig Premium!");
-        } else {
-          toast.error("Erro ao processar assinatura");
-        }
+        toast.error("Assinaturas estão disponíveis somente no aplicativo iOS");
         setIsProcessing(false);
-        return activated;
+        return false;
       }
     } catch (error: any) {
       console.error("[IAP] Purchase error:", error);

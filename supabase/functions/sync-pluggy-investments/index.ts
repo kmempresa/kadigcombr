@@ -40,9 +40,7 @@ async function getPluggyInvestments(accessToken: string, itemId: string): Promis
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    console.error('Failed to get investments:', error);
-    return [];
+    throw new Error('Failed to get investments');
   }
 
   const data = await response.json();
@@ -98,8 +96,6 @@ serve(async (req) => {
     }
 
     const { action, connectionId, portfolioId, itemId } = await req.json();
-    console.log('Sync action:', action, { connectionId, portfolioId, itemId });
-
     // Get Pluggy access token
     const accessToken = await getAccessToken();
 
@@ -123,8 +119,6 @@ serve(async (req) => {
 
       // Fetch investments from Pluggy
       const pluggyInvestments = await getPluggyInvestments(accessToken, connection.item_id);
-      console.log(`Found ${pluggyInvestments.length} investments from Pluggy`);
-
       // Get existing investments from this connection
       const { data: existingInvestments } = await supabase
         .from('investments')
