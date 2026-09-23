@@ -346,36 +346,6 @@ const Onboarding = () => {
                       <p className="text-sm text-muted-foreground mt-1">Em menos de 1 minuto a Kadig monta seu diagnóstico.</p>
                     </motion.div>
                   )}
-                  {step === "theme" && (
-              <motion.div key="theme" {...anim}>
-                <Title kicker="Último passo" title="Como você prefere ver a Kadig?" />
-                <div className="grid grid-cols-2 gap-3">
-                  {([["light", "Claro", Sun], ["dark", "Escuro", Moon]] as const).map(([v, label, Icon], i) => {
-                    const on = theme === v;
-                    return (
-                      <motion.button key={v} {...stagger(i)} whileTap={{ scale: 0.96 }}
-                        onClick={() => { setTheme(v); navigator.vibrate?.(10); }}
-                        className={`rounded-3xl border p-3 text-left backdrop-blur-xl transition-colors ${on ? "border-kadig-cyan bg-kadig-cyan/10" : "border-border/60 bg-card/40"}`}>
-                        <div className={`${v === "light" ? "light-theme" : ""} rounded-2xl border border-border bg-background p-3 space-y-2 aspect-[3/4] flex flex-col`}>
-                          <div className="h-2 w-10 rounded-full bg-muted-foreground/40" />
-                          <div className="rounded-xl bg-card border border-border p-2 space-y-1.5">
-                            <div className="h-1.5 w-8 rounded-full bg-muted-foreground/40" />
-                            <div className="h-3 w-14 rounded bg-foreground/80" />
-                          </div>
-                          <div className="flex-1 rounded-xl bg-gradient-to-t from-primary/30 to-transparent" />
-                          <div className="flex justify-around">{[0,1,2,3].map(k => <div key={k} className={`h-1.5 w-1.5 rounded-full ${k===0?"bg-primary":"bg-muted-foreground/40"}`} />)}</div>
-                        </div>
-                        <div className="flex items-center justify-between mt-3 px-1">
-                          <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="w-4 h-4" />{label}</span>
-                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${on ? "bg-kadig-cyan border-kadig-cyan" : "border-border"}`}>{on && <Check className="w-3 h-3 text-primary-foreground" />}</span>
-                        </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground mt-4 text-center">Você pode trocar quando quiser em Conta.</p>
-              </motion.div>
-            )}
           </AnimatePresence>
               </motion.div>
             )}
@@ -610,6 +580,36 @@ const Onboarding = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-3">Projeção com o CDI dos últimos 12 meses, sem novos aportes. Não é garantia de rentabilidade.</p>
+              </motion.div>
+            )}
+            {step === "theme" && (
+              <motion.div key="theme" {...anim}>
+                <Title kicker="Último passo" title="Como você prefere ver a Kadig?" />
+                <div className="grid grid-cols-2 gap-3">
+                  {([["light", "Claro", Sun], ["dark", "Escuro", Moon]] as const).map(([v, label, Icon], i) => {
+                    const on = theme === v;
+                    return (
+                      <motion.button key={v} {...stagger(i)} whileTap={{ scale: 0.96 }}
+                        onClick={() => { setTheme(v); navigator.vibrate?.(10); }}
+                        className={`rounded-3xl border p-3 text-left backdrop-blur-xl transition-colors ${on ? "border-kadig-cyan bg-kadig-cyan/10" : "border-border/60 bg-card/40"}`}>
+                        <div className={`${v === "light" ? "light-theme" : ""} rounded-2xl border border-border bg-background p-3 space-y-2 aspect-[3/4] flex flex-col`}>
+                          <div className="h-2 w-10 rounded-full bg-muted-foreground/40" />
+                          <div className="rounded-xl bg-card border border-border p-2 space-y-1.5">
+                            <div className="h-1.5 w-8 rounded-full bg-muted-foreground/40" />
+                            <div className="h-3 w-14 rounded bg-foreground/80" />
+                          </div>
+                          <div className="flex-1 rounded-xl bg-gradient-to-t from-primary/30 to-transparent" />
+                          <div className="flex justify-around">{[0,1,2,3].map(k => <div key={k} className={`h-1.5 w-1.5 rounded-full ${k===0?"bg-primary":"bg-muted-foreground/40"}`} />)}</div>
+                        </div>
+                        <div className="flex items-center justify-between mt-3 px-1">
+                          <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="w-4 h-4" />{label}</span>
+                          <span className={`w-5 h-5 rounded-full border flex items-center justify-center ${on ? "bg-kadig-cyan border-kadig-cyan" : "border-border"}`}>{on && <Check className="w-3 h-3 text-primary-foreground" />}</span>
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-4 text-center">Você pode trocar quando quiser em Conta.</p>
               </motion.div>
             )}
           </AnimatePresence>
