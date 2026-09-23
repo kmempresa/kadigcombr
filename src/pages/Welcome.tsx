@@ -68,14 +68,14 @@ const Welcome = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          <div className="space-y-3">
+          <div className="space-y-3 text-center">
             <h1 className="text-2xl font-bold leading-tight tracking-tight">
               Seu dinheiro pode{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-kadig-cyan to-primary">
                 trabalhar melhor.
               </span>
             </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
               Descubra o potencial do seu patrimônio com inteligência e controle total.
             </p>
           </div>
