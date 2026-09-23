@@ -1,4 +1,4 @@
-import { Sparkles, ChevronRight } from "lucide-react";
+import { Lightbulb as Sparkles, ChevronRight } from "lucide-react";
 
 interface Props {
   title?: string;
@@ -10,7 +10,7 @@ interface Props {
 
 /** Contextual Kadig Intelligence insight shown across the app. */
 export default function IntelligenceHint({ title, message, cta, onClick, tone = "default" }: Props) {
-  const border = tone === "risk" ? "border-destructive/30 bg-destructive/5" : "border-primary/30 bg-primary/5";
+  const border = tone === "risk" ? "border-destructive/30 bg-destructive/5" : "border-border bg-card";
   return (
     <button type="button" onClick={onClick} disabled={!onClick}
       className={`w-full text-left rounded-2xl border ${border} p-3.5 flex items-start gap-3`}>

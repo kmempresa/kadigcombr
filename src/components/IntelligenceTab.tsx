@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldAlert, Gauge, Lightbulb, Loader2, Calculator, Bot, Check, X, ChevronRight, MessageCircle, Sparkles, Send } from "lucide-react";
@@ -79,9 +80,9 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   const InsightCard = ({ i }: { i: Insight }) => {
     const s = sevStyle[i.severity];
     return (
-      <div className="bg-card border border-border rounded-2xl p-4">
+      <div className="bg-card border border-border rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${s.cls}`}>{s.label} · {i.category}</span>
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`w-2 h-2 rounded-full ${s.dot}`} />{i.category}</span>
           {i.annualImpact > 0 && <span className="text-xs font-semibold text-success">+{v(i.annualImpact)}/ano</span>}
         </div>
         <p className="font-semibold text-foreground text-sm">{i.title}</p>
@@ -96,24 +97,30 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto pb-28 px-4 pt-6 max-w-2xl mx-auto w-full">
-      <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <span className="text-lg font-bold text-foreground">Kadig Intelligence</span>
-      </div>
-      <div className="flex gap-1 bg-muted/50 p-1 rounded-xl mb-5 overflow-x-auto">
+    <div className="flex-1 pb-20">
+      <header className="relative overflow-hidden pt-safe">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="relative px-4 pb-4 pt-2">
+          <span className="text-xs text-muted-foreground">{greeting}{firstName ? `, ${firstName}` : ""}</span>
+          <p className="font-semibold text-foreground text-base">Intelligence</p>
+        </div>
+      </header>
+
+      <div className="flex border-b border-border px-4 overflow-x-auto bg-card/50">
         {tabs.map((t) => (
-          <button key={t.id} onClick={() => setView(t.id)}
-            className={`flex-1 whitespace-nowrap text-xs font-medium py-2 px-2 rounded-lg transition-colors ${view === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>
+          <motion.button key={t.id} onClick={() => setView(t.id)} whileTap={{ scale: 0.95 }}
+            className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${view === t.id ? "text-foreground" : "text-muted-foreground"}`}>
             {t.label}
-          </button>
+            {view === t.id && <motion.div layoutId="intelTab" className="absolute bottom-0 left-2 right-2 h-[3px] bg-primary rounded-full" />}
+          </motion.button>
         ))}
       </div>
 
+      <div className="p-4 space-y-4">
       {view === "hoje" && (
         <>
-          <h1 className="text-2xl font-bold text-foreground">{greeting}{firstName ? `, ${firstName}` : ""}</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             Seu patrimônio está {health}{attention.length ? `, e encontramos ${attention.length} ponto${attention.length > 1 ? "s" : ""} importante${attention.length > 1 ? "s" : ""}.` : "."}
           </p>
           <p className="text-[11px] text-muted-foreground mt-2">
@@ -121,11 +128,11 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
           </p>
 
           <div className="grid grid-cols-5 gap-3 mt-5">
-            <div className="col-span-3 bg-card border border-border rounded-2xl p-4">
+            <div className="col-span-3 bg-card border border-border rounded-xl p-4">
               <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
               <p className="text-xs text-muted-foreground mt-1">em oportunidades identificadas</p>
             </div>
-            <div className="col-span-2 bg-card border border-border rounded-2xl p-4">
+            <div className="col-span-2 bg-card border border-border rounded-xl p-4">
               <p className="text-xs text-muted-foreground">Kadig Score</p>
               <p className={`text-2xl font-bold ${result.score >= 70 ? "text-success" : result.score >= 40 ? "text-warning" : "text-destructive"}`}>{result.score}</p>
               <div className="h-1.5 bg-muted rounded-full mt-1.5 overflow-hidden"><div className="h-full bg-primary" style={{ width: `${result.score}%` }} /></div>
@@ -140,10 +147,10 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
             {attention.slice(0, 3).map((i) => {
               const s = sevStyle[i.severity];
               return (
-                <button key={i.id} onClick={() => openInsight(i)} className="w-full text-left bg-card border border-border rounded-2xl p-4">
+                <button key={i.id} onClick={() => openInsight(i)} className="w-full text-left bg-card border border-border rounded-xl p-4">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${s.dot}`} />
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{s.label}</span>
+                    <span className="text-xs text-muted-foreground">{s.label}</span>
                   </div>
                   <p className="text-sm font-semibold text-foreground mt-1.5">{i.title}</p>
                   {i.annualImpact > 0 && <p className="text-xs text-success mt-0.5">Potencial estimado: +{v(i.annualImpact)}/ano</p>}
@@ -174,7 +181,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
 
       {view === "opps" && (
         <>
-          <div className="bg-success/10 border border-success/30 rounded-2xl p-4">
+          <div className="bg-card border border-border rounded-xl p-4">
             <p className="text-xs text-muted-foreground">Encontramos no seu patrimônio</p>
             <p className="text-2xl font-bold text-success">{v(result.totalOpportunity)}/ano</p>
             <p className="text-xs text-muted-foreground mt-1">em oportunidades, priorizadas por impacto.</p>
@@ -200,7 +207,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
             <div className="space-y-3 mt-5">
               <p className="text-xs text-muted-foreground">Valor considerado: <span className="text-foreground font-semibold">{brl(whatIfAmount)}</span></p>
               {scenarios.map((s) => (
-                <div key={s.key} className="bg-card border border-border rounded-2xl p-4">
+                <div key={s.key} className="bg-card border border-border rounded-xl p-4">
                   <p className="font-semibold text-foreground">{s.label}</p>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-xs">
                     <div><p className="text-muted-foreground">Patrimônio</p><p className="text-foreground font-medium">{v(s.netWorth, true)}</p></div>
@@ -220,7 +227,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
       {view === "autopilot" && (
         <>
           <p className="text-sm text-muted-foreground">Defina sua estratégia. A Kadig monitora sua carteira e sugere ajustes quando algo sai da regra.</p>
-          <div className="bg-card border border-border rounded-2xl p-4 mt-4 space-y-3">
+          <div className="bg-card border border-border rounded-xl p-4 mt-4 space-y-3">
             {([
               ["minLiquidity", "Liquidez mínima (R$)"],
               ["maxDrawdownPct", "Perda máxima em crise (%)"],
@@ -256,6 +263,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
