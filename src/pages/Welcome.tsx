@@ -44,21 +44,23 @@ const Welcome = () => {
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             />
 
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-44 h-32 bg-card/40 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col p-4 justify-between"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="flex justify-between items-start">
-                <div className="w-8 h-5 bg-muted rounded-sm" />
-                <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG SCORE</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold tracking-tighter">?</div>
-                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Descubra o seu</div>
-              </div>
-            </motion.div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+              <motion.div
+                className="w-44 h-32 bg-card/40 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col p-4 justify-between"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="w-8 h-5 bg-muted rounded-sm" />
+                  <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG SCORE</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold tracking-tighter">?</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Descubra o seu</div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
 
