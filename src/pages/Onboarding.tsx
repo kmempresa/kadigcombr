@@ -290,9 +290,11 @@ const Onboarding = () => {
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div className="absolute -top-[15%] -left-[25%] w-[85%] h-[45%] bg-kadig-cyan/15 blur-[120px] rounded-full"
           animate={{ x: [0, 30, 0], y: [0, 20, 0] }} transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.div className="absolute -bottom-[15%] -right-[25%] w-[85%] h-[45%] bg-primary/15 blur-[120px] rounded-full"
+        <motion.div className="absolute -bottom-[15%] -right-[25%] w-[85%] h-[45%] bg-kadig-blue/15 blur-[120px] rounded-full"
           animate={{ x: [0, -30, 0], y: [0, -20, 0] }} transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }} />
-        <div className="absolute inset-0 opacity-[0.04] [background-image:linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:32px_32px]" />
+        <div className="absolute inset-0 [background:radial-gradient(ellipse_60%_40%_at_50%_0%,hsl(var(--kadig-light)/0.12),transparent_70%)]" />
+        <motion.div className="absolute left-1/2 top-0 h-full w-px [background:linear-gradient(to_bottom,hsl(var(--kadig-light)/0.25),transparent_60%)]"
+          animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }} />
       </div>
 
       <header className="relative z-10 shrink-0 px-4 pb-2" style={{ paddingTop: "max(env(safe-area-inset-top, 0px) + 4px, 16px)" }}>
