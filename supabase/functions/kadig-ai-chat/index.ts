@@ -1,3 +1,4 @@
+import { fetch } from "../_shared/brapiCache.ts";
 import { serve } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

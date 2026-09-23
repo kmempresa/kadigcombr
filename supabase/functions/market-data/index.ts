@@ -1,3 +1,4 @@
+import { fetch } from "../_shared/brapiCache.ts";
 import { serve } from "../_shared/cors.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
