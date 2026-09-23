@@ -2103,7 +2103,7 @@ const AppDashboard = () => {
               <div>
                 <span className="text-xs text-muted-foreground">Plano</span>
                 <p className={`font-medium ${isPremium ? "text-kadig-blue" : "text-foreground"}`}>
-                  {isPremium ? "Premium ✨" : "Gratuito"}
+                  {isPremium ? "Premium" : "Gratuito"}
                 </p>
               </div>
             </div>
