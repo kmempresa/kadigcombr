@@ -32,7 +32,6 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
   const [whatIfAmount, setWhatIfAmount] = useState(() => parseAmount(initialWhatIf));
-  const [ask, setAsk] = useState("");
   const [, tick] = useState(0);
 
   useEffect(() => { setView(initialView); }, [initialView]);
