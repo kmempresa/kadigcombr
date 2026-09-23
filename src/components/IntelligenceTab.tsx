@@ -55,8 +55,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
 
   const topShare = useMemo(() => {
     const max = investments.reduce((m, i) => Math.max(m, i.current_value), 0);
-    return result.netWorth ? (max / result.netWorth) * 100 : 0;
-  }, [investments, result.netWorth]);
+    return result.invested ? (max / result.invested) * 100 : 0;
+  }, [investments, result.invested]);
   useIntelligenceAlerts(userId, topShare);
 
   const checks = useMemo(() => checkAutopilot(result, investments, rules, ind), [result, investments, rules, ind]);
@@ -98,7 +98,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   ];
   const rec = scenarios.length ? recommendWhatIf(scenarios, whatIfAmount) : null;
   const cols = scenarios.filter((s) => s.key !== "consorcio");
-  const broken = checks.filter((c) => !c.ok).length;
+  const broken = checks.filter((c) => c.ok === false).length;
 
   return (
     <div className="flex-1 pb-20">
@@ -313,12 +313,12 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               {checks.map((c) => (
                 <div key={c.id} className="bg-card border border-border rounded-xl p-3">
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok ? "bg-success" : "bg-destructive"}`} />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok === null ? "bg-muted-foreground" : c.ok ? "bg-success" : "bg-destructive"}`} />
                     <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
                     <p className="text-xs text-muted-foreground text-right">{c.target}</p>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
-                  {!c.ok && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
+                   {c.ok !== true && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
 
                 </div>
               ))}

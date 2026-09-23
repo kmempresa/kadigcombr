@@ -382,7 +382,7 @@ export function simulateWhatIf(
 export interface RuleCheck {
   id: string;
   label: string;
-  ok: boolean;
+  ok: boolean | null;
   current: string;
   target: string;
   suggestion: string;
@@ -390,8 +390,6 @@ export interface RuleCheck {
 
 export function checkAutopilot(r: EngineResult, investments: EngineInvestment[], rules: AutopilotRules, ind: EngineIndicators): RuleCheck[] {
   const risk = riskScore(r.stress, r.invested);
-  const totalCost = investments.reduce((s, i) => s + i.total_invested, 0);
-  const ret = totalCost ? ((r.invested - totalCost) / totalCost) * 100 : 0;
   const bench = ind.cdi12m + rules.beatCdiPlus;
   const top = investments.reduce((m, i) => (i.current_value > (m?.current_value || 0) ? i : m), null as EngineInvestment | null);
   const topPct = top && r.invested ? (top.current_value / r.invested) * 100 : 0;
@@ -406,15 +404,15 @@ export function checkAutopilot(r: EngineResult, investments: EngineInvestment[],
       suggestion: ok(risk <= rules.maxRisk, `Realocar cerca de ${brl(((risk - rules.maxRisk) * 2 / 100) * r.invested * 2.5)} de ativos voláteis para renda fixa`) },
     { id: "conc", label: "Concentração máxima", ok: topPct <= rules.maxConcentrationPct, current: `${topPct.toFixed(0)}%${top ? ` em ${top.asset_name}` : ""}`, target: `${rules.maxConcentrationPct}% por ativo`,
       suggestion: ok(topPct <= rules.maxConcentrationPct, `Reduzir ${top?.asset_name} em ${brl(((topPct - rules.maxConcentrationPct) / 100) * r.invested)}`) },
-    { id: "ret", label: "Meta de retorno", ok: ret >= bench, current: `${ret.toFixed(1)}%`, target: `CDI + ${rules.beatCdiPlus}% (${bench.toFixed(1)}%)`,
-      suggestion: ok(ret >= bench, "Revisar ativos com retorno abaixo do benchmark") },
+    { id: "ret", label: "Meta de retorno", ok: null, current: "Aguardando histórico anual completo", target: ind.cdi12m > 0 ? `CDI + ${rules.beatCdiPlus}% (${bench.toFixed(1)}%)` : `CDI + ${rules.beatCdiPlus}%`,
+      suggestion: "A comparação será ativada quando houver histórico suficiente, sem confundir retorno desde a compra com retorno anual." },
     { id: "goal", label: "Meta patrimonial", ok: months <= monthsLeft, current: `${formatMonths(months)} no ritmo atual`, target: `${brl(rules.targetNetWorth, true)} até ${rules.targetYear}`,
       suggestion: ok(months <= monthsLeft, "Aumentar aportes mensais ou revisar o prazo da meta") },
   ];
 }
 
 export function recommendWhatIf(sc: WhatIfScenario[], amount: number): { key: WhatIfScenario["key"]; reason: string } {
-  const av = sc.find((s) => s.key === "avista")!;
+  const av = sc.find((s) => s.key === "avista");
   const fin = sc.find((s) => s.key === "financiamento");
   const nao = sc.find((s) => s.key === "nao");
   if (!av || !fin || !nao) return { key: "nao", reason: "Dados insuficientes para comparar os cenários." };
