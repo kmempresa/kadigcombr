@@ -21,11 +21,8 @@ const Welcome = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-kadig-cyan to-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/25">
-              <img src={kadigLogo} alt="Kadig" className="w-4 h-4 object-contain" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Kadig</span>
+          <div className="w-14 h-14 bg-gradient-to-br from-kadig-cyan to-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25">
+            <img src={kadigLogo} alt="Kadig" className="w-7 h-7 object-contain" />
           </div>
         </motion.div>
 
@@ -71,14 +68,14 @@ const Welcome = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.45 }}
         >
-          <div className="space-y-3">
+          <div className="space-y-3 text-center">
             <h1 className="text-2xl font-bold leading-tight tracking-tight">
               Seu dinheiro pode{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-kadig-cyan to-primary">
                 trabalhar melhor.
               </span>
             </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px]">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
               Descubra o potencial do seu patrimônio com inteligência e controle total.
             </p>
           </div>
