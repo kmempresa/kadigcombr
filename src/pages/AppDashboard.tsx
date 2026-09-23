@@ -13,6 +13,8 @@ import {
   HelpCircle,
   Plus,
   ChevronRight,
+  Check,
+
   ChevronDown,
   ChevronUp,
   User,
@@ -2110,16 +2112,17 @@ const AppDashboard = () => {
               <div className="bg-gradient-to-br from-kadig-blue to-kadig-cyan rounded-2xl p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1 text-white">Kadig Premium ✨</h3>
+                    <h3 className="font-bold text-lg mb-1 text-white">Kadig Premium</h3>
                     <p className="text-white/80 text-sm mb-2">
                       Você tem acesso a todos os recursos exclusivos!
                     </p>
                     <div className="flex items-center gap-2 text-white/70 text-sm">
-                      <Sparkles className="w-4 h-4" />
+                      <Check className="w-4 h-4" />
                       <span>Bianca, Trade e Mercado desbloqueados</span>
                     </div>
                   </div>
-                  <Sparkles className="w-8 h-8 text-white/80" />
+                  <ChevronRight className="w-6 h-6 text-white/70" />
+
                 </div>
               </div>
             ) : (
@@ -2137,7 +2140,7 @@ const AppDashboard = () => {
                       R$ 39,90/mês
                     </span>
                   </div>
-                  <Sparkles className="w-8 h-8 text-white/80" />
+                  <ChevronRight className="w-6 h-6 text-white/70" />
                 </div>
               </button>
             )}
