@@ -27,7 +27,7 @@ interface Props { userName: string; showValues: boolean; initialView?: IntelView
 
 export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
   const navigate = useNavigate();
-  const { loading, userId, investments, connections, globals, goals, ind, result, analyzedAt } = useIntelligence();
+  const { loading, dataWarning, userId, investments, connections, globals, goals, ind, result, analyzedAt, reload } = useIntelligence();
   const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
@@ -125,11 +125,16 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
         {view === "hoje" && (
           <>
             <div>
-              <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
+                <button className="text-xs text-primary" onClick={() => reload()}>Atualizar</button>
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conta{connections !== 1 ? "s" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados
               </p>
             </div>
+
+            {dataWarning && <p className="text-xs text-destructive">{dataWarning} Tente atualizar novamente.</p>}
 
 
             <button onClick={() => setView("opps")} className="w-full text-left bg-card border border-border rounded-xl p-5">
@@ -213,7 +218,10 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                     <div key={k} className="flex gap-3"><span className="w-28 shrink-0 text-muted-foreground">{k}</span><span className="text-foreground">{val}</span></div>
                   ))}
                 </div>
-                <Button size="sm" className="w-full mt-3" onClick={() => toast.success("Adicionado ao seu plano de ação.")}>{i.action}</Button>
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="text-xs text-muted-foreground">Ação sugerida</p>
+                  <p className="text-sm text-foreground mt-0.5">{i.action}</p>
+                </div>
               </div>
             ))}
 
@@ -271,7 +279,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                         <div className="p-3 border-t border-border text-muted-foreground">{label as string}</div>
                         {cols.map((c) => (
                           <div key={c.key} className={`p-3 border-t border-border text-center ${rec?.key === c.key ? "text-primary font-semibold" : "text-foreground"}`}>
-                            {(fn as (c: typeof cols[0]) => string)(c)}
+                             {c.key === "financiamento" && c.monthlyPayment === 0 ? "Indisponível" : (fn as (c: typeof cols[0]) => string)(c)}
                           </div>
                         ))}
                       </div>
@@ -329,6 +337,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                 <div key={k} className="flex items-center justify-between gap-3">
                   <label className="text-xs text-muted-foreground">{label}</label>
                   <Input type="number" className="w-32 h-9 text-right" value={rules[k]}
+                    min={k === "targetYear" ? new Date().getFullYear() : 0}
+                    max={k === "maxRisk" ? 10 : k === "maxConcentrationPct" ? 100 : undefined}
                     onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
                 </div>
               ))}

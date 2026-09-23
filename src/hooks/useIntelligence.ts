@@ -14,8 +14,9 @@ export function useIntelligence() {
   const [globals, setGlobals] = useState<EngineGlobalAsset[]>([]);
   const [goals, setGoals] = useState<EngineGoal[]>([]);
   const [connections, setConnections] = useState(0);
-  const [ind, setInd] = useState<EngineIndicators>({ cdi12m: 14.4, ipca12m: 4.1, selic: 15 });
+  const [ind, setInd] = useState<EngineIndicators>({ cdi12m: 0, ipca12m: 0, selic: 0 });
   const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
+  const [dataWarning, setDataWarning] = useState<string | null>(null);
   const chId = useRef(`intel-${++channelSeq}`);
 
   const load = useCallback(async () => {
@@ -33,6 +34,12 @@ export function useIntelligence() {
       supabase.functions.invoke("market-data", { body: { type: "economic-indicators" } }),
       finP,
     ]);
+    const dataErrors = [inv.error, ga.error, gl.error, cn.error].filter(Boolean);
+    if (dataErrors.length) {
+      setDataWarning("Não foi possível atualizar todos os dados do patrimônio.");
+    } else {
+      setDataWarning(null);
+    }
     setInvestments((inv.data || []).map((i) => ({
       id: i.id, asset_name: i.asset_name, asset_type: i.asset_type, ticker: i.ticker,
       current_value: Number(i.current_value) || 0, total_invested: Number(i.total_invested) || 0, maturity_date: i.maturity_date,
@@ -41,12 +48,12 @@ export function useIntelligence() {
     setGoals((gl.data || []).map((g) => ({ id: g.id, type: g.type, target_value: Number(g.target_value) || 0, target_date: g.target_date })));
     setConnections((cn as any).count || 0);
     const e = econ.data as any;
-    setInd((p) => ({
-      cdi12m: Number(e?.accumulated12m?.cdi) || p.cdi12m,
-      ipca12m: Number(e?.accumulated12m?.ipca) || p.ipca12m,
-      selic: Number(e?.current?.selic) || p.selic,
-      financing: fin || p.financing,
-    }));
+    setInd({
+      cdi12m: Number(e?.accumulated12m?.cdi) || 0,
+      ipca12m: Number(e?.accumulated12m?.ipca) || 0,
+      selic: Number(e?.current?.selic) || 0,
+      financing: fin || undefined,
+    });
     setAnalyzedAt(new Date());
     setLoading(false);
   }, []);
@@ -56,8 +63,17 @@ export function useIntelligence() {
     const ch = supabase.channel(chId.current)
       .on("postgres_changes", { event: "*", schema: "public", table: "investments" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "global_assets" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "goals" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "pluggy_connections" }, () => load())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const refresh = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", refresh);
+    const interval = window.setInterval(load, 5 * 60 * 1000);
+    return () => {
+      supabase.removeChannel(ch);
+      document.removeEventListener("visibilitychange", refresh);
+      window.clearInterval(interval);
+    };
   }, [load]);
 
   const result = useMemo(() => runEngine(investments, globals, goals, ind), [investments, globals, goals, ind]);
@@ -70,7 +86,7 @@ export function useIntelligence() {
     [investments, result.netWorth],
   );
 
-  return { analyzedAt, loading, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
+  return { analyzedAt, loading, dataWarning, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
 }
 
 /** Push a notification when concentration rises significantly (once per day per level). */

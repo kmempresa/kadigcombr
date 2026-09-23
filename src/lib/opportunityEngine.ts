@@ -87,7 +87,8 @@ export function stressLoss(investments: EngineInvestment[]) {
 
 export function liquidity(investments: EngineInvestment[]) {
   return investments
-    .filter((i) => ["cash", "fixed"].includes(classify(i.asset_type)))
+    // Fixed income may have lockups; only balances explicitly classified as cash are certainly liquid.
+    .filter((i) => classify(i.asset_type) === "cash")
     .reduce((s, i) => s + i.current_value, 0);
 }
 
@@ -161,7 +162,7 @@ export function runEngine(
   const cash = byClass.get("cash") || 0;
   const reserve = Math.max(invested * 0.05, 5000);
   const idle = cash - reserve;
-  if (idle > 1000) {
+  if (idle > 1000 && ind.cdi12m > 0) {
     const impact = idle * (ind.cdi12m / 100) * 0.85; // net of IR estimate
     insights.push({
       id: "idle-cash",
@@ -255,30 +256,7 @@ export function runEngine(
     });
   }
 
-  // 6. Tax-loss harvesting
-  const losers = investments.filter((i) => i.total_invested > 0 && i.current_value < i.total_invested && ["equity", "realestate", "crypto"].includes(classify(i.asset_type)));
-  const winners = investments.filter((i) => i.current_value > i.total_invested && ["equity", "realestate", "crypto"].includes(classify(i.asset_type)));
-  const lossTotal = losers.reduce((s, i) => s + (i.total_invested - i.current_value), 0);
-  const gainTotal = winners.reduce((s, i) => s + (i.current_value - i.total_invested), 0);
-  if (lossTotal > 500 && gainTotal > 0) {
-    const saving = Math.min(lossTotal, gainTotal) * 0.15;
-    insights.push({
-      id: "tax",
-      severity: "opportunity",
-      category: "Impostos",
-      title: `Economia de até ${brl(saving)} em IR`,
-      detail: `Você tem ${brl(lossTotal)} em prejuízos que podem compensar ${brl(gainTotal)} de lucros em outros ativos de renda variável.`,
-      annualImpact: saving,
-      action: "Usar prejuízos para compensar lucros ao vender",
-      bucket: "Impostos",
-      current: `${brl(lossTotal)} em prejuízo não compensado`,
-      suggestion: "Realizar prejuízo e compensar no IR de vendas com lucro",
-      risk: "Baixo · não altera a exposição se recomprar depois",
-      cta: "Ver oportunidade",
-    });
-  }
-
-  // 7. Low diversification
+  // 6. Low diversification
   if (allocation.length <= 2) {
     penalty += 10;
     insights.push({
@@ -292,9 +270,9 @@ export function runEngine(
     });
   }
 
-  // 8. Goals
+  // 7. Goals. Only calculate when both official benchmark values are available.
   goals.forEach((g) => {
-    if (!g.target_value) return;
+    if (!g.target_value || ind.cdi12m <= 0 || ind.ipca12m <= 0) return;
     const m = monthsToTarget(netWorth, g.target_value, ind.cdi12m - ind.ipca12m);
     insights.push({
       id: `goal-${g.id}`,
@@ -373,9 +351,9 @@ export function simulateWhatIf(
   // Financing: 20% down, 60x at real BCB average rate
   const down = amount * 0.2;
   const fin = amount - down;
-  const annualFin = ind.financing && ind.financing > 0 ? ind.financing : ind.selic + 10;
-  const i = Math.pow(1 + annualFin / 100, 1 / 12) - 1, n = 60;
-  const pmt = (fin * i) / (1 - Math.pow(1 + i, -n));
+  const annualFin = ind.financing && ind.financing > 0 ? ind.financing : 0;
+  const i = annualFin > 0 ? Math.pow(1 + annualFin / 100, 1 / 12) - 1 : 0, n = 60;
+  const pmt = i > 0 ? (fin * i) / (1 - Math.pow(1 + i, -n)) : 0;
   const finTotal = down + pmt * n;
 
   // Consortium: 80 months, 16% admin fee
@@ -390,8 +368,8 @@ export function simulateWhatIf(
   return [
     mk("avista", "À vista", netWorth - amount, liquid - amount, invested - amount, amount, 0,
       liquid < amount ? "Sua liquidez atual não cobre a compra sem vender outros ativos." : "Menor custo total, mas reduz sua liquidez imediatamente."),
-    mk("financiamento", "Financiamento", netWorth - down - (finTotal - amount) * 0.2, liquid - down, invested - down, finTotal, pmt,
-      `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.`),
+    mk("financiamento", "Financiamento", annualFin > 0 ? netWorth - down - (finTotal - amount) * 0.2 : netWorth, annualFin > 0 ? liquid - down : liquid, annualFin > 0 ? invested - down : invested, finTotal, pmt,
+      annualFin > 0 ? `Entrada de ${brl(down)} + 60x de ${brl(pmt)} (${(i * 100).toFixed(2).replace(".", ",")}% a.m., taxa média do Banco Central). Juros totais de ${brl(finTotal - amount)}.` : "Taxa média de financiamento indisponível no Banco Central."),
     mk("consorcio", "Consórcio", netWorth - consTotal * 0.1, liquid, invested, consTotal, consPmt,
       `80x de ${brl(consPmt)} com taxa de administração de 16%. Sem garantia de data de contemplação.`),
     mk("nao", "Não comprar", netWorth, liquid, invested, 0, 0,
@@ -437,10 +415,12 @@ export function checkAutopilot(r: EngineResult, investments: EngineInvestment[],
 
 export function recommendWhatIf(sc: WhatIfScenario[], amount: number): { key: WhatIfScenario["key"]; reason: string } {
   const av = sc.find((s) => s.key === "avista")!;
-  const fin = sc.find((s) => s.key === "financiamento")!;
-  const nao = sc.find((s) => s.key === "nao")!;
+  const fin = sc.find((s) => s.key === "financiamento");
+  const nao = sc.find((s) => s.key === "nao");
+  if (!av || !fin || !nao) return { key: "nao", reason: "Dados insuficientes para comparar os cenários." };
   if (av.liquid < 0 && fin.liquid < 0) return { key: "nao", reason: "Nenhuma forma de compra é viável sem vender ativos e zerar sua reserva." };
   if (amount > nao.netWorth * 0.3) return { key: "nao", reason: `A compra representa ${((amount / nao.netWorth) * 100).toFixed(0)}% do seu patrimônio e atrasaria sua meta de ${formatMonths(nao.goalMonths)} para ${formatMonths(av.goalMonths)}.` };
-  if (av.liquid >= 0) return { key: "avista", reason: `Você tem liquidez para pagar à vista e evita ${brl(fin.totalCost - amount)} em juros do financiamento.` };
+  if (av.liquid >= 0 && fin.totalCost > amount) return { key: "avista", reason: `Você tem liquidez para pagar à vista e evita ${brl(fin.totalCost - amount)} em juros do financiamento.` };
+  if (fin.totalCost <= amount) return { key: "nao", reason: "A taxa oficial de financiamento está indisponível; não é seguro recomendar crédito agora." };
   return { key: "financiamento", reason: "Preserva sua liquidez, já que pagar à vista consumiria toda a reserva." };
 }
