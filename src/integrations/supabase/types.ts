@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_cache: {
+        Row: {
+          body: string
+          fetched_at: string
+          key: string
+          status: number
+        }
+        Insert: {
+          body: string
+          fetched_at?: string
+          key: string
+          status?: number
+        }
+        Update: {
+          body?: string
+          fetched_at?: string
+          key?: string
+          status?: number
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
