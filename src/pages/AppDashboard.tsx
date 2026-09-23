@@ -2283,6 +2283,8 @@ const AppDashboard = () => {
         onOpenChange={setEditDrawerOpen}
         investment={editingInvestment}
         onSuccess={() => setRefreshKey(prev => prev + 1)}
+        sharePct={editingInvestment ? intel.assetShare(editingInvestment.id) : 0}
+        netWorth={intel.result.netWorth}
       />
 
       {/* Analysis Drawers */}

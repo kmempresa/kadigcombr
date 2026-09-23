@@ -1,3 +1,4 @@
+import IntelligenceHint from "@/components/IntelligenceHint";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { X, Trash2, Save, AlertTriangle } from "lucide-react";
@@ -41,6 +42,8 @@ interface InvestmentEditDrawerProps {
   onOpenChange: (open: boolean) => void;
   investment: Investment | null;
   onSuccess: () => void;
+  sharePct?: number;
+  netWorth?: number;
 }
 
 const InvestmentEditDrawer = ({
@@ -48,7 +51,10 @@ const InvestmentEditDrawer = ({
   onOpenChange,
   investment,
   onSuccess,
+  sharePct = 0,
+  netWorth = 0,
 }: InvestmentEditDrawerProps) => {
+  const [showReduction, setShowReduction] = useState(false);
   const [quantity, setQuantity] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
   const [currentPrice, setCurrentPrice] = useState("");
@@ -222,6 +228,27 @@ const InvestmentEditDrawer = ({
               </button>
             </div>
           </DrawerHeader>
+          {sharePct >= 10 && (
+            <div className="px-4 pt-3">
+              <IntelligenceHint
+                tone={sharePct > 25 ? "risk" : "default"}
+                message={`Este ativo representa ${sharePct.toFixed(0)}% do seu patrimônio.`}
+                cta={showReduction ? "Ocultar simulação" : "Simular redução"}
+                onClick={() => setShowReduction((v) => !v)}
+              />
+              {showReduction && (() => {
+                const target = Math.min(sharePct, 20);
+                const release = ((sharePct - target) / 100) * netWorth;
+                return (
+                  <div className="mt-2 rounded-xl bg-card border border-border p-3 text-xs text-muted-foreground space-y-1">
+                    <p>Reduzindo para <span className="text-foreground font-medium">{target.toFixed(0)}%</span> do patrimônio:</p>
+                    <p>Valor a realocar: <span className="text-foreground font-medium">{formatCurrency(release)}</span></p>
+                    <p>Em renda fixa a 100% do CDI, esse valor ficaria protegido de uma queda do ativo e renderia cerca de <span className="text-success font-medium">{formatCurrency(release * 0.144 * 0.85)}</span>/ano.</p>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Asset Info */}
