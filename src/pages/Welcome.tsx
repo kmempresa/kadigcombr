@@ -78,52 +78,42 @@ const Welcome = () => {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="space-y-4 sm:space-y-6 mb-6 sm:mb-8"
         >
-          <motion.p
-            className="text-primary text-base sm:text-lg font-medium"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            Olá! Que bom te ver aqui.
-          </motion.p>
-          
           <motion.h1
-            className="text-foreground text-2xl sm:text-3xl md:text-4xl font-bold leading-tight"
+            className="text-foreground text-3xl sm:text-4xl font-bold leading-tight tracking-tight"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
           >
-            Sua jornada como investidor fica mais inteligente com a Kadig.
+            Seu dinheiro pode estar trabalhando melhor.
           </motion.h1>
-          
+
           <motion.p
-            className="text-muted-foreground text-base sm:text-lg"
+            className="text-muted-foreground text-base sm:text-lg leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
           >
-            Vamos começar?
+            A Kadig analisa seu patrimônio, encontra riscos e oportunidades e mostra o impacto de cada decisão financeira.
           </motion.p>
         </motion.div>
 
-        {/* Buttons */}
         <motion.div
-          className="flex gap-3 sm:gap-4"
+          className="flex flex-col gap-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.1 }}
+          transition={{ duration: 0.6, delay: 1 }}
         >
           <button
             onClick={() => navigate("/auth")}
-            className="flex-1 py-3.5 sm:py-4 px-4 sm:px-6 bg-secondary/50 backdrop-blur-sm border border-border text-foreground font-semibold rounded-xl hover:bg-secondary/70 active:scale-[0.98] transition-all duration-200"
+            className="w-full py-4 px-6 bg-gradient-to-r from-primary to-kadig-cyan text-primary-foreground font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-primary/30"
           >
-            Fazer login
+            Descobrir meu Kadig Score
           </button>
           <button
             onClick={() => navigate("/auth")}
-            className="flex-1 py-3.5 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-primary to-kadig-cyan text-primary-foreground font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-primary/30"
+            className="w-full py-3 text-foreground/80 font-medium active:scale-[0.98] transition-all"
           >
-            Criar conta
+            Já tenho conta
           </button>
         </motion.div>
 
