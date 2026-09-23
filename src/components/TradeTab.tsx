@@ -316,6 +316,19 @@ const TradeTab = ({
         )}
       </AnimatePresence>
 
+      {/* Busca embutida (quando dentro da Carteira) */}
+      {embedded && (
+        <div className="px-4 pt-1 pb-3">
+          <Input
+            placeholder="Buscar ativo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-11 bg-muted/30 border-border"
+            aria-label="Buscar ativo"
+          />
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex px-4 gap-1 overflow-x-auto scrollbar-hide">
         {tabs.map((tab) => (
