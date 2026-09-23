@@ -257,7 +257,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                 autoComplete="off"
                 name="what-if-decision"
                 aria-label="Decisão e valor para simular"
-                className="relative z-10 pointer-events-auto select-text"
+                className="relative z-10 pointer-events-auto select-text bg-background text-foreground caret-primary placeholder:text-muted-foreground opacity-100"
                 value={whatIfText}
                 onChange={(e) => setWhatIfText(e.currentTarget.value)}
                 onClick={(e) => e.currentTarget.focus()}
@@ -268,7 +268,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
             <div className="flex gap-2 flex-wrap">
               {["Comprar um carro de R$ 600 mil", "Comprar um apartamento de R$ 1,5 milhão", "Viagem de R$ 80 mil"].map((ex) => (
                 <button key={ex} onClick={() => { setWhatIfText(ex); setWhatIfAmount(parseAmount(ex)); }}
-                  className="text-xs px-3 py-1.5 rounded-full border border-border text-muted-foreground">{ex}</button>
+                  className="text-xs px-3 py-1.5 rounded-full border border-border bg-background text-foreground">{ex}</button>
               ))}
             </div>
 
@@ -349,7 +349,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
               ] as [keyof AutopilotRules, string][]).map(([k, label]) => (
                 <div key={k} className="flex items-center justify-between gap-3">
                   <label className="text-xs text-muted-foreground">{label}</label>
-                  <Input type="number" className="w-32 h-9 text-right" value={rules[k]}
+                  <Input type="number" className="w-32 h-9 text-right bg-background text-foreground caret-primary opacity-100" value={rules[k]}
                     min={k === "targetYear" ? new Date().getFullYear() : 0}
                     max={k === "maxRisk" ? 10 : k === "maxConcentrationPct" ? 100 : undefined}
                     onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
