@@ -78,9 +78,26 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
     return m < 1 ? "agora" : m < 60 ? `há ${m} min` : `há ${Math.floor(m / 60)}h`;
   })();
 
+  const [openRule, setOpenRule] = useState<string | null>(null);
+  const [showPlan, setShowPlan] = useState(false);
+  const [draft, setDraft] = useState<Partial<Record<keyof AutopilotRules, string>>>({});
+
   const saveRules = (r: AutopilotRules) => {
     setRules(r);
     if (userId) localStorage.setItem(`kadig-autopilot-v3-${userId}`, JSON.stringify(r));
+  };
+
+  const commitRule = (k: keyof AutopilotRules) => {
+    const raw = draft[k];
+    setDraft((d) => { const n = { ...d }; delete n[k]; return n; });
+    if (raw === undefined) return;
+    let n = raw.includes(",") ? Number(raw.replace(/\./g, "").replace(",", ".")) : Number(raw);
+    if (!Number.isFinite(n) || raw.trim() === "") return;
+    if (k === "maxRisk") n = Math.min(10, Math.max(0, n));
+    if (k === "maxConcentrationPct") n = Math.min(100, Math.max(1, n));
+    if (k === "targetYear") n = Math.max(new Date().getFullYear(), Math.round(n));
+    if (n < 0) n = 0;
+    if (n !== rules[k]) { saveRules({ ...rules, [k]: n }); toast.success("Regra atualizada"); }
   };
 
   const openInsight = (i: Insight) => {
@@ -323,18 +340,33 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
             </div>
 
             <div className="space-y-2">
-              {checks.map((c) => (
-                <div key={c.id} className="bg-card border border-border rounded-xl p-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok === null ? "bg-muted-foreground" : c.ok ? "bg-success" : "bg-destructive"}`} />
-                    <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
-                    <p className="text-xs text-muted-foreground text-right">{c.target}</p>
+              {checks.map((c) => {
+                const expanded = openRule === c.id;
+                return (
+                  <div key={c.id} className="bg-card border border-border rounded-xl">
+                    <button type="button" onClick={() => setOpenRule(expanded ? null : c.id)}
+                      className="w-full text-left p-3 active:bg-muted/50 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${c.ok === null ? "bg-muted-foreground" : c.ok ? "bg-success" : "bg-destructive"}`} />
+                      <p className="text-sm font-medium text-foreground flex-1">{c.label}</p>
+                      <p className="text-xs text-muted-foreground text-right">{c.target}</p>
+                      <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`} />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
+                    </button>
+                    {expanded && (
+                      <div className="px-3 pb-3 pl-7 space-y-2">
+                        <p className="text-xs text-foreground">
+                          {c.ok === true ? "Esta regra está dentro do limite. Nenhuma ação necessária." : c.suggestion}
+                        </p>
+                        {c.ok === false && (
+                          <p className="text-[11px] text-muted-foreground">Execute este ajuste na sua corretora. A Kadig confere de novo sozinha assim que a carteira mudar.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1.5 pl-4">Atual: {showValues ? c.current : "•••"}</p>
-                   {c.ok !== true && <p className="text-xs text-primary mt-1 pl-4">{c.suggestion}</p>}
-
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <p className="text-sm font-semibold text-foreground pt-2">Suas regras</p>
@@ -348,19 +380,34 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
                 ["targetYear", "Até o ano"],
               ] as [keyof AutopilotRules, string][]).map(([k, label]) => (
                 <div key={k} className="flex items-center justify-between gap-3">
-                  <label className="text-xs text-muted-foreground">{label}</label>
-                  <Input type="number" className="w-32 h-9 text-right bg-background text-foreground caret-primary opacity-100" value={rules[k]}
-                    min={k === "targetYear" ? new Date().getFullYear() : 0}
-                    max={k === "maxRisk" ? 10 : k === "maxConcentrationPct" ? 100 : undefined}
-                    onChange={(e) => saveRules({ ...rules, [k]: Number(e.target.value) || 0 })} />
+                  <label htmlFor={`rule-${k}`} className="text-xs text-muted-foreground">{label}</label>
+                  <Input id={`rule-${k}`} type="text" inputMode="decimal"
+                    className="relative z-10 w-32 h-9 text-right bg-background text-foreground caret-primary opacity-100 pointer-events-auto"
+                    value={draft[k] ?? String(rules[k])}
+                    onChange={(e) => setDraft((d) => ({ ...d, [k]: e.target.value.replace(/[^\d.,]/g, "") }))}
+                    onBlur={() => commitRule(k)}
+                    onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }} />
                 </div>
               ))}
             </div>
 
             {broken > 0 && (
-              <Button className="w-full" onClick={() => toast.success("Recomendações salvas. Você recebe o passo a passo para executar na sua corretora.")}>
-                Ver o que alterar
-              </Button>
+              <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                <Button type="button" className="w-full" onClick={() => setShowPlan((s) => !s)}>
+                  {showPlan ? "Ocultar plano" : "Ver o que alterar"}
+                </Button>
+                {showPlan && (
+                  <ol className="space-y-3">
+                    {checks.filter((c) => c.ok === false).map((c, idx) => (
+                      <li key={c.id} className="text-xs">
+                        <p className="font-medium text-foreground">{idx + 1}. {c.label}</p>
+                        <p className="text-muted-foreground mt-0.5">{c.suggestion}</p>
+                      </li>
+                    ))}
+                    <p className="text-[11px] text-muted-foreground">Nenhuma operação é feita sem você. Execute os ajustes na sua corretora.</p>
+                  </ol>
+                )}
+              </div>
             )}
           </>
         )}
