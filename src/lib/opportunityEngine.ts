@@ -32,10 +32,14 @@ export interface EngineIndicators {
 
 export interface AutopilotRules {
   minLiquidity: number;
-  maxDrawdownPct: number;
+  maxRisk: number; // 0-10
   beatCdiPlus: number;
+  maxConcentrationPct: number;
   targetNetWorth: number;
+  targetYear: number;
 }
+
+export const riskScore = (stress: number, invested: number) => invested ? Math.min(10, ((stress / invested) * 100) / 2) : 0;
 
 export type InsightSeverity = "risk" | "efficiency" | "opportunity";
 
@@ -47,7 +51,16 @@ export interface Insight {
   detail: string;
   annualImpact: number; // R$/ano estimated (0 when not monetary)
   action: string;
+  exposure?: number; // R$ at risk (for risk items)
+  bucket?: OpportunityBucket;
+  current?: string;
+  suggestion?: string;
+  risk?: string;
+  cta?: string;
 }
+
+export type OpportunityBucket = "Rentabilidade" | "Juros/dívidas" | "Impostos" | "Taxas" | "Caixa parado";
+export const BUCKETS: OpportunityBucket[] = ["Rentabilidade", "Juros/dívidas", "Impostos", "Taxas", "Caixa parado"];
 
 export type AssetClass = "cash" | "fixed" | "equity" | "crypto" | "fund" | "realestate" | "other";
 
@@ -157,6 +170,11 @@ export function runEngine(
       detail: `Esse valor está em conta corrente, acima de uma reserva de ${brl(reserve)}. Aplicado a 100% do CDI (${ind.cdi12m.toFixed(2)}% a.a.), renderia cerca de ${brl(impact)} por ano.`,
       annualImpact: impact,
       action: "Mover para um CDB de liquidez diária ou Tesouro Selic",
+      bucket: "Caixa parado",
+      current: `${brl(idle)} em conta corrente rendendo 0%`,
+      suggestion: "CDB com liquidez diária a 100% do CDI",
+      risk: "Baixo · coberto pelo FGC até R$ 250 mil por banco",
+      cta: "Ver oportunidade",
     });
     penalty += Math.min(15, (idle / invested) * 60);
   }
@@ -175,7 +193,11 @@ export function runEngine(
       detail: `${top.asset_name} representa ${brl(top.current_value)}. Os 3 maiores ativos somam ${top3Pct.toFixed(0)}% do total. Um problema nesse ativo afetaria boa parte do seu patrimônio.`,
       annualImpact: 0,
       action: "Reduzir a posição para até 20–25% e diversificar",
+      exposure: top.current_value * STRESS[classify(top.asset_type)] || top.current_value * 0.2,
+      cta: "Simular redução",
     });
+    const last = insights[insights.length - 1];
+    last.detail = `Em um cenário de -20% no mercado, impacto estimado: -${brl(last.exposure!)}. ` + last.detail;
     penalty += Math.min(25, (topPct - 25) * 0.5);
   }
 
@@ -190,6 +212,8 @@ export function runEngine(
       detail: `Criptoativos podem cair 40% ou mais em poucas semanas. A faixa usual para perfis moderados é de 2% a 10% do patrimônio investido.`,
       annualImpact: 0,
       action: "Rebalancear parte da posição para renda fixa",
+      exposure: (byClass.get("crypto") || 0) * 0.4,
+      cta: "Simular redução",
     });
     penalty += Math.min(20, (cryptoPct - 15) * 0.4);
   }
@@ -204,6 +228,8 @@ export function runEngine(
     detail: `Estimativa de perda de ${stressPct.toFixed(1)}% da carteira em um cenário de crise, considerando a sensibilidade de cada classe de ativo.`,
     annualImpact: 0,
     action: stressPct > 15 ? "Aumentar a parcela em renda fixa pós-fixada" : "Sua carteira está bem protegida",
+    exposure: stressPct > 15 ? stress * 0.5 : 0,
+    cta: "Ver proteção",
   });
 
   // 5. Maturities in next 30 days
@@ -219,7 +245,9 @@ export function runEngine(
       id: "maturity",
       severity: "opportunity",
       category: "Vencimentos",
-      title: `${brl(total)} vencem nos próximos 30 dias`,
+      title: `${brl(total)} possuem vencimento nos próximos ${Math.max(1, Math.ceil(Math.max(...maturing.map((m) => new Date(m.maturity_date!).getTime() - now)) / 86400000))} dias`,
+      exposure: total * 0.05,
+      cta: "Planejar reinvestimento",
       detail: `${maturing.map((m) => m.asset_name).join(", ")}. Planeje o reinvestimento para não deixar o dinheiro parado.`,
       annualImpact: 0,
       action: "Definir onde reinvestir antes do vencimento",
@@ -241,6 +269,11 @@ export function runEngine(
       detail: `Você tem ${brl(lossTotal)} em prejuízos que podem compensar ${brl(gainTotal)} de lucros em outros ativos de renda variável.`,
       annualImpact: saving,
       action: "Usar prejuízos para compensar lucros ao vender",
+      bucket: "Impostos",
+      current: `${brl(lossTotal)} em prejuízo não compensado`,
+      suggestion: "Realizar prejuízo e compensar no IR de vendas com lucro",
+      risk: "Baixo · não altera a exposição se recomprar depois",
+      cta: "Ver oportunidade",
     });
   }
 
@@ -276,8 +309,8 @@ export function runEngine(
   // Liquidity score
   if (liquid / invested < 0.1) penalty += 10;
 
-  const order: Record<InsightSeverity, number> = { risk: 0, efficiency: 1, opportunity: 2 };
-  insights.sort((a, b) => order[a.severity] - order[b.severity] || b.annualImpact - a.annualImpact);
+  const weight = (i: Insight) => i.annualImpact + (i.exposure || 0) * 0.1;
+  insights.sort((a, b) => weight(b) - weight(a));
 
   return {
     netWorth,
@@ -376,32 +409,36 @@ export interface RuleCheck {
 }
 
 export function checkAutopilot(r: EngineResult, investments: EngineInvestment[], rules: AutopilotRules, ind: EngineIndicators): RuleCheck[] {
-  const stressPct = r.invested ? (r.stress / r.invested) * 100 : 0;
+  const risk = riskScore(r.stress, r.invested);
   const totalCost = investments.reduce((s, i) => s + i.total_invested, 0);
   const ret = totalCost ? ((r.invested - totalCost) / totalCost) * 100 : 0;
   const bench = ind.cdi12m + rules.beatCdiPlus;
+  const top = investments.reduce((m, i) => (i.current_value > (m?.current_value || 0) ? i : m), null as EngineInvestment | null);
+  const topPct = top && r.invested ? (top.current_value / r.invested) * 100 : 0;
   const months = monthsToTarget(r.netWorth, rules.targetNetWorth, ind.cdi12m - ind.ipca12m);
+  const monthsLeft = Math.max(0, (rules.targetYear - new Date().getFullYear()) * 12 + (11 - new Date().getMonth()));
+  const ok = (b: boolean, s: string) => (b ? "Dentro da regra" : s);
 
   return [
-    {
-      id: "liq", label: "Liquidez imediata", ok: r.liquid >= rules.minLiquidity,
-      current: brl(r.liquid), target: `mín. ${brl(rules.minLiquidity)}`,
-      suggestion: r.liquid >= rules.minLiquidity ? "Dentro da estratégia" : `Mover ${brl(rules.minLiquidity - r.liquid)} para renda fixa com liquidez diária`,
-    },
-    {
-      id: "dd", label: "Perda máxima em crise", ok: stressPct <= rules.maxDrawdownPct,
-      current: `${stressPct.toFixed(1)}%`, target: `máx. ${rules.maxDrawdownPct}%`,
-      suggestion: stressPct <= rules.maxDrawdownPct ? "Dentro da estratégia" : `Reduzir cerca de ${brl(((stressPct - rules.maxDrawdownPct) / 100) * r.invested * 2.5)} em ativos voláteis`,
-    },
-    {
-      id: "ret", label: `Superar CDI + ${rules.beatCdiPlus}%`, ok: ret >= bench,
-      current: `${ret.toFixed(1)}% acumulado`, target: `${bench.toFixed(1)}%`,
-      suggestion: ret >= bench ? "Dentro da estratégia" : "Revisar ativos com retorno abaixo do benchmark",
-    },
-    {
-      id: "goal", label: `Meta de ${brl(rules.targetNetWorth, true)}`, ok: isFinite(months) && months <= 240,
-      current: brl(r.netWorth, true), target: formatMonths(months),
-      suggestion: isFinite(months) && months <= 240 ? "Prazo estimado no ritmo atual" : "Aumentar aportes mensais para viabilizar a meta",
-    },
+    { id: "liq", label: "Reserva mínima", ok: r.liquid >= rules.minLiquidity, current: brl(r.liquid), target: brl(rules.minLiquidity),
+      suggestion: ok(r.liquid >= rules.minLiquidity, `Mover ${brl(rules.minLiquidity - r.liquid)} para renda fixa com liquidez diária`) },
+    { id: "risk", label: "Risco máximo", ok: risk <= rules.maxRisk, current: `${risk.toFixed(1)}/10`, target: `${rules.maxRisk}/10`,
+      suggestion: ok(risk <= rules.maxRisk, `Realocar cerca de ${brl(((risk - rules.maxRisk) * 2 / 100) * r.invested * 2.5)} de ativos voláteis para renda fixa`) },
+    { id: "conc", label: "Concentração máxima", ok: topPct <= rules.maxConcentrationPct, current: `${topPct.toFixed(0)}%${top ? ` em ${top.asset_name}` : ""}`, target: `${rules.maxConcentrationPct}% por ativo`,
+      suggestion: ok(topPct <= rules.maxConcentrationPct, `Reduzir ${top?.asset_name} em ${brl(((topPct - rules.maxConcentrationPct) / 100) * r.invested)}`) },
+    { id: "ret", label: "Meta de retorno", ok: ret >= bench, current: `${ret.toFixed(1)}%`, target: `CDI + ${rules.beatCdiPlus}% (${bench.toFixed(1)}%)`,
+      suggestion: ok(ret >= bench, "Revisar ativos com retorno abaixo do benchmark") },
+    { id: "goal", label: "Meta patrimonial", ok: months <= monthsLeft, current: `${formatMonths(months)} no ritmo atual`, target: `${brl(rules.targetNetWorth, true)} até ${rules.targetYear}`,
+      suggestion: ok(months <= monthsLeft, "Aumentar aportes mensais ou revisar o prazo da meta") },
   ];
+}
+
+export function recommendWhatIf(sc: WhatIfScenario[], amount: number): { key: WhatIfScenario["key"]; reason: string } {
+  const av = sc.find((s) => s.key === "avista")!;
+  const fin = sc.find((s) => s.key === "financiamento")!;
+  const nao = sc.find((s) => s.key === "nao")!;
+  if (av.liquid < 0 && fin.liquid < 0) return { key: "nao", reason: "Nenhuma forma de compra é viável sem vender ativos e zerar sua reserva." };
+  if (amount > nao.netWorth * 0.3) return { key: "nao", reason: `A compra representa ${((amount / nao.netWorth) * 100).toFixed(0)}% do seu patrimônio e atrasaria sua meta de ${formatMonths(nao.goalMonths)} para ${formatMonths(av.goalMonths)}.` };
+  if (av.liquid >= 0) return { key: "avista", reason: `Você tem liquidez para pagar à vista e evita ${brl(fin.totalCost - amount)} em juros do financiamento.` };
+  return { key: "financiamento", reason: "Preserva sua liquidez, já que pagar à vista consumiria toda a reserva." };
 }
