@@ -216,20 +216,6 @@ Deno.serve(async (req) => {
     if (type === 'currency-prices') {
       console.log('Fetching currency prices');
       
-      // Fallback values (estimated based on recent market data)
-      const fallbackPrices: { [key: string]: { price: number; change24h: number } } = {
-        'DÓLAR AMERICANO (USD)': { price: 6.10, change24h: 0.15 },
-        'EURO (EUR)': { price: 6.65, change24h: 0.12 },
-        'LIBRA ESTERLINA (GBP)': { price: 7.75, change24h: 0.08 },
-        'IENE JAPONÊS (JPY)': { price: 0.04, change24h: -0.05 },
-        'FRANCO SUÍÇO (CHF)': { price: 6.90, change24h: 0.10 },
-        'DÓLAR CANADENSE (CAD)': { price: 4.35, change24h: 0.05 },
-        'DÓLAR AUSTRALIANO (AUD)': { price: 3.95, change24h: 0.02 },
-        'PESO ARGENTINO (ARS)': { price: 0.0058, change24h: -0.50 },
-        'YUAN CHINÊS (CNY)': { price: 0.85, change24h: 0.03 },
-        'PESO MEXICANO (MXN)': { price: 0.30, change24h: 0.08 },
-      };
-      
       try {
         // Usar API do Banco Central ou AwesomeAPI para cotações
         const currencies = 'USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,CHF-BRL,CAD-BRL,AUD-BRL,ARS-BRL,CNY-BRL,MXN-BRL';
@@ -244,10 +230,10 @@ Deno.serve(async (req) => {
         
         // Check if API returned an error (quota exceeded, etc)
         if (data.status === 429 || data.code === 'QuotaExceeded' || !data.USDBRL) {
-          console.log('AwesomeAPI quota exceeded or invalid response, using fallback values');
+          console.log('AwesomeAPI quota exceeded or returned an invalid response');
           return new Response(
-            JSON.stringify({ prices: fallbackPrices, lastUpdate: new Date().toISOString(), source: 'fallback' }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
         
@@ -283,10 +269,9 @@ Deno.serve(async (req) => {
         );
       } catch (error) {
         console.error('Error fetching currency prices:', error);
-        // Return fallback values instead of empty
         return new Response(
-          JSON.stringify({ prices: fallbackPrices, lastUpdate: new Date().toISOString(), source: 'fallback' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
@@ -473,17 +458,8 @@ Deno.serve(async (req) => {
           { date: '2026-03-18', type: 'fomc' },
         ];
         
-        // 3. Divulgação IPCA (geralmente 10º dia útil do mês)
+        // Datas de IPCA só devem ser exibidas quando vierem de calendário oficial.
         const ipcaDates: any[] = [];
-        for (let m = 0; m < 12; m++) {
-          // Aproximadamente dia 10-12 de cada mês
-          const ipcaDate = new Date(currentYear, m, 10 + Math.floor(Math.random() * 3));
-          if (ipcaDate >= today) {
-            ipcaDates.push({ date: ipcaDate.toISOString().split('T')[0], type: 'ipca' });
-          }
-          const nextYearIpca = new Date(currentYear + 1, m, 10 + Math.floor(Math.random() * 3));
-          ipcaDates.push({ date: nextYearIpca.toISOString().split('T')[0], type: 'ipca' });
-        }
         
         // 4. PIB Brasil (divulgação trimestral IBGE)
         const pibDates: any[] = [
@@ -1089,6 +1065,46 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Top dividend banks - ranked only with current BRAPI data
+    if (type === 'top-dividend-banks') {
+      try {
+        const bankTickers = ['BBAS3', 'ITUB4', 'BBDC4', 'SANB11', 'ITSA4', 'BRSR6', 'BPAC11', 'ABCB4', 'BMGB4'];
+        const response = await fetch(
+          `https://brapi.dev/api/quote/${bankTickers.join(',')}?token=${BRAPI_TOKEN}&fundamental=true`
+        );
+        if (!response.ok) throw new Error(`BRAPI error: ${response.status}`);
+        const data = await response.json();
+        const banks = (data.results || [])
+          .filter((stock: any) => Number(stock.dividendYield) > 0)
+          .map((stock: any) => ({
+            name: stock.longName || stock.shortName || stock.symbol,
+            ticker: stock.symbol,
+            dividendYield: Number(stock.dividendYield),
+            price: Number(stock.regularMarketPrice) || 0,
+            sector: 'Bancos',
+          }))
+          .sort((a: any, b: any) => b.dividendYield - a.dividendYield)
+          .slice(0, 3);
+        return new Response(
+          JSON.stringify({ banks, lastUpdate: new Date().toISOString(), source: 'brapi' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error fetching top dividend banks:', error);
+        return new Response(
+          JSON.stringify({ banks: [], error: 'Dividend data unavailable' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    if (type !== 'all') {
+      return new Response(
+        JSON.stringify({ error: `Unknown request type: ${type}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Lista ampla de ações populares brasileiras
     const allStocks = [
       // Maiores da B3
@@ -1185,24 +1201,11 @@ Deno.serve(async (req) => {
         }));
       }
       
-      // Adicionar índices internacionais (simulados pois brapi não tem)
-      indices.push(
-        { name: 'S&P 500', value: 5996.66, changePercent: 0.78, type: 'us' },
-        { name: 'NASDAQ', value: 19630.20, changePercent: 1.51, type: 'us' },
-        { name: 'Dow Jones', value: 43153.13, changePercent: -0.02, type: 'us' }
-      );
     } catch (indicesError) {
       console.error('Error fetching indices:', indicesError);
     }
 
-    // Commodities (dados simulados - brapi não oferece commodities)
-    const commodities = [
-      { name: 'Ouro', symbol: 'GOLD', value: 2689.50, changePercent: 0.45, icon: '🥇' },
-      { name: 'Prata', symbol: 'SILVER', value: 30.85, changePercent: -0.32, icon: '🥈' },
-      { name: 'Petróleo', symbol: 'OIL', value: 78.45, changePercent: 1.23, icon: '🛢️' },
-      { name: 'Café', symbol: 'COFFEE', value: 352.20, changePercent: 0.87, icon: '☕' },
-      { name: 'Dólar', symbol: 'USD', value: 6.12, changePercent: -0.15, icon: '💵' },
-    ];
+    const commodities: any[] = [];
 
     return new Response(
       JSON.stringify({
@@ -1214,78 +1217,6 @@ Deno.serve(async (req) => {
         lastUpdate: new Date().toISOString(),
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
-    // Top dividend banks - returns top 3 banks with highest dividend yield
-    if (type === 'top-dividend-banks') {
-      console.log('Fetching top dividend banks from BRAPI');
-      
-      try {
-        // List of major Brazilian bank stocks
-        const bankTickers = ['BBAS3', 'ITUB4', 'BBDC4', 'SANB11', 'ITSA4', 'BRSR6', 'BPAC11', 'ABCB4', 'BMGB4', 'BIDI11'];
-        
-        const response = await fetch(
-          `https://brapi.dev/api/quote/${bankTickers.join(',')}?token=${BRAPI_TOKEN}&fundamental=true`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`BRAPI error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log(`BRAPI returned ${data.results?.length || 0} bank stocks`);
-        
-        if (data.results && data.results.length > 0) {
-          // Map and sort by dividend yield
-          const banks = data.results
-            .filter((stock: any) => stock.dividendYield && stock.dividendYield > 0)
-            .map((stock: any) => ({
-              name: stock.longName || stock.shortName || stock.symbol,
-              ticker: stock.symbol,
-              dividendYield: stock.dividendYield || 0,
-              price: stock.regularMarketPrice || 0,
-              sector: 'Bancos',
-            }))
-            .sort((a: any, b: any) => b.dividendYield - a.dividendYield)
-            .slice(0, 5);
-          
-          console.log(`Returning ${banks.length} top dividend banks`);
-          
-          return new Response(
-            JSON.stringify({ 
-              banks, 
-              lastUpdate: new Date().toISOString() 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-        
-        throw new Error('No bank data available');
-        
-      } catch (error) {
-        console.error('Error fetching top dividend banks:', error);
-        
-        const fallbackBanks = [
-          { name: 'Banco do Brasil', ticker: 'BBAS3', dividendYield: 9.8, price: 28.45, sector: 'Bancos' },
-          { name: 'Itausa', ticker: 'ITSA4', dividendYield: 8.2, price: 10.15, sector: 'Bancos' },
-          { name: 'Bradesco', ticker: 'BBDC4', dividendYield: 7.5, price: 14.32, sector: 'Bancos' },
-        ];
-        
-        return new Response(
-          JSON.stringify({ 
-            banks: fallbackBanks, 
-            lastUpdate: new Date().toISOString(),
-            source: 'fallback'
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    // Default response for unknown type
-    return new Response(
-      JSON.stringify({ error: `Unknown request type: ${type}` }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {

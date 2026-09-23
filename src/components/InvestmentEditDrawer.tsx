@@ -94,15 +94,12 @@ const InvestmentEditDrawer = ({
     });
 
     const newTotalGain = newTotalValue - newTotalInvested;
-    const newCdiPercent = newTotalInvested > 0 ? ((newTotalGain / newTotalInvested) * 100) : 0;
-
     // Update portfolio
     await supabase
       .from("portfolios")
       .update({
         total_value: newTotalValue,
         total_gain: newTotalGain,
-        cdi_percent: newCdiPercent,
       })
       .eq("id", portfolioId);
   };

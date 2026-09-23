@@ -16,21 +16,26 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (!supabaseUrl || !supabaseServiceKey || !supabaseAnonKey) throw new Error('Backend configuration missing');
     const BRAPI_TOKEN = Deno.env.get('BRAPI_TOKEN');
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    if (authError || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     
-    const { userId, forceUpdate = false } = await req.json().catch(() => ({}));
+    await req.json().catch(() => ({}));
+    const userId = user.id;
     
     console.log(`Starting price update for user: ${userId || 'all'}`);
 
     // Buscar todos os investimentos (do usuário ou todos)
-    let investmentsQuery = supabase.from('investments').select('*');
-    if (userId) {
-      investmentsQuery = investmentsQuery.eq('user_id', userId);
-    }
+    const investmentsQuery = supabase.from('investments').select('*').eq('user_id', userId);
     
     const { data: investments, error: invError } = await investmentsQuery;
     
@@ -230,7 +235,8 @@ serve(async (req) => {
     // Buscar investimentos atualizados agrupados por portfolio
     const { data: updatedInvestments } = await supabase
       .from('investments')
-      .select('portfolio_id, current_value, total_invested, user_id');
+      .select('portfolio_id, current_value, total_invested, user_id')
+      .eq('user_id', userId);
     
     if (updatedInvestments) {
       const portfolioTotals: { [key: string]: { value: number; invested: number; userId: string } } = {};
@@ -245,14 +251,11 @@ serve(async (req) => {
 
       for (const [portfolioId, totals] of Object.entries(portfolioTotals)) {
         const gain = totals.value - totals.invested;
-        const cdiPercent = totals.invested > 0 ? (gain / totals.invested) * 100 : 0;
-        
         await supabase.from('portfolios').update({
           total_value: totals.value,
           total_gain: gain,
-          cdi_percent: cdiPercent,
           updated_at: new Date().toISOString(),
-        }).eq('id', portfolioId);
+        }).eq('id', portfolioId).eq('user_id', userId);
       }
     }
 

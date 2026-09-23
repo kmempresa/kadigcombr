@@ -73,6 +73,7 @@ const TradeTab = ({
   const [maioresAltas, setMaioresAltas] = useState<StockQuote[]>([]);
   const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loadingMarket, setLoadingMarket] = useState(false);
+  const [marketError, setMarketError] = useState(false);
   const [globalPatrimonio, setGlobalPatrimonio] = useState(0);
   const [loadingGlobalPatrimonio, setLoadingGlobalPatrimonio] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
@@ -84,14 +85,11 @@ const TradeTab = ({
   const [altasExpanded, setAltasExpanded] = useState(true);
   const [baixasExpanded, setBaixasExpanded] = useState(true);
 
-  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([
-    { name: "IBOV", value: 164799.99, changePercent: -0.46 },
-    { name: "IFIX", value: 3809.30, changePercent: 0.13 },
-    { name: "IDIV", value: 11587.36, changePercent: -0.45 },
-  ]);
+  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([]);
 
   const fetchMarketStocks = async () => {
     setLoadingMarket(true);
+    setMarketError(false);
     try {
       const { data, error } = await supabase.functions.invoke('market-data', {
         body: { type: 'all' }
@@ -103,19 +101,16 @@ const TradeTab = ({
         setMarketStocks(data.stocks || []);
         setMaioresAltas(data.maioresAltas || []);
         setMaioresBaixas(data.maioresBaixas || []);
-        if (data.indices && data.indices.length > 0) {
-          setMarketIndices([
-            ...data.indices.slice(0, 2),
-            { name: "IDIV", value: 11587.36, changePercent: -0.45 }
-          ]);
+        setMarketIndices(data.indices || []);
+        setMarketError(Boolean(data.error) || !(data.stocks?.length || data.indices?.length));
+        if (data.lastUpdate) {
+          const updated = new Date(data.lastUpdate);
+          setLastUpdate(updated.toLocaleDateString("pt-BR") + " às " + updated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
         }
-        const now = new Date();
-        setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
       }
     } catch (error) {
       console.error("Error fetching market:", error);
-      const now = new Date();
-      setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+      setMarketError(true);
     }
     setLoadingMarket(false);
   };
@@ -123,7 +118,7 @@ const TradeTab = ({
   useEffect(() => {
     if (activeTab === "mercado" || activeTab === "favoritos") {
       fetchMarketStocks();
-      const interval = setInterval(fetchMarketStocks, 30000);
+      const interval = setInterval(fetchMarketStocks, 10 * 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [activeTab]);
@@ -594,6 +589,12 @@ const TradeTab = ({
                     Última atualização: {lastUpdate}
                   </p>
                 </div>
+
+                {marketError && (
+                  <div className="mb-4 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                    Cotações temporariamente indisponíveis. Os valores não serão substituídos por números antigos.
+                  </div>
+                )}
 
                 {/* Índices do mercado */}
                 <div className="pb-4">

@@ -717,12 +717,9 @@ const AdicionarInvestimento = () => {
           // Update portfolio totals
           const newTotalValue = Number(currentPortfolioValue) + currentValue;
           const newTotalGain = Number(currentPortfolioGain) + gainValue;
-          const cdiPercent = newTotalValue > 0 ? ((newTotalGain / newTotalValue) * 100) : 0;
-          
           await supabase.from('portfolios').update({
             total_value: newTotalValue,
             total_gain: newTotalGain,
-            cdi_percent: cdiPercent,
           }).eq('id', portfolioId);
           
           toast.success("Investimento adicionado com sucesso!");

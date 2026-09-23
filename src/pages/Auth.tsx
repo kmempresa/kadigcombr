@@ -40,7 +40,7 @@ const Auth = () => {
         // Check if user has completed onboarding (has a profile)
         const {
           data: profile
-        } = await supabase.from("profiles").select("full_name, investor_profile").eq("user_id", data.user.id).single();
+        } = await supabase.from("profiles").select("full_name, investor_profile").eq("user_id", data.user.id).maybeSingle();
         if (profile?.full_name && profile?.investor_profile) {
           // User has completed onboarding, go to dashboard
           navigate("/app");
@@ -51,6 +51,24 @@ const Auth = () => {
       }
     } catch (error) {
       toast.error("Erro ao fazer login. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast.error("Informe seu e-mail para recuperar a senha");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos as instruções de recuperação para seu e-mail");
+    } catch {
+      toast.error("Não foi possível enviar a recuperação de senha");
     } finally {
       setIsLoading(false);
     }
@@ -207,7 +225,7 @@ const Auth = () => {
           </div>
 
           {/* Forgot password */}
-          <button className="w-full py-3 text-foreground hover:text-primary transition-colors text-sm sm:text-base font-medium">
+          <button type="button" onClick={handleForgotPassword} disabled={isLoading} className="w-full py-3 text-foreground hover:text-primary transition-colors text-sm sm:text-base font-medium disabled:opacity-50">
             Esqueceu a senha?
           </button>
         </motion.footer>
