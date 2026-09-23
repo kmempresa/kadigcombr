@@ -47,18 +47,18 @@ const Welcome = () => {
 
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <motion.div
-                className="w-44 h-32 bg-card/40 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col p-4 justify-between"
+                className="w-48 bg-card/40 backdrop-blur-xl border border-border rounded-2xl shadow-2xl flex flex-col p-4 gap-3"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
               >
-                <div className="flex justify-between items-start">
-                  <div className="w-8 h-5 bg-muted rounded-sm" />
-                  <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG INTELLIGENCE</div>
+                <div className="flex justify-between items-center gap-2">
+                  <div className="w-7 h-4 bg-muted rounded-sm shrink-0" />
+                  <div className="text-[8px] font-semibold text-kadig-cyan tracking-wide whitespace-nowrap">KADIG INTELLIGENCE</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold tracking-tighter">R$ ?</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Potencial do seu patrimônio</div>
+                  <div className="text-xl font-bold tracking-tight">R$ ?</div>
+                  <div className="text-[9px] text-muted-foreground uppercase tracking-widest leading-snug">Potencial do seu patrimônio</div>
                 </div>
               </motion.div>
             </div>
