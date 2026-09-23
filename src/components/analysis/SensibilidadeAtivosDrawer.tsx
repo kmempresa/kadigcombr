@@ -69,7 +69,7 @@ export default function SensibilidadeAtivosDrawer({
   const { investments } = useRealtimeInvestments(portfolioId);
   const { isUpdating, lastUpdateTime } = useRealTimePrices({
     autoRefresh: true,
-    refreshInterval: 5 * 60 * 1000, // 5 minutes
+    refreshInterval: 60 * 1000, // 1 minute
   });
 
   // Fetch volatility data - recalculates when investments change

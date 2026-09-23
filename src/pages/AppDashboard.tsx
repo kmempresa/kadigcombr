@@ -337,7 +337,7 @@ const AppDashboard = () => {
 
   const { isUpdating: isPricesUpdating, refreshPrices, lastUpdateTime } = useRealTimePrices({
     autoRefresh: true,
-    refreshInterval: 5 * 60 * 1000, // 5 minutes
+    refreshInterval: 60 * 1000, // 1 minute
     onUpdate: handlePriceUpdate,
   });
   const [emblaRef, emblaApi] = useEmblaCarousel({ 

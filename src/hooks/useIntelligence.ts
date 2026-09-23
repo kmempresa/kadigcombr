@@ -68,7 +68,7 @@ export function useIntelligence() {
       .subscribe();
     const refresh = () => { if (document.visibilityState === "visible") load(); };
     document.addEventListener("visibilitychange", refresh);
-    const interval = window.setInterval(load, 5 * 60 * 1000);
+    const interval = window.setInterval(load, 60 * 1000);
     return () => {
       supabase.removeChannel(ch);
       document.removeEventListener("visibilitychange", refresh);
