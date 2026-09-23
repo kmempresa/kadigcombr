@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "../_shared/cors.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -91,7 +91,6 @@ serve(async (req) => {
               change30d,
               volatility: Math.max(2, Math.min(30, volatility)), // Clamp between 2-30%
               expectedReturn: Math.max(-15, Math.min(15, expectedReturn)), // Clamp between -15% and 15%
-              targetPrice: stock.regularMarketPrice * (1 + expectedReturn / 100),
             });
           }
         }

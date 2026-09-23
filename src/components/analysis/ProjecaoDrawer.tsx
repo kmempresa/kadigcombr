@@ -575,7 +575,7 @@ const ProjecaoDrawer = ({
           <div className="flex items-center justify-between">
             <DrawerTitle className="flex items-center gap-2 text-foreground">
               <TrendingUp className="w-5 h-5 text-primary" />
-              Projeção 12 Meses
+              Simulação 12 meses
             </DrawerTitle>
             <DrawerClose asChild>
               <button className="p-2 hover:bg-muted rounded-full transition-colors">
@@ -586,6 +586,9 @@ const ProjecaoDrawer = ({
         </DrawerHeader>
 
         <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(95vh-80px)]">
+          <p className="text-xs text-muted-foreground leading-snug">
+            Simulação com base no CDI e IPCA oficiais e no histórico dos seus ativos. Não é previsão nem recomendação: rentabilidade passada não garante resultados futuros.
+          </p>
           {/* Target Selector */}
           <motion.button
             onClick={() => setShowSelector(!showSelector)}
