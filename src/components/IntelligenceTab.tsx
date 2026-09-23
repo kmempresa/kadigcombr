@@ -244,14 +244,26 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
           <>
             <p className="text-base font-semibold text-foreground">O que você está pensando em fazer?</p>
             <p className="text-xs text-muted-foreground">Simulação financeira com seu patrimônio atual e taxas oficiais disponíveis. Não é uma cotação de crédito.</p>
-            <form className="flex gap-2" onSubmit={(e) => {
+            <form className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => {
               e.preventDefault();
               const a = parseAmount(whatIfText);
               if (!a) { toast.error("Informe um valor, por exemplo R$ 600 mil"); return; }
               setWhatIfAmount(a);
             }}>
-              <Input value={whatIfText} onChange={(e) => setWhatIfText(e.target.value)} placeholder="Comprar um carro de R$ 600 mil" />
-              <Button type="submit">Simular</Button>
+              <Input
+                type="text"
+                inputMode="text"
+                enterKeyHint="done"
+                autoComplete="off"
+                name="what-if-decision"
+                aria-label="Decisão e valor para simular"
+                className="relative z-10 pointer-events-auto select-text"
+                value={whatIfText}
+                onChange={(e) => setWhatIfText(e.currentTarget.value)}
+                onClick={(e) => e.currentTarget.focus()}
+                placeholder="Ex.: Comprar um carro de R$ 600 mil"
+              />
+              <Button type="submit" className="sm:w-auto">Simular</Button>
             </form>
             <div className="flex gap-2 flex-wrap">
               {["Comprar um carro de R$ 600 mil", "Comprar um apartamento de R$ 1,5 milhão", "Viagem de R$ 80 mil"].map((ex) => (
