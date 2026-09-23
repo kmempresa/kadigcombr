@@ -8,6 +8,13 @@
       "when": 1790187059618,
       "tag": "0000_security_hardening_audit_log",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790193161381,
+      "tag": "0001_api_cache",
+      "breakpoints": true
     }
   ]
 }
