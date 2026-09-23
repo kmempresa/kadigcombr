@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, User, History, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -39,7 +39,8 @@ const ConsultorIA = () => {
   const { isPremium, isLoading: isLoadingSubscription, refetch: refetchSubscription } = useSubscription();
   const [premiumDrawerOpen, setPremiumDrawerOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
-  const [input, setInput] = useState("");
+  const location = useLocation();
+  const [input, setInput] = useState(() => (location.state as { prefill?: string } | null)?.prefill || "");
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
