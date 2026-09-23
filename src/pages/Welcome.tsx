@@ -54,11 +54,11 @@ const Welcome = () => {
               >
                 <div className="flex justify-between items-start">
                   <div className="w-8 h-5 bg-muted rounded-sm" />
-                  <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG SCORE</div>
+                  <div className="text-[10px] font-semibold text-kadig-cyan tracking-wide">KADIG INTELLIGENCE</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold tracking-tighter">?</div>
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Descubra o seu</div>
+                  <div className="text-3xl font-bold tracking-tighter">R$ ?</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Potencial do seu patrimônio</div>
                 </div>
               </motion.div>
             </div>
@@ -79,8 +79,8 @@ const Welcome = () => {
                 trabalhar melhor.
               </span>
             </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-              Descubra o potencial do seu patrimônio com inteligência e controle total.
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-[300px] mx-auto">
+              A Kadig analisa seu patrimônio, encontra oportunidades e riscos e ajuda você a tomar decisões melhores.
             </p>
           </div>
 
@@ -89,7 +89,7 @@ const Welcome = () => {
               onClick={() => navigate("/auth")}
               className="w-full py-4 px-6 bg-gradient-to-r from-kadig-cyan to-primary text-primary-foreground font-semibold text-sm rounded-2xl shadow-xl shadow-primary/25 hover:opacity-90 active:scale-[0.98] transition-all"
             >
-              Descobrir meu Kadig Score
+              Analisar meu patrimônio
             </button>
             <button
               onClick={() => navigate("/auth")}
