@@ -586,6 +586,9 @@ const ProjecaoDrawer = ({
         </DrawerHeader>
 
         <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(95vh-80px)]">
+          <p className="text-xs text-muted-foreground leading-snug">
+            Simulação com base no CDI e IPCA oficiais e no histórico dos seus ativos. Não é previsão nem recomendação: rentabilidade passada não garante resultados futuros.
+          </p>
           {/* Target Selector */}
           <motion.button
             onClick={() => setShowSelector(!showSelector)}

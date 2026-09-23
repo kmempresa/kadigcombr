@@ -1623,7 +1623,7 @@ const AppDashboard = () => {
                   </div>
                 </div>
                 <div className="border-t border-border/50 pt-3 pl-16">
-                  <p className="text-sm text-muted-foreground leading-relaxed">Veja quanto sua carteira pode render nos próximos 12 meses baseado no histórico.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">Simule cenários para os próximos 12 meses com CDI, IPCA e histórico. Não é previsão.</p>
                 </div>
               </motion.button>
 
