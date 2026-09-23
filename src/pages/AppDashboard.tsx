@@ -13,6 +13,8 @@ import {
   HelpCircle,
   Plus,
   ChevronRight,
+  Check,
+
   ChevronDown,
   ChevronUp,
   User,
