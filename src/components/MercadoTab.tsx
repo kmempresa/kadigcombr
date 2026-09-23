@@ -93,12 +93,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [maioresAltas, setMaioresAltas] = useState<StockQuote[]>([]);
   const [maioresBaixas, setMaioresBaixas] = useState<StockQuote[]>([]);
   const [loading, setLoading] = useState(true);
+  const [marketError, setMarketError] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([
-    { name: "IBOV", value: 164799.99, changePercent: -0.46 },
-    { name: "IFIX", value: 3809.30, changePercent: 0.13 },
-    { name: "IDIV", value: 11587.36, changePercent: -0.45 },
-  ]);
+  const [marketIndices, setMarketIndices] = useState<MarketIndex[]>([]);
   const [marketNews, setMarketNews] = useState<NewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
   const [newsPage, setNewsPage] = useState(1);
@@ -127,14 +124,6 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [showAllAgenda, setShowAllAgenda] = useState(false);
   const [agendaFilter, setAgendaFilter] = useState<'all' | 'monetary' | 'economic' | 'corporate' | 'market'>('all');
 
-  // Mock best performance stocks
-  const [bestPerformance] = useState([
-    { ticker: "CURY3", name: "CURY CONSTRUTORA E...", financeiro: 85, dividendos: 70, recomendacao: 45, indice: 60 },
-    { ticker: "LPSB3", name: "LPS BRASIL - CONSULTORIA DE IMOVEI...", financeiro: 80, dividendos: 75, recomendacao: 40, indice: 55 },
-    { ticker: "RSUL4", name: "METALURGICA RIOSULENSE S.A.", financeiro: 75, dividendos: 65, recomendacao: 35, indice: 50 },
-    { ticker: "CAMB3", name: "CAMBUCI S.A.", financeiro: 70, dividendos: 60, recomendacao: 30, indice: 45 },
-  ]);
-
   const fetchMarketNews = async () => {
     setLoadingNews(true);
     try {
@@ -158,6 +147,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
 
   const fetchMarketData = async () => {
     setLoading(true);
+    setMarketError(false);
     try {
       const { data, error } = await supabase.functions.invoke('market-data', {
         body: { type: 'all' }
@@ -168,17 +158,16 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       if (data) {
         setMaioresAltas(data.maioresAltas || []);
         setMaioresBaixas(data.maioresBaixas || []);
-        if (data.indices && data.indices.length > 0) {
-          setMarketIndices([
-            ...data.indices.slice(0, 2),
-            { name: "IDIV", value: 11587.36, changePercent: -0.45 }
-          ]);
+        setMarketIndices(data.indices || []);
+        setMarketError(Boolean(data.error) || !(data.maioresAltas?.length || data.indices?.length));
+        if (data.lastUpdate) {
+          const updated = new Date(data.lastUpdate);
+          setLastUpdate(updated.toLocaleDateString("pt-BR") + " às " + updated.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
         }
-        const now = new Date();
-        setLastUpdate(now.toLocaleDateString("pt-BR") + " às " + now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
       }
     } catch (error) {
       console.error("Error fetching market:", error);
+      setMarketError(true);
     }
     setLoading(false);
   };
@@ -276,9 +265,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     fetchEconomicIndicators();
     fetchDividends();
     fetchAgenda();
-    // Auto-refresh: cotações a cada 60s, notícias a cada 2 minutos
-    const marketInterval = setInterval(fetchMarketData, 60000);
-    const newsInterval = setInterval(fetchMarketNews, 120000);
+    // Atualizações controladas para preservar as cotas dos fornecedores.
+    const marketInterval = setInterval(fetchMarketData, 10 * 60 * 1000);
+    const newsInterval = setInterval(fetchMarketNews, 15 * 60 * 1000);
     return () => {
       clearInterval(marketInterval);
       clearInterval(newsInterval);
@@ -315,20 +304,6 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const getNewsImage = (news: NewsItem, index: number) => {
     if (news.image_url) return news.image_url;
     return newsPlaceholders[index % newsPlaceholders.length];
-  };
-
-  // Gauge component for performance indicators
-  const GaugeChart = ({ value, colors }: { value: number; colors: string }) => {
-    const rotation = (value / 100) * 180 - 90;
-    return (
-      <div className="relative w-14 h-8 overflow-hidden">
-        <div className={`absolute bottom-0 left-0 right-0 h-14 rounded-t-full ${colors}`} />
-        <div 
-          className="absolute bottom-0 left-1/2 w-0.5 h-6 bg-gray-800 origin-bottom"
-          style={{ transform: `translateX(-50%) rotate(${rotation}deg)` }}
-        />
-      </div>
-    );
   };
 
   const tools = [
@@ -370,6 +345,11 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
         <>
           {/* Índices do mercado */}
           <section className="px-4 pb-4">
+            {marketError && (
+              <div className="mb-4 rounded-xl border border-gray-700 bg-[#252b3d] p-4 text-sm text-gray-300">
+                Cotações temporariamente indisponíveis. A Kadig não exibe valores antigos como se fossem atuais.
+              </div>
+            )}
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
               {marketIndices.map((index) => (
                 <div 
@@ -743,65 +723,6 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                         {stock.regularMarketChangePercent.toFixed(2)}%
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Índice Kadig */}
-          <section className="px-4 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-1 h-6 bg-primary rounded-full" />
-              <h2 className="text-lg font-semibold text-white">Índice Kadig</h2>
-            </div>
-            
-            <button 
-              onClick={() => setShowAllKadig(!showAllKadig)}
-              className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2 hover:bg-[#3a4259] transition-colors"
-            >
-              {showAllKadig ? 'VER MENOS' : 'LISTA COMPLETA DO ÍNDICE'}
-              <ChevronDown className={`w-4 h-4 transition-transform ${showAllKadig ? 'rotate-180' : ''}`} />
-            </button>
-
-            <div className="bg-[#252b3d] rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-700">
-                <ArrowUp className="w-5 h-5 text-emerald-500" />
-                <h3 className="text-white font-semibold">Melhor desempenho</h3>
-              </div>
-              
-              <div className="space-y-6">
-                {bestPerformance.slice(0, showAllKadig ? bestPerformance.length : 2).map((stock, index) => (
-                  <div key={index}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="bg-[#3a4259] text-white text-xs px-2 py-1 rounded-md font-medium">
-                        {stock.ticker}
-                      </span>
-                      <span className="text-white text-sm truncate">{stock.name}</span>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div className="text-center">
-                        <GaugeChart value={stock.financeiro} colors="bg-gradient-to-r from-orange-400 via-yellow-400 to-green-400" />
-                        <p className="text-gray-400 text-xs mt-1">Financeiro</p>
-                      </div>
-                      <div className="text-center">
-                        <GaugeChart value={stock.dividendos} colors="bg-gradient-to-r from-yellow-400 via-lime-400 to-green-500" />
-                        <p className="text-gray-400 text-xs mt-1">Dividendos</p>
-                      </div>
-                      <div className="text-center">
-                        <GaugeChart value={stock.recomendacao} colors="bg-gray-400" />
-                        <p className="text-gray-400 text-xs mt-1">Recomendação</p>
-                      </div>
-                      <div className="text-center">
-                        <GaugeChart value={stock.indice} colors="bg-gradient-to-r from-violet-400 to-purple-500" />
-                        <p className="text-gray-400 text-xs mt-1">Índice Kadig</p>
-                      </div>
-                    </div>
-                    
-                    {index < bestPerformance.length - 1 && (
-                      <div className="border-b border-gray-700 mt-4" />
-                    )}
                   </div>
                 ))}
               </div>
