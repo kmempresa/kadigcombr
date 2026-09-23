@@ -1167,7 +1167,7 @@ const AppDashboard = () => {
                     <span className="text-xs text-muted-foreground uppercase">CDI</span>
                   </div>
                   <p className="text-lg font-bold text-primary tabular-nums">
-                    {showValues ? `+${interpolatedStats.cdi.toFixed(2)}%` : "••%"}
+                    {!showValues ? "••%" : !economicIndicators ? "—" : `${interpolatedStats.cdi >= 0 ? '+' : ''}${interpolatedStats.cdi.toFixed(2)}%`}
                   </p>
                 </div>
                 <div className="w-px h-10 bg-border" />
@@ -1176,9 +1176,13 @@ const AppDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-warning" />
                     <span className="text-xs text-muted-foreground uppercase">IPCA</span>
                   </div>
-                  <p className="text-lg font-bold text-warning tabular-nums">
-                    {showValues ? `+${interpolatedStats.ipca.toFixed(2)}%` : "••%"}
-                  </p>
+                  {showValues && economicIndicators && interpolatedStats.ipca === 0 ? (
+                    <p className="text-sm font-semibold text-muted-foreground leading-7">A divulgar</p>
+                  ) : (
+                    <p className="text-lg font-bold text-warning tabular-nums">
+                      {!showValues ? "••%" : !economicIndicators ? "—" : `${interpolatedStats.ipca >= 0 ? '+' : ''}${interpolatedStats.ipca.toFixed(2)}%`}
+                    </p>
+                  )}
                 </div>
               </div>
 
