@@ -117,6 +117,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [economicIndicators, setEconomicIndicators] = useState<any>(null);
   const [bankOffers, setBankOffers] = useState<any[]>([]);
   const [bankOffersUpdatedAt, setBankOffersUpdatedAt] = useState<string | null>(null);
+  const [offerFilter, setOfferFilter] = useState<string>("Todos");
   // Real dividends data from API
   const [dividends, setDividends] = useState<DividendItem[]>([]);
   const [loadingDividends, setLoadingDividends] = useState(false);
@@ -428,14 +429,42 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
           </section>
 
           {/* Melhores ofertas de renda fixa */}
-          {bankOffers.length > 0 && (
+          {bankOffers.length > 0 && (() => {
+            const categorize = (offer: any): string => {
+              const text = `${offer.product || ""} ${offer.rate_label || ""}`.toUpperCase();
+              if (text.includes("LCI")) return "LCI";
+              if (text.includes("LCA")) return "LCA";
+              if (text.includes("TESOURO")) return "Tesouro Direto";
+              if (text.includes("CDB")) return "CDB";
+              return "Outros";
+            };
+            const categories = ["Todos", ...Array.from(new Set(bankOffers.map(categorize)))];
+            const filteredOffers = offerFilter === "Todos"
+              ? bankOffers
+              : bankOffers.filter((o) => categorize(o) === offerFilter);
+            return (
             <section className="px-4 pb-6">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1 h-6 bg-primary rounded-full" />
                 <h2 className="text-lg font-semibold text-white">Melhores ofertas de renda fixa</h2>
               </div>
+              <div className="flex gap-2 mb-3 overflow-x-auto pb-1 -mx-4 px-4">
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setOfferFilter(cat)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                      offerFilter === cat
+                        ? "bg-primary text-white"
+                        : "bg-[#252b3d] text-gray-400"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
               <div className="space-y-2">
-                {bankOffers.map((offer) => (
+                {filteredOffers.map((offer) => (
                   <div
                     key={offer.id}
                     className="bg-[#252b3d] rounded-xl px-4 py-3 flex items-center gap-3"
@@ -455,13 +484,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   </div>
                 ))}
               </div>
+              {filteredOffers.length === 0 && (
+                <p className="text-gray-500 text-sm py-2">Nenhuma oferta de {offerFilter} no momento.</p>
+              )}
               {bankOffersUpdatedAt && (
                 <p className="text-gray-500 text-xs mt-2">
                   Taxas divulgadas pelos bancos, atualizadas em {new Date(bankOffersUpdatedAt).toLocaleDateString("pt-BR")}. Confira as condições no site de cada banco antes de investir.
                 </p>
               )}
             </section>
-          )}
+            );
+          })()}
 
           {/* Principais notícias do mercado */}
           <section className="px-4 pb-6">
