@@ -62,6 +62,42 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_offers: {
+        Row: {
+          bank_name: string
+          id: string
+          min_investment: number | null
+          product: string
+          rate_cdi_pct: number | null
+          rate_label: string
+          source_url: string | null
+          term: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_name: string
+          id?: string
+          min_investment?: number | null
+          product: string
+          rate_cdi_pct?: number | null
+          rate_label: string
+          source_url?: string | null
+          term?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_name?: string
+          id?: string
+          min_investment?: number | null
+          product?: string
+          rate_cdi_pct?: number | null
+          rate_label?: string
+          source_url?: string | null
+          term?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
