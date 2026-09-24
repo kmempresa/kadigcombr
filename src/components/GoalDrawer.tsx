@@ -195,6 +195,10 @@ const GoalDrawer = ({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className={`fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col ${themeClass}`}
           >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2">
@@ -319,7 +323,10 @@ const GoalDrawer = ({
             </div>
 
             {/* Footer Buttons */}
-            <div className="p-4 flex gap-3 border-t border-border safe-area-inset-bottom">
+            <div
+              className="p-4 flex gap-3 border-t border-border"
+              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+            >
               <button
                 onClick={onClose}
                 disabled={loading}
