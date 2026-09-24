@@ -29,6 +29,8 @@ serve(async (req) => {
     const authClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
     const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const { data: securityControl } = await supabase.from('account_security_controls').select('status').eq('user_id', user.id).maybeSingle();
+    if (securityControl && securityControl.status !== 'active') return new Response(JSON.stringify({ error: 'Account restricted' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     
     await req.json().catch(() => ({}));
     const userId = user.id;
