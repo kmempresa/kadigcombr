@@ -9,4 +9,4 @@
 - [ ] Executar testes e confirmar ausência de erros de execução
 - [ ] Documentar dependências externas e riscos restantes
 - [x] Padronizar Segurança, Preferências, Suporte e Sobre; corrigir todas as ações da Conta
-- [ ] Integrar central de cibersegurança da Kadig ao KDG com alertas, avisos, suspensão e banimento
+- [ ] Integrar central de cibersegurança da Kadig ao KDG com alertas, avisos, suspensão e banimento — Kadig concluído; falta aplicar a tela no projeto KDG Control Hub
