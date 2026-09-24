@@ -114,6 +114,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [userInvestments, setUserInvestments] = useState<any[]>([]);
   const [economicIndicators, setEconomicIndicators] = useState<any>(null);
+  const [bankOffers, setBankOffers] = useState<any[]>([]);
+  const [bankOffersUpdatedAt, setBankOffersUpdatedAt] = useState<string | null>(null);
   // Real dividends data from API
   const [dividends, setDividends] = useState<DividendItem[]>([]);
   const [loadingDividends, setLoadingDividends] = useState(false);
