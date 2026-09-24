@@ -118,8 +118,8 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
   const broken = checks.filter((c) => c.ok === false).length;
 
   return (
-    <div className="flex-1 pb-20">
-      <header className="relative overflow-hidden pt-safe">
+    <div className="flex-1 pb-20 bg-background">
+      <header className="relative overflow-hidden pt-safe bg-background">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="relative px-4 pb-4 pt-2">
@@ -128,7 +128,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
         </div>
       </header>
 
-      <div className="flex border-b border-border px-4 overflow-x-auto bg-card/50">
+      <div className="flex border-b border-border px-4 overflow-x-auto bg-background sticky top-0 z-20">
         {tabs.map((t) => (
           <motion.button key={t.id} onClick={() => setView(t.id)} whileTap={{ scale: 0.95 }}
             className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-all relative ${view === t.id ? "text-foreground" : "text-muted-foreground"}`}>
