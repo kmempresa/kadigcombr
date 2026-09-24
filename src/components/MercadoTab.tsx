@@ -280,6 +280,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     fetchEconomicIndicators();
     fetchDividends();
     fetchAgenda();
+    fetchBankOffers();
     // Atualizações controladas para preservar as cotas dos fornecedores.
     const marketInterval = setInterval(fetchMarketData, 60 * 1000);
     const newsInterval = setInterval(fetchMarketNews, 5 * 60 * 1000);
@@ -288,6 +289,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       clearInterval(newsInterval);
     };
   }, []);
+
+  const fetchBankOffers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bank-rates', { body: {} });
+      if (error) return;
+      if (data?.offers?.length) {
+        setBankOffers(data.offers);
+        setBankOffersUpdatedAt(data.updated_at || null);
+      }
+    } catch { /* seção simplesmente não aparece */ }
+  };
 
   const toggleFavorite = (symbol: string) => {
     setFavorites(prev => 
