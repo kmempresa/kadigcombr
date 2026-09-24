@@ -47,7 +47,7 @@ export const createNotification = async ({
 // Pre-built notification types
 export const notifyInvestmentAdded = (assetName: string, portfolioName: string, value: number) => {
   return createNotification({
-    title: 'Investimento adicionado 📈',
+    title: 'Investimento adicionado',
     message: `${assetName} foi adicionado à carteira "${portfolioName}" com valor de R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
     type: 'success',
     category: 'investment',
@@ -61,7 +61,7 @@ export const notifyInvestmentDeleted = (assetName: string, count?: number) => {
     : `${assetName} foi removido da sua carteira`;
   
   return createNotification({
-    title: 'Investimento excluído 🗑️',
+    title: 'Investimento excluído',
     message,
     type: 'warning',
     category: 'investment',
@@ -71,7 +71,7 @@ export const notifyInvestmentDeleted = (assetName: string, count?: number) => {
 
 export const notifyConnectionAdded = (bankName: string) => {
   return createNotification({
-    title: 'Conta conectada 🔗',
+    title: 'Conta conectada',
     message: `Sua conta do ${bankName} foi conectada com sucesso via Open Finance`,
     type: 'success',
     category: 'connection',
@@ -91,7 +91,7 @@ export const notifyConnectionRemoved = (bankName: string) => {
 
 export const notifyConnectionSynced = (bankName: string, created: number, updated: number) => {
   return createNotification({
-    title: 'Sincronização concluída ✅',
+    title: 'Sincronização concluída',
     message: `${bankName}: ${created} novo(s), ${updated} atualizado(s)`,
     type: 'success',
     category: 'sync',

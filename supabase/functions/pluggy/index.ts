@@ -150,6 +150,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    const { data: securityControl } = await supabase
+      .from('account_security_controls')
+      .select('status')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (securityControl && securityControl.status !== 'active') {
+      return new Response(JSON.stringify({ error: 'Account restricted' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { action, itemId } = await req.json();
 
