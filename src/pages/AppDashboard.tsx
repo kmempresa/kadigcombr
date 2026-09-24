@@ -2179,14 +2179,15 @@ const AppDashboard = () => {
               { icon: MessageSquare, label: "Suporte", action: () => setSupportDrawerOpen(true) },
               { icon: Info, label: "Sobre", action: () => navigate("/sobre") },
             ].map((item, index) => (
-              <button 
+              <Button
                 key={index} 
                 onClick={item.action}
-                className="w-full flex items-center justify-between py-4 border-b border-border"
+                variant="ghost"
+                className="h-auto w-full justify-between rounded-none border-b border-border px-0 py-4"
               >
-                <span className="font-medium text-foreground">{item.label}</span>
+                <span className="flex items-center gap-3 font-medium text-foreground"><item.icon className="h-5 w-5 text-primary" />{item.label}</span>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
+              </Button>
             ))}
 
             <button onClick={handleLogout} className="w-full flex items-center justify-between py-4 border-b border-border">

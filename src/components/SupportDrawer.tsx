@@ -1,181 +1,63 @@
-import { useState, useRef, useEffect } from "react";
-import { X, Upload, FileText, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, FileText, Loader2, Paperclip, Trash2 } from "lucide-react";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
+import { supabase } from "@/integrations/supabase/client";
 
-interface SupportDrawerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  userEmail?: string;
-}
-
-const supportCategories = [
-  { value: "carteira", label: "Minha Carteira" },
-  { value: "investimentos", label: "Investimentos" },
-  { value: "bianca", label: "Bianca (IA)" },
-  { value: "conta", label: "Minha Conta" },
-  { value: "pagamentos", label: "Pagamentos e Assinatura" },
-  { value: "bug", label: "Reportar um Bug" },
-  { value: "sugestao", label: "Sugestão de Melhoria" },
-  { value: "outro", label: "Outro" },
+interface Props { open: boolean; onOpenChange: (open: boolean) => void; userEmail?: string }
+const categories = [
+  ["carteira", "Minha Carteira"], ["investimentos", "Investimentos"], ["intelligence", "Intelligence"], ["conta", "Minha Conta"],
+  ["pagamentos", "Pagamentos e assinatura"], ["bug", "Reportar um problema"], ["sugestao", "Sugestão"], ["outro", "Outro"],
 ];
 
-const SupportDrawerComponent = ({ open, onOpenChange, userEmail = "" }: SupportDrawerProps) => {
+const SupportDrawerComponent = ({ open, onOpenChange, userEmail = "" }: Props) => {
   const { theme } = useTheme();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [email, setEmail] = useState(userEmail);
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (userEmail) setEmail(userEmail); }, [userEmail]);
 
-  // Update email when userEmail prop changes
-  useEffect(() => {
-    if (userEmail) setEmail(userEmail);
-  }, [userEmail]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    const validFiles = selectedFiles.filter(file => {
-      const isValidType = ["image/jpeg", "image/png", "application/pdf"].includes(file.type);
-      const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
-      if (!isValidType) toast.error(`${file.name}: Formato não aceito`);
-      if (!isValidSize) toast.error(`${file.name}: Arquivo muito grande (máx 5MB)`);
-      return isValidType && isValidSize;
-    });
-    setFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    const validFiles = droppedFiles.filter(file => {
-      const isValidType = ["image/jpeg", "image/png", "application/pdf"].includes(file.type);
-      const isValidSize = file.size <= 5 * 1024 * 1024;
-      return isValidType && isValidSize;
-    });
-    setFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = async () => {
-    if (!email || !category || !description) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
+  const addFiles = (list: FileList | null) => {
+    const next = Array.from(list ?? []);
+    for (const file of next) {
+      if (!["image/jpeg", "image/png", "application/pdf"].includes(file.type)) return toast.error("Use imagens JPG, PNG ou arquivos PDF.");
+      if (file.size > 5 * 1024 * 1024) return toast.error("Cada anexo pode ter até 5 MB.");
     }
-
-    setIsSubmitting(true);
-    
-    // Simulate sending - in production, this would call an edge function
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success("Chamado enviado com sucesso! Entraremos em contato em breve.");
-    setCategory("");
-    setDescription("");
-    setFiles([]);
-    onOpenChange(false);
-    setIsSubmitting(false);
+    if (files.length + next.length > 3) return toast.error("Envie no máximo 3 anexos.");
+    setFiles((current) => [...current, ...next]);
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
+  const submit = async () => {
+    if (!email || !category || description.trim().length < 10) return toast.error("Preencha os campos e descreva o pedido com pelo menos 10 caracteres.");
+    setBusy(true);
+    const body = new FormData(); body.append("email", email); body.append("category", category); body.append("description", description.trim()); files.forEach((file) => body.append("attachments", file));
+    const { error } = await supabase.functions.invoke("create-support-ticket", { body });
+    setBusy(false);
+    if (error) return toast.error("Não foi possível enviar o chamado. Tente novamente.");
+    setCategory(""); setDescription(""); setFiles([]); onOpenChange(false); toast.success("Chamado enviado. A equipe Kadig responderá por e-mail.");
   };
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={`h-[95vh] ${theme === "light" ? "light-theme" : ""} bg-background`}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
-          <span className="text-lg font-semibold text-foreground">Abrir chamado</span>
-          <button onClick={handleClose} className="p-2" type="button">
-            <X className="w-6 h-6 text-foreground" />
-          </button>
+  return <Drawer open={open} onOpenChange={onOpenChange}>
+    <DrawerContent className={`${theme === "light" ? "light-theme" : ""} h-[96dvh] overflow-hidden bg-background`}>
+      <header className="shrink-0 border-b border-border px-4 pb-4 safe-area-inset-top"><div className="flex items-center gap-3 pt-2"><Button variant="ghost" size="icon" className="rounded-full" onClick={() => onOpenChange(false)} aria-label="Voltar"><ArrowLeft /></Button><div><h1 className="text-xl font-semibold">Suporte</h1><p className="text-xs text-muted-foreground">Fale diretamente com a equipe Kadig</p></div></div></header>
+      <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-8 safe-area-inset-bottom">
+        <div className="space-y-4 rounded-xl border border-border bg-card p-4">
+          <label className="block text-sm font-medium">E-mail<Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 h-12 bg-background" /></label>
+          <label className="block text-sm font-medium">Assunto<Select value={category} onValueChange={setCategory}><SelectTrigger className="mt-2 h-12 bg-background"><SelectValue placeholder="Selecione uma opção" /></SelectTrigger><SelectContent className={theme === "light" ? "light-theme" : ""}>{categories.map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></label>
+          <label className="block text-sm font-medium">Como podemos ajudar?<textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} placeholder="Conte o que aconteceu..." className="mt-2 min-h-32 w-full resize-none rounded-md border border-input bg-background px-3 py-3 text-base outline-none focus:ring-2 focus:ring-ring" /></label>
+          <div><input ref={inputRef} type="file" multiple accept=".jpg,.jpeg,.png,.pdf" className="hidden" onChange={(e) => addFiles(e.target.files)} /><Button type="button" variant="outline" className="h-12 w-full rounded-xl" onClick={() => inputRef.current?.click()}><Paperclip />Adicionar anexo</Button><p className="mt-2 text-xs text-muted-foreground">Até 3 arquivos JPG, PNG ou PDF de 5 MB cada.</p></div>
+          {files.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center gap-3 rounded-lg bg-muted/50 p-3"><FileText className="text-primary" /><span className="min-w-0 flex-1 truncate text-sm">{file.name}</span><Button type="button" variant="ghost" size="icon" onClick={() => setFiles((all) => all.filter((_, i) => i !== index))} aria-label={`Remover ${file.name}`}><Trash2 /></Button></div>)}
         </div>
-
-        <div className="flex-1 overflow-y-auto p-4 bg-background">
-          <div className="bg-card rounded-2xl p-6 shadow-sm border border-border">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-foreground">Fale Conosco</h2>
-              <button 
-                onClick={handleClose}
-                type="button"
-                className="text-primary font-medium hover:underline"
-              >
-                Voltar
-              </button>
-            </div>
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  E-mail * <span className="text-muted-foreground font-normal">(Utilize de preferência o e-mail cadastrado na plataforma)</span>
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  className="bg-background border-input rounded-xl h-12 text-foreground"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Para onde precisa de ajuda?*
-                </label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="bg-background border-input rounded-xl h-12 text-foreground">
-                    <SelectValue placeholder="Busque ou selecione uma das opções" />
-                  </SelectTrigger>
-                  <SelectContent className={theme === "light" ? "light-theme" : ""}>
-                    {supportCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label htmlFor="support-description" className="block text-sm font-medium text-foreground mb-2">
-                  Descreva o problema *
-                </label>
-                <textarea
-                  id="support-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descreva detalhadamente o problema ou dúvida..."
-                  className="flex w-full rounded-xl border border-input bg-background px-3 py-3 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 min-h-[120px] resize-none"
-                />
-              </div>
-
-
-              <p className="text-xs text-muted-foreground">* Campo obrigatório</p>
-
-              {/* Submit Button */}
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !email || !category || !description}
-                className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg"
-              >
-                {isSubmitting ? "ENVIANDO..." : "ENVIAR"}
-              </Button>
-            </form>
-          </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
-  );
+        <Button type="submit" className="mt-4 h-12 w-full rounded-xl" disabled={busy || !email || !category || description.trim().length < 10}>{busy ? <><Loader2 className="animate-spin" />Enviando</> : "Enviar chamado"}</Button>
+      </form>
+    </DrawerContent>
+  </Drawer>;
 };
-
 export { SupportDrawerComponent as SupportDrawer };
