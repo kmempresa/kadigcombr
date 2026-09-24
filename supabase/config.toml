@@ -27,3 +27,5 @@ project_id = "purbhxibouvtmgtsoidh"
     verify_jwt = false
   [functions.kdg-update-plan]
     verify_jwt = false
+  [functions.bank-rates]
+    verify_jwt = false
