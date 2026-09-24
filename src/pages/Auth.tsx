@@ -37,6 +37,21 @@ const Auth = () => {
         return;
       }
       if (data.user) {
+        const deviceKey = "kadig-security-device";
+        let deviceId = localStorage.getItem(deviceKey);
+        const isNewDevice = !deviceId;
+        if (!deviceId) {
+          deviceId = crypto.randomUUID();
+          localStorage.setItem(deviceKey, deviceId);
+        }
+        void supabase.functions.invoke("security-event", { body: {
+          event_type: isNewDevice ? "new_device" : "login_success",
+          severity: isNewDevice ? "attention" : "info",
+          title: isNewDevice ? "Entrada em novo dispositivo" : "Entrada realizada",
+          summary: isNewDevice ? "A conta entrou em um dispositivo ainda não reconhecido." : "Uma nova sessão foi iniciada com sucesso.",
+          fingerprint: `${isNewDevice ? "new-device" : "login"}:${deviceId}`,
+          metadata: { platform: navigator.platform || "unknown" },
+        } });
         // Check if user has completed onboarding (has a profile)
         const {
           data: profile
