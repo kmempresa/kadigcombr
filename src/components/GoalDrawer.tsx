@@ -198,12 +198,12 @@ const GoalDrawer = ({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
-                  <svg className="w-4 h-4 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                  <svg className="w-4 h-4 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="font-medium text-foreground">Criar nova meta</span>
+                <span className="font-semibold text-foreground">Criar nova meta</span>
               </div>
               <button onClick={onClose} className="p-2 text-muted-foreground">
                 <HelpCircle className="w-5 h-5" />
@@ -220,7 +220,7 @@ const GoalDrawer = ({
                     className="w-full flex items-center justify-between py-3 border-b border-border"
                   >
                     <div className="flex items-start gap-2">
-                      <div className="w-1 h-5 bg-foreground rounded-full mt-0.5" />
+                      <div className="w-1 h-5 bg-primary rounded-full mt-0.5" />
                       <div className="text-left">
                         <p className="font-semibold text-foreground">
                           Média de proventos: {currentValue > 0 ? `R$ ${currentValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "-"}
@@ -246,7 +246,7 @@ const GoalDrawer = ({
                         {/* Foco na renda passiva recente */}
                         <div className="border-b border-border pb-4">
                           <div className="flex items-start gap-2 mb-2">
-                            <div className="w-1 h-4 bg-foreground rounded-full mt-0.5" />
+                            <div className="w-1 h-4 bg-primary rounded-full mt-0.5" />
                             <h4 className="font-semibold text-foreground text-sm">Foco na renda passiva recente</h4>
                           </div>
                           <p className="text-sm text-muted-foreground leading-relaxed pl-3">
@@ -261,7 +261,7 @@ const GoalDrawer = ({
                         {/* Diluição no efeito de calendário */}
                         <div className="border-b border-border pb-4">
                           <div className="flex items-start gap-2 mb-2">
-                            <div className="w-1 h-4 bg-foreground rounded-full mt-0.5" />
+                            <div className="w-1 h-4 bg-primary rounded-full mt-0.5" />
                             <h4 className="font-semibold text-foreground text-sm">Diluição no efeito de calendário</h4>
                           </div>
                           <p className="text-sm text-muted-foreground leading-relaxed pl-3">
@@ -278,7 +278,7 @@ const GoalDrawer = ({
 
               {/* Title section */}
               <div className="flex items-start gap-2">
-                <div className="w-1 h-5 bg-foreground rounded-full mt-0.5" />
+                <div className="w-1 h-5 bg-primary rounded-full mt-0.5" />
                 <div>
                   <h3 className="font-semibold text-foreground">{title}</h3>
                   <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{description}</p>
@@ -286,7 +286,7 @@ const GoalDrawer = ({
               </div>
 
               {/* Date Input */}
-              <div className="bg-muted rounded-2xl p-4">
+              <div className="bg-card border border-border rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-foreground font-medium">Data fim:</span>
                   <input
@@ -301,7 +301,7 @@ const GoalDrawer = ({
               </div>
 
               {/* Target Value Input */}
-              <div className="bg-muted rounded-2xl p-4">
+              <div className="bg-card border border-border rounded-2xl p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-foreground font-medium">Objetivo:</span>
                   <div className="flex items-center gap-1 text-right">
