@@ -31,10 +31,13 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const [profiles, subscriptions, portfolios] = await Promise.all([
+    const [profiles, subscriptions, portfolios, securityControls, securityEvents, securityActions] = await Promise.all([
       all("profiles", "user_id, full_name, email, phone, investor_profile, investment_goal, created_at, updated_at"),
       all("subscriptions", "user_id, plan, status, price_monthly, current_period_start, current_period_end, created_at, updated_at"),
       all("portfolios", "id, user_id, name, total_value, total_gain, created_at, updated_at"),
+      all("account_security_controls", "user_id, status, public_reason, actioned_by, actioned_at, updated_at"),
+      all("security_events", "id, user_id, event_type, severity, status, title, summary, source, metadata, occurrence_count, first_seen_at, last_seen_at, resolved_at, resolved_by, created_at"),
+      all("security_admin_actions", "id, user_id, action, reason, public_message, mandatory_notice, actor, security_event_id, created_at"),
     ]);
 
     const patrimonyByUser: Record<string, number> = {};
@@ -50,10 +53,16 @@ Deno.serve(async (req) => {
         active_subscriptions: active.length,
         mrr,
         total_patrimony: Object.values(patrimonyByUser).reduce((a, b) => a + b, 0),
+        open_security_events: securityEvents.filter((e) => e.status === "open" || e.status === "reviewing").length,
+        critical_security_events: securityEvents.filter((e) => e.severity === "critical" && (e.status === "open" || e.status === "reviewing")).length,
+        restricted_accounts: securityControls.filter((c) => c.status !== "active").length,
       },
       profiles: profiles.map((p) => ({ ...p, total_patrimony: patrimonyByUser[p.user_id] ?? 0 })),
       subscriptions,
       portfolios,
+      security_controls: securityControls,
+      security_events: securityEvents,
+      security_actions: securityActions,
     });
   } catch (e) {
     console.error("kdg-export failed:", (e as Error).message);
