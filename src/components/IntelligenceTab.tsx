@@ -27,7 +27,7 @@ interface Props { userName: string; showValues: boolean; initialView?: IntelView
 
 export default function IntelligenceTab({ userName, showValues, initialView = "hoje", initialWhatIf = "" }: Props) {
   const navigate = useNavigate();
-  const { loading, dataWarning, userId, investments, connections, globals, goals, ind, result, analyzedAt, reload } = useIntelligence();
+  const { loading, dataWarning, userId, investments, connections, globals, goals, ind, result, analyzedAt, reload, refresh, refreshing } = useIntelligence();
   const [view, setView] = useState<IntelView>(initialView);
   const [rules, setRules] = useState<AutopilotRules>(DEFAULT_RULES);
   const [whatIfText, setWhatIfText] = useState(initialWhatIf);
@@ -144,7 +144,10 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
             <div>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>
-                <button className="text-xs text-primary" onClick={() => reload()}>Atualizar</button>
+                <button className="text-xs text-primary disabled:opacity-60 inline-flex items-center gap-1" disabled={refreshing}
+                  onClick={async () => { await refresh(); toast.success("Análise atualizada"); }}>
+                  {refreshing && <Loader2 className="w-3 h-3 animate-spin" />}{refreshing ? "Atualizando" : "Atualizar"}
+                </button>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                  {investments.length} ativo{investments.length !== 1 ? "s" : ""} · {connections} conexão{connections !== 1 ? "ões" : ""} · {globals.length} be{globals.length !== 1 ? "ns" : "m"} · {v(result.netWorth, true)} analisados

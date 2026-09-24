@@ -18,6 +18,7 @@ export function useIntelligence() {
   const [analyzedAt, setAnalyzedAt] = useState<Date | null>(null);
   const [dataWarning, setDataWarning] = useState<string | null>(null);
   const chId = useRef(`intel-${++channelSeq}`);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -86,7 +87,15 @@ export function useIntelligence() {
     [investments, result.netWorth],
   );
 
-  return { analyzedAt, loading, dataWarning, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await supabase.functions.invoke("update-prices", { body: {} }).catch(() => null);
+      await load();
+    } finally { setRefreshing(false); }
+  }, [load]);
+
+  return { refreshing, refresh, analyzedAt, loading, dataWarning, userId, investments, globals, goals, connections, ind, result, assetShare, reload: load };
 }
 
 /** Push a notification when concentration rises significantly (once per day per level). */

@@ -133,6 +133,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       if (error) throw error;
       
       if (data?.news) {
+        try { localStorage.setItem('kadig-mkt-news', JSON.stringify(data.news)); } catch {}
         setMarketNews(data.news);
         // Calculate pages based on actual news count
         const pages = Math.ceil(data.news.length / newsPerPage);
@@ -145,7 +146,6 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   };
 
   const fetchMarketData = async () => {
-    setLoading(true);
     setMarketError(false);
     try {
       const { data, error } = await supabase.functions.invoke('market-data', {
@@ -155,6 +155,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       if (error) throw error;
       
       if (data) {
+        if (data.maioresAltas?.length || data.indices?.length) {
+          try { localStorage.setItem('kadig-mkt-all', JSON.stringify(data)); } catch {}
+        }
         setMaioresAltas(data.maioresAltas || []);
         setMaioresBaixas(data.maioresBaixas || []);
         setMarketIndices(data.indices || []);
@@ -258,6 +261,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   };
 
   useEffect(() => {
+    // Mostra na hora a última cotação real recebida (com horário), enquanto busca a nova.
+    try {
+      const c = JSON.parse(localStorage.getItem('kadig-mkt-all') || 'null');
+      if (c) {
+        setMaioresAltas(c.maioresAltas || []); setMaioresBaixas(c.maioresBaixas || []); setMarketIndices(c.indices || []);
+        if (c.lastUpdate) { const u = new Date(c.lastUpdate); setLastUpdate(u.toLocaleDateString("pt-BR") + " às " + u.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })); }
+        setLoading(false);
+      }
+      const n = JSON.parse(localStorage.getItem('kadig-mkt-news') || 'null');
+      if (n?.length) { setMarketNews(n); setTotalNewsPages(Math.max(1, Math.ceil(n.length / newsPerPage))); }
+    } catch {}
     fetchMarketData();
     fetchMarketNews();
     fetchUserInvestments();
