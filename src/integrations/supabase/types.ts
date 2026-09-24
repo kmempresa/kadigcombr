@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_security_controls: {
+        Row: {
+          actioned_at: string | null
+          actioned_by: string | null
+          internal_reason: string | null
+          public_reason: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          internal_reason?: string | null
+          public_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          internal_reason?: string | null
+          public_reason?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_cache: {
         Row: {
           body: string
@@ -592,6 +622,110 @@ export type Database = {
         }
         Relationships: []
       }
+      security_admin_actions: {
+        Row: {
+          action: string
+          actor: string
+          created_at: string
+          id: string
+          mandatory_notice: boolean
+          metadata: Json
+          public_message: string | null
+          reason: string | null
+          security_event_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor: string
+          created_at?: string
+          id?: string
+          mandatory_notice?: boolean
+          metadata?: Json
+          public_message?: string | null
+          reason?: string | null
+          security_event_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          created_at?: string
+          id?: string
+          mandatory_notice?: boolean
+          metadata?: Json
+          public_message?: string | null
+          reason?: string | null
+          security_event_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_admin_actions_security_event_id_fkey"
+            columns: ["security_event_id"]
+            isOneToOne: false
+            referencedRelation: "security_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          fingerprint: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          metadata: Json
+          occurrence_count: number
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source: string
+          status: string
+          summary: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          fingerprint?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json
+          occurrence_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source?: string
+          status?: string
+          summary: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          fingerprint?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json
+          occurrence_count?: number
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source?: string
+          status?: string
+          summary?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
@@ -703,6 +837,10 @@ export type Database = {
     }
     Functions: {
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
+      is_account_security_active: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
