@@ -1,12 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { useTheme } from "@/hooks/useTheme";
 import kadigIcon from "@/assets/kadig-icon-new.png";
+import AccountPageShell from "@/components/AccountPageShell";
+import { Button } from "@/components/ui/button";
 
 const Sobre = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
 
   const links = [
     { label: "Termos de Uso", path: "/termos-de-uso" },
@@ -15,19 +15,8 @@ const Sobre = () => {
   ];
 
   return (
-    <div className={`min-h-screen bg-background ${theme === "light" ? "light-theme" : ""}`}>
-      {/* Header */}
-      <header className="flex items-center gap-4 p-4 safe-area-inset-top">
-        <button 
-          onClick={() => navigate("/app", { state: { returnToTab: "conta" } })}
-          className="w-10 h-10 rounded-full bg-card flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <h1 className="text-xl font-semibold text-foreground">Sobre</h1>
-      </header>
-
-      <div className="p-6 space-y-8">
+    <AccountPageShell title="Sobre" subtitle="Informações e documentos da Kadig">
+      <div className="space-y-7">
         {/* Logo and Version */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -46,12 +35,11 @@ const Sobre = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-5 border border-border"
+           className="bg-card rounded-xl p-5 border border-border"
         >
           <p className="text-muted-foreground text-center leading-relaxed">
-            O Kadig é seu assistente financeiro pessoal, projetado para ajudá-lo a 
-            gerenciar suas carteiras de investimentos, acompanhar seu patrimônio e 
-            tomar decisões financeiras mais inteligentes.
+            A Kadig analisa seu patrimônio, encontra oportunidades e riscos e ajuda
+            você a tomar decisões financeiras melhores.
           </p>
         </motion.div>
 
@@ -60,17 +48,18 @@ const Sobre = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="space-y-3"
+          className="overflow-hidden rounded-xl border border-border bg-card"
         >
           {links.map((link, index) => (
-            <button
+            <Button
+              variant="ghost"
               key={index}
               onClick={() => navigate(link.path)}
-              className="w-full flex items-center justify-between py-4 px-4 bg-card rounded-xl border border-border hover:bg-muted/50 transition-colors"
+              className="h-auto w-full justify-between rounded-none border-b border-border px-4 py-4 last:border-b-0"
             >
               <span className="font-medium text-foreground">{link.label}</span>
               <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </button>
+            </Button>
           ))}
         </motion.div>
 
@@ -89,7 +78,7 @@ const Sobre = () => {
           </p>
         </motion.div>
       </div>
-    </div>
+    </AccountPageShell>
   );
 };
 

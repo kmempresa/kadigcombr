@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
-import TwoFactorSection from "@/components/TwoFactorSection";
 
 interface ProfileDrawerProps {
   open: boolean;
@@ -363,7 +362,6 @@ const ProfileDrawer = ({ open, onOpenChange, userData, onProfileUpdate }: Profil
             </motion.div>
           )}
 
-          <TwoFactorSection />
         </div>
       </DrawerContent>
     </Drawer>

@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Loader2, Moon, Sun } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/useTheme";
 import { motion } from "framer-motion";
+import AccountPageShell from "@/components/AccountPageShell";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Preferencias = () => {
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const [loading, setLoading] = useState(true);
   
   // Notification states
   const [notifications, setNotifications] = useState({
@@ -17,40 +19,40 @@ const Preferencias = () => {
     promocoes: true,
   });
 
-  const handleNotificationChange = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { setLoading(false); return; }
+      const { data: saved } = await supabase.from("user_preferences").select("eventos_carteira, noticias, educacional, promocoes").eq("user_id", data.user.id).maybeSingle();
+      if (saved) setNotifications({ eventosCarteira: saved.eventos_carteira, noticias: saved.noticias, educacional: saved.educacional, promocoes: saved.promocoes });
+      setLoading(false);
+    });
+  }, []);
+
+  const handleNotificationChange = async (key: keyof typeof notifications) => {
+    const next = { ...notifications, [key]: !notifications[key] };
+    setNotifications(next);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error } = await supabase.from("user_preferences").upsert({ user_id: user.id, eventos_carteira: next.eventosCarteira, noticias: next.noticias, educacional: next.educacional, promocoes: next.promocoes, updated_at: new Date().toISOString() });
+    if (error) { setNotifications(notifications); toast.error("Não foi possível salvar a preferência."); }
   };
 
   return (
-    <div className={`${theme === "light" ? "light-theme" : ""} min-h-screen bg-background`}>
-      {/* Header */}
-      <header className="flex items-center gap-4 p-4 safe-area-inset-top">
-        <button 
-          onClick={() => navigate("/app", { state: { returnToTab: "conta" } })}
-          className="w-10 h-10 rounded-full bg-card flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5 text-foreground" />
-        </button>
-        <h1 className="text-xl font-semibold text-foreground">Preferências</h1>
-      </header>
-
-      <div className="p-4 space-y-8">
+    <AccountPageShell title="Preferências" subtitle="Ajuste a Kadig ao seu jeito">
+      <div className="space-y-8">
         {/* Aparência Section */}
         <section>
-          <h2 className="text-center text-lg font-semibold text-foreground mb-6">Aparência</h2>
+           <h2 className="text-sm font-semibold text-foreground mb-4">Aparência</h2>
           
           <div className="grid grid-cols-2 gap-4">
             {/* Modo Claro */}
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => setTheme("light")}
-              className={`relative rounded-2xl p-4 transition-all ${
+              className={`relative rounded-xl border p-4 transition-all ${
                 theme === "light" 
-                  ? "bg-muted ring-2 ring-primary" 
-                  : "bg-card"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary" 
+                  : "border-border bg-card"
               }`}
             >
               {/* Checkmark */}
@@ -63,7 +65,7 @@ const Preferencias = () => {
               </div>
               
               {/* Phone Preview Light */}
-              <div className="bg-card rounded-xl p-3 mb-3 border border-border">
+              <div className="bg-background rounded-lg p-3 mb-3 border border-border">
                 <div className="flex items-center gap-1 mb-2">
                   <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
                   <div className="flex-1" />
@@ -75,9 +77,9 @@ const Preferencias = () => {
                     {/* Colorful ring chart */}
                     <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                       <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(32 95% 44%)" strokeWidth="8" strokeDasharray="70 150" />
+                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(var(--primary))" strokeWidth="8" strokeDasharray="70 150" />
                       <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(280 70% 50%)" strokeWidth="8" strokeDasharray="50 150" />
+                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(var(--accent))" strokeWidth="8" strokeDasharray="50 150" />
                       <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
                       <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(var(--primary))" strokeWidth="8" strokeDasharray="30 150" />
                     </svg>
@@ -100,10 +102,10 @@ const Preferencias = () => {
             <motion.button
               whileTap={{ scale: 0.98 }}
               onClick={() => setTheme("dark")}
-              className={`relative rounded-2xl p-4 transition-all ${
+              className={`relative rounded-xl border p-4 transition-all ${
                 theme === "dark" 
-                  ? "bg-secondary ring-2 ring-primary" 
-                  : "bg-card"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary" 
+                  : "border-border bg-card"
               }`}
             >
               {/* Checkmark */}
@@ -116,33 +118,33 @@ const Preferencias = () => {
               </div>
               
               {/* Phone Preview Dark */}
-              <div className="bg-[hsl(220_50%_12%)] rounded-xl p-3 mb-3 border border-[hsl(220_40%_20%)]">
+              <div className="bg-secondary rounded-lg p-3 mb-3 border border-border">
                 <div className="flex items-center gap-1 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-[hsl(210_20%_70%/0.4)]" />
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40" />
                   <div className="flex-1" />
-                  <div className="w-2 h-2 rounded-full bg-[hsl(210_100%_60%)]" />
-                  <div className="w-2 h-2 rounded-full bg-[hsl(210_100%_60%)]" />
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                  <div className="w-2 h-2 rounded-full bg-primary" />
                 </div>
                 <div className="flex items-center justify-center py-4">
                   <div className="relative w-16 h-16">
                     {/* Colorful ring chart */}
                     <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(220 40% 20%)" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(32 95% 44%)" strokeWidth="8" strokeDasharray="70 150" />
-                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(220 40% 20%)" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(280 70% 50%)" strokeWidth="8" strokeDasharray="50 150" />
-                      <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(220 40% 20%)" strokeWidth="8" />
-                      <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(210 100% 60%)" strokeWidth="8" strokeDasharray="30 150" />
+                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                      <circle cx="50" cy="50" r="35" fill="none" stroke="hsl(var(--primary))" strokeWidth="8" strokeDasharray="70 150" />
+                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                      <circle cx="50" cy="50" r="25" fill="none" stroke="hsl(var(--accent))" strokeWidth="8" strokeDasharray="50 150" />
+                      <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+                      <circle cx="50" cy="50" r="15" fill="none" stroke="hsl(var(--primary))" strokeWidth="8" strokeDasharray="30 150" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Moon className="w-5 h-5 text-[hsl(210_20%_70%)]" />
+                      <Moon className="w-5 h-5 text-muted-foreground" />
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <div className="h-1 flex-1 bg-[hsl(210_100%_60%)] rounded-full" />
-                  <div className="h-1 flex-1 bg-[hsl(220_40%_20%)] rounded-full" />
-                  <div className="h-1 flex-1 bg-[hsl(220_40%_20%)] rounded-full" />
+                  <div className="h-1 flex-1 bg-primary rounded-full" />
+                  <div className="h-1 flex-1 bg-muted rounded-full" />
+                  <div className="h-1 flex-1 bg-muted rounded-full" />
                 </div>
               </div>
               
@@ -153,12 +155,12 @@ const Preferencias = () => {
 
         {/* Notificações Section */}
         <section>
-          <h2 className="text-center text-lg font-semibold text-foreground mb-2">Notificações</h2>
-          <p className="text-center text-sm text-muted-foreground mb-6">
+           <h2 className="text-sm font-semibold text-foreground mb-2">Notificações</h2>
+           <p className="text-sm text-muted-foreground mb-4">
             Controle as informações que você deseja receber.
           </p>
           
-          <div className="space-y-2">
+           {loading ? <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div> : <div className="overflow-hidden rounded-xl border border-border bg-card">
             {[
               { key: "eventosCarteira", label: "Eventos da Carteira" },
               { key: "noticias", label: "Notícias" },
@@ -167,7 +169,7 @@ const Preferencias = () => {
             ].map((item) => (
               <div 
                 key={item.key}
-                className="flex items-center justify-between py-4 px-4 bg-card rounded-xl"
+                 className="flex items-center justify-between py-4 px-4 border-b border-border last:border-b-0"
               >
                 <span className="font-medium text-foreground">{item.label}</span>
                 <Switch
@@ -177,10 +179,10 @@ const Preferencias = () => {
                 />
               </div>
             ))}
-          </div>
+          </div>}
         </section>
       </div>
-    </div>
+    </AccountPageShell>
   );
 };
 

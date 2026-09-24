@@ -634,6 +634,69 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          attachment_paths: string[]
+          category: string
+          created_at: string
+          description: string
+          email: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attachment_paths?: string[]
+          category: string
+          created_at?: string
+          description: string
+          email: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attachment_paths?: string[]
+          category?: string
+          created_at?: string
+          description?: string
+          email?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          educacional: boolean
+          eventos_carteira: boolean
+          noticias: boolean
+          promocoes: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          educacional?: boolean
+          eventos_carteira?: boolean
+          noticias?: boolean
+          promocoes?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          educacional?: boolean
+          eventos_carteira?: boolean
+          noticias?: boolean
+          promocoes?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

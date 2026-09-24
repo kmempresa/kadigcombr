@@ -8,3 +8,4 @@
 - [ ] Validar os fluxos principais no celular e no desktop
 - [ ] Executar testes e confirmar ausência de erros de execução
 - [ ] Documentar dependências externas e riscos restantes
+- [x] Padronizar Segurança, Preferências, Suporte e Sobre; corrigir todas as ações da Conta
