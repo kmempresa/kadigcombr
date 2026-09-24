@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BankLogo } from "@/components/BankLogo";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search,
@@ -114,6 +115,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [comparadorOpen, setComparadorOpen] = useState(false);
   const [userInvestments, setUserInvestments] = useState<any[]>([]);
   const [economicIndicators, setEconomicIndicators] = useState<any>(null);
+  const [bankOffers, setBankOffers] = useState<any[]>([]);
+  const [bankOffersUpdatedAt, setBankOffersUpdatedAt] = useState<string | null>(null);
   // Real dividends data from API
   const [dividends, setDividends] = useState<DividendItem[]>([]);
   const [loadingDividends, setLoadingDividends] = useState(false);
@@ -278,6 +281,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
     fetchEconomicIndicators();
     fetchDividends();
     fetchAgenda();
+    fetchBankOffers();
     // Atualizações controladas para preservar as cotas dos fornecedores.
     const marketInterval = setInterval(fetchMarketData, 60 * 1000);
     const newsInterval = setInterval(fetchMarketNews, 5 * 60 * 1000);
@@ -286,6 +290,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       clearInterval(newsInterval);
     };
   }, []);
+
+  const fetchBankOffers = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('bank-rates', { body: {} });
+      if (error) return;
+      if (data?.offers?.length) {
+        setBankOffers(data.offers);
+        setBankOffersUpdatedAt(data.updated_at || null);
+      }
+    } catch { /* seção simplesmente não aparece */ }
+  };
 
   const toggleFavorite = (symbol: string) => {
     setFavorites(prev => 
@@ -411,6 +426,42 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               </button>
             ))}
           </section>
+
+          {/* Melhores ofertas de renda fixa */}
+          {bankOffers.length > 0 && (
+            <section className="px-4 pb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-6 bg-primary rounded-full" />
+                <h2 className="text-lg font-semibold text-white">Melhores ofertas de renda fixa</h2>
+              </div>
+              <div className="space-y-2">
+                {bankOffers.map((offer) => (
+                  <div
+                    key={offer.id}
+                    className="bg-[#252b3d] rounded-xl px-4 py-3 flex items-center gap-3"
+                  >
+                    <BankLogo connectorName={offer.bank_name} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white text-sm font-medium truncate">{offer.bank_name}</p>
+                      <p className="text-gray-400 text-xs truncate">
+                        {offer.product}
+                        {offer.term ? ` · ${offer.term}` : ""}
+                        {offer.min_investment != null ? ` · mín. ${formatPrice(offer.min_investment)}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-success whitespace-nowrap">
+                      {offer.rate_label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {bankOffersUpdatedAt && (
+                <p className="text-gray-500 text-xs mt-2">
+                  Taxas divulgadas pelos bancos, atualizadas em {new Date(bankOffersUpdatedAt).toLocaleDateString("pt-BR")}. Confira as condições no site de cada banco antes de investir.
+                </p>
+              )}
+            </section>
+          )}
 
           {/* Principais notícias do mercado */}
           <section className="px-4 pb-6">
