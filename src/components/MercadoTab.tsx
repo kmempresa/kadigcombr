@@ -484,13 +484,17 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   </div>
                 ))}
               </div>
+              {filteredOffers.length === 0 && (
+                <p className="text-gray-500 text-sm py-2">Nenhuma oferta de {offerFilter} no momento.</p>
+              )}
               {bankOffersUpdatedAt && (
                 <p className="text-gray-500 text-xs mt-2">
                   Taxas divulgadas pelos bancos, atualizadas em {new Date(bankOffersUpdatedAt).toLocaleDateString("pt-BR")}. Confira as condições no site de cada banco antes de investir.
                 </p>
               )}
             </section>
-          )}
+            );
+          })()}
 
           {/* Principais notícias do mercado */}
           <section className="px-4 pb-6">
