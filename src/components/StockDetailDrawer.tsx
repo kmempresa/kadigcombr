@@ -854,7 +854,7 @@ const StockDetailDrawer = ({
                                         item.sentiment === 'Negative' ? 'text-red-500' : 
                                         'text-muted-foreground'
                                       }`}>
-                                        {item.sentiment === 'Positive' ? '📈' : item.sentiment === 'Negative' ? '📉' : '➖'}
+                                        {item.sentiment === 'Positive' ? '+' : item.sentiment === 'Negative' ? '-' : '='}
                                       </span>
                                     </>
                                   )}

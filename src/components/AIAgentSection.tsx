@@ -111,7 +111,7 @@ export const AIAgentSection = () => {
                     <div className="bg-muted rounded-xl sm:rounded-2xl rounded-bl-md px-3 sm:px-4 py-2 sm:py-3 max-w-[85%]">
                       <p className="text-xs sm:text-sm text-foreground">
                         Sua carteira rendeu <span className="text-primary font-semibold">+2.3%</span> este mês, 
-                        superando o CDI em <span className="text-green-500 font-semibold">127%</span>! 🚀
+                        superando o CDI em <span className="text-green-500 font-semibold">127%</span>.
                       </p>
                     </div>
                   </div>

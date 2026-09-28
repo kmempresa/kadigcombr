@@ -71,7 +71,7 @@ export const useApplePurchase = (): UsePurchaseResult => {
         // Activate subscription in database
         const activated = await activateSubscription();
         if (activated) {
-          toast.success("🎉 Bem-vindo ao Kadig Premium!");
+          toast.success("Bem-vindo à Kadig Premium");
         }
         
         setIsProcessing(false);
