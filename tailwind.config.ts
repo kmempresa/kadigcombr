@@ -59,6 +59,10 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        connect: {
+          DEFAULT: "hsl(var(--connect-surface))",
+          foreground: "hsl(var(--connect-foreground))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
