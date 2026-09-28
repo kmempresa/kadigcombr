@@ -36,6 +36,13 @@
       "when": 1790617794538,
       "tag": "0004_harden_security_definer_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790620978900,
+      "tag": "0005_welcome_notification_no_emoji",
+      "breakpoints": true
     }
   ]
 }
