@@ -1,10 +1,12 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
-import { Body, Button, Container, Head, Heading, Html, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
+import { Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
+
+const LOGO_URL = 'https://appinvestt.lovable.app/email/kadig-logo.png'
 
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif' }
 const container = { maxWidth: '480px', margin: '0 auto', padding: '32px 24px' }
-const brand = { fontSize: '20px', fontWeight: 800 as const, letterSpacing: '4px', color: '#0a1a33', margin: '0 0 28px' }
+const logo = { display: 'block', width: '132px', height: 'auto', margin: '0 0 20px' }
 const bar = { height: '3px', width: '48px', backgroundColor: '#3399ff', borderRadius: '2px', margin: '0 0 28px' }
 const h1 = { fontSize: '22px', fontWeight: 700 as const, color: '#1a2233', margin: '0 0 16px' }
 export const text = { fontSize: '15px', color: '#627089', lineHeight: '1.6', margin: '0 0 22px' }
@@ -20,7 +22,7 @@ export const KadigEmail = ({ preview, title, children, cta, url, note }: {
     <Preview>{preview}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Text style={brand}>KADIG</Text>
+        <Img src={LOGO_URL} alt="Kadig" width="132" style={logo} />
         <Section style={bar} />
         <Heading style={h1}>{title}</Heading>
         {children}
