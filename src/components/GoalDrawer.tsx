@@ -29,6 +29,8 @@ const GoalDrawer = ({
   const [loading, setLoading] = useState(false);
   const [existingGoalId, setExistingGoalId] = useState<string | null>(null);
   const [infoExpanded, setInfoExpanded] = useState(false);
+  const [monthly, setMonthly] = useState("");
+  const [day, setDay] = useState("");
 
   // Format currency input
   const formatCurrencyInput = (value: string) => {
@@ -70,6 +72,8 @@ const GoalDrawer = ({
 
       if (data) {
         setExistingGoalId(data.id);
+        setMonthly(data.monthly_contribution ? formatCurrencyInput((Number(data.monthly_contribution) * 100).toFixed(0)) : "");
+        setDay(data.contribution_day ? String(data.contribution_day) : "");
         setTargetValue(formatCurrencyInput((data.target_value * 100).toString()));
         if (data.target_date) {
           const date = new Date(data.target_date);
@@ -79,6 +83,8 @@ const GoalDrawer = ({
         setExistingGoalId(null);
         setTargetValue("");
         setTargetDate("");
+        setMonthly("");
+        setDay("");
       }
     } catch (error) {
       console.error("Error loading goal:", error);
@@ -108,7 +114,18 @@ const GoalDrawer = ({
         }
       }
 
+      const monthlyValue = parseCurrency(monthly);
+      const dayValue = Number(day);
+      if (monthlyValue > 0 && !(dayValue >= 1 && dayValue <= 28)) {
+        toast.error("Escolha um dia do aporte entre 1 e 28");
+        return;
+      }
+      const reminder = {
+        monthly_contribution: monthlyValue > 0 ? monthlyValue : null,
+        contribution_day: monthlyValue > 0 ? dayValue : null,
+      };
       const goalData = {
+        ...reminder,
         user_id: session.user.id,
         portfolio_id: portfolioId,
         type,
@@ -125,6 +142,7 @@ const GoalDrawer = ({
             target_value: goalData.target_value,
             target_date: goalData.target_date,
             current_value: goalData.current_value,
+            ...reminder,
           })
           .eq("id", existingGoalId);
 
@@ -318,6 +336,32 @@ const GoalDrawer = ({
                       className="text-right text-foreground bg-transparent border-none focus:outline-none w-32 placeholder:text-muted-foreground/50"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Contribution reminder */}
+              <div className="flex items-start gap-2 pt-2">
+                <div className="w-1 h-5 bg-primary rounded-full mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-foreground">Lembrete de aporte</h3>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">Opcional. Avisamos todo mês no dia escolhido.</p>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground font-medium">Aporte mensal:</span>
+                  <div className="flex items-center gap-1 text-right">
+                    <span className="text-muted-foreground">R$</span>
+                    <input type="text" inputMode="numeric" value={monthly} onChange={(e) => setMonthly(formatCurrencyInput(e.target.value))} placeholder="00,00"
+                      className="text-right text-foreground bg-transparent border-none focus:outline-none w-32 placeholder:text-muted-foreground/50" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground font-medium">Dia do aporte:</span>
+                  <input type="text" inputMode="numeric" value={day} onChange={(e) => setDay(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="1 a 28"
+                    className="text-right text-foreground bg-transparent border-none focus:outline-none w-24 placeholder:text-muted-foreground/50" />
                 </div>
               </div>
             </div>
