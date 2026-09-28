@@ -26,7 +26,8 @@ export default function DividendsCard({ showValues, refreshKey }: { showValues: 
   const received = (items || []).filter((i) => !i.upcoming);
   const upcoming = (items || []).filter((i) => i.upcoming).reverse();
   const total12 = received.reduce((s, i) => s + i.total, 0);
-  const hidden = expanded ? 0 : Math.max(0, upcoming.length - COLLAPSED) + Math.max(0, received.length - COLLAPSED);
+  const collapsible = upcoming.length > COLLAPSED || received.length > COLLAPSED;
+  const hidden = Math.max(0, upcoming.length - COLLAPSED) + Math.max(0, received.length - COLLAPSED);
 
   return (
     <div className="space-y-3">
