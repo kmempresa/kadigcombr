@@ -47,7 +47,7 @@ export default function DividendsCard({ showValues, refreshKey }: { showValues: 
               <p className="text-xs font-medium text-muted-foreground">Últimos pagamentos</p>
               {(expanded ? received : received.slice(0, COLLAPSED)).map((i, k) => <Row key={`r${k}`} i={i} v={v} />)}
             </div> : <p className="text-sm text-muted-foreground">Nenhum provento pago nos últimos 12 meses para as ações da carteira.</p>}
-            {(hidden > 0 || expanded) && hidden === 0 && (upcoming.length > COLLAPSED || received.length > COLLAPSED) && (
+            {collapsible && (
               <button
                 type="button"
                 onClick={() => setExpanded((e) => !e)}
