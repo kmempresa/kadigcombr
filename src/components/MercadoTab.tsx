@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { BankLogo } from "@/components/BankLogo";
+import PriceAlertsDrawer from "@/components/PriceAlertsDrawer";
+import { BellRing } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Search,
@@ -109,6 +111,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   const [showAllDividends, setShowAllDividends] = useState(false);
   const [showAllNews, setShowAllNews] = useState(false);
   const [simuladorOpen, setSimuladorOpen] = useState(false);
+  const [alertsOpen, setAlertsOpen] = useState(false);
   const [carteirasOpen, setCarteirasOpen] = useState(false);
   const [relatoriosOpen, setRelatoriosOpen] = useState(false);
   const [indiceKadigOpen, setIndiceKadigOpen] = useState(false);
@@ -336,6 +339,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   };
 
   const tools = [
+    { label: "Alertas de preço", gradient: "from-primary to-primary", icon: BellRing, onClick: () => setAlertsOpen(true) },
     { label: "Simulador de investimentos", gradient: "from-primary to-primary", icon: Calculator, onClick: () => setSimuladorOpen(true) },
     { label: "Comparador de ativos", gradient: "from-primary to-primary", icon: BarChart3, onClick: () => setComparadorOpen(true) },
     { label: "Carteiras recomendadas", gradient: "from-primary to-primary", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
@@ -1023,6 +1027,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
         isFavorite={selectedStock ? favorites.includes(selectedStock.symbol) : false}
       />
       
+      <PriceAlertsDrawer open={alertsOpen} onOpenChange={setAlertsOpen} />
+
       {/* Simulador Drawer */}
       <SimuladorDrawer
         open={simuladorOpen}

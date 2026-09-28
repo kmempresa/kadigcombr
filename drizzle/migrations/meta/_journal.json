@@ -43,6 +43,13 @@
       "when": 1790620978900,
       "tag": "0005_welcome_notification_no_emoji",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790621929043,
+      "tag": "0006_kadig_extras_alerts_goal_reminders",
+      "breakpoints": true
     }
   ]
 }

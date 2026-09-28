@@ -9,6 +9,7 @@ import {
   simulateWhatIf, parseAmount, checkAutopilot, recommendWhatIf, brl, formatMonths, BUCKETS,
   type AutopilotRules, type Insight,
 } from "@/lib/opportunityEngine";
+import CdiComparisonCard from "@/components/CdiComparisonCard";
 import { useIntelligence, useIntelligenceAlerts } from "@/hooks/useIntelligence";
 
 const DEFAULT_RULES: AutopilotRules = {
@@ -141,6 +142,7 @@ export default function IntelligenceTab({ userName, showValues, initialView = "h
       <div className="p-4 space-y-4">
         {view === "hoje" && (
           <>
+            <CdiComparisonCard showValues={showValues} />
             <div>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-foreground">Análise do seu patrimônio {ago}</p>

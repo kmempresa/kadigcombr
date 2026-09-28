@@ -29,6 +29,20 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
   const [confirmPassword, setConfirmPassword] = useState("");
   const [deleteText, setDeleteText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sessions, setSessions] = useState<{ id: string; os: string; app: string; last_seen: string; created_at: string; current: boolean }[] | null>(null);
+  const loadSessions = async () => {
+    setSessions(null);
+    const { data, error } = await supabase.functions.invoke("kadig-extras", { body: { action: "sessions" } });
+    if (error) { toast.error("Não foi possível carregar as sessões."); setSessions([]); return; }
+    setSessions(data.sessions || []);
+  };
+  useEffect(() => { if (open && view === "sessions") loadSessions(); }, [open, view]);
+  const revoke = async (id: string) => {
+    const { error } = await supabase.functions.invoke("kadig-extras", { body: { action: "revoke_session", session_id: id } });
+    if (error) return toast.error("Não foi possível encerrar a sessão.");
+    setSessions((s) => (s || []).filter((x) => x.id !== id));
+    toast.success("Sessão encerrada.");
+  };
 
   useEffect(() => { if (open) supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? "")); }, [open]);
   const back = () => view === "main" ? onOpenChange(false) : setView("main");
@@ -53,6 +67,7 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
     setBusy(false);
     if (error) return toast.error("Não foi possível encerrar as outras sessões.");
     toast.success("Outras sessões encerradas.");
+    loadSessions();
   };
 
   const deleteAccount = async () => {
@@ -92,7 +107,21 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
             <Button className="h-12 w-full rounded-xl" disabled={busy || !currentPassword || !newPassword || !confirmPassword} onClick={changePassword}>{busy ? <Loader2 className="animate-spin" /> : "Salvar nova senha"}</Button>
           </div>}
           {view === "sessions" && <div className="space-y-4">
-            <section className="rounded-xl border border-border bg-card p-4"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/10"><Smartphone className="text-primary" /></span><div><p className="font-medium">Este dispositivo</p><p className="text-xs text-muted-foreground">Sessão atual protegida</p></div></div></section>
+            {sessions === null ? <div className="flex justify-center py-6"><Loader2 className="animate-spin text-muted-foreground" /></div> : (
+              <section className="overflow-hidden rounded-xl border border-border bg-card">
+                {sessions.map((x, i) => (
+                  <div key={x.id} className={`flex items-center gap-3 p-4 ${i ? "border-t border-border" : ""}`}>
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary/10"><Smartphone className="text-primary" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">{x.app} no {x.os}</p>
+                      <p className="text-xs text-muted-foreground">{x.current ? "Este dispositivo" : `Ativa em ${new Date(x.last_seen).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`}</p>
+                    </div>
+                    {!x.current && <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => revoke(x.id)}>Encerrar</Button>}
+                  </div>
+                ))}
+                {sessions.length === 0 && <p className="p-4 text-sm text-muted-foreground">Nenhuma sessão encontrada.</p>}
+              </section>
+            )}
             <Button variant="outline" className="h-12 w-full rounded-xl" disabled={busy} onClick={signOutOthers}>{busy ? <Loader2 className="animate-spin" /> : <><LogOut />Encerrar sessões em outros dispositivos</>}</Button>
           </div>}
           {view === "delete" && <div className="space-y-4">
