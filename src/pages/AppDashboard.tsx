@@ -2222,7 +2222,13 @@ const AppDashboard = () => {
       )}
 
       {activeTab === "intelligence" && (
-        <IntelligenceTab userName={userName} showValues={showValues} initialView={intelView} initialWhatIf={intelWhatIf} />
+        isPremium ? (
+          <IntelligenceTab userName={userName} showValues={showValues} initialView={intelView} initialWhatIf={intelWhatIf} />
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <PremiumPaywall type="intelligence" onSubscribe={() => setPremiumDrawerOpen(true)} />
+          </div>
+        )
       )}
 
       {/* Conexoes Tab - Open Finance via Pluggy */}
