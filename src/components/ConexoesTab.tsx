@@ -15,9 +15,9 @@ import {
   ChevronRight,
   Download,
   Zap,
-  Banknote
+  Banknote,
+  ShieldCheck
 } from "lucide-react";
-import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,7 +25,6 @@ import { usePortfolio } from "@/contexts/PortfolioContext";
 import { usePluggySync } from "@/hooks/usePluggySync";
 import { useRealtimeConnections } from "@/hooks/useRealtimeConnections";
 import { notifyConnectionAdded, notifyConnectionRemoved } from "@/lib/notifications";
-import { getBankLogoInfo } from "@/lib/bankLogos";
 import { BankLogo } from "@/components/BankLogo";
 import {
   Drawer,
@@ -450,11 +449,10 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
   return (
     <div className={`min-h-full flex-1 bg-background text-foreground pb-24 ${theme === "light" ? "light-theme" : ""}`}>
-      <header className="pt-safe border-b border-border">
-        <div className="px-5 pt-3 pb-5 flex items-center justify-between gap-3">
+      <header className="pt-safe bg-background">
+        <div className="px-4 pt-2 pb-4 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <span className="text-xs font-medium text-primary">Open Finance</span>
-            <h1 className="text-xl font-semibold text-foreground">Conexões</h1>
+            <h1 className="text-base font-semibold text-foreground">Conexões</h1>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {connections.length > 0 && (
@@ -474,7 +472,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         </div>
       </header>
 
-      <div className="px-5 pt-6">
+      <div className="px-4 pt-4 max-w-2xl mx-auto">
 
       {/* Loading */}
       {loading && connections.length === 0 && (
@@ -486,18 +484,51 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Empty State */}
       {!loading && connections.length === 0 && (
-        <section className="overflow-hidden rounded-lg bg-connect p-6 sm:p-8 text-connect-foreground border border-primary/20">
-          <div className="w-12 h-12 rounded-md bg-connect-foreground/15 border border-connect-foreground/30 flex items-center justify-center mb-6">
-            <Building2 className="w-6 h-6 text-connect-foreground" />
-          </div>
-          <h2 className="max-w-sm text-2xl font-semibold leading-tight">Conecte seus bancos em um só lugar</h2>
-          <p className="mt-3 mb-7 max-w-sm text-sm leading-relaxed text-connect-foreground/80">
-            Conecte suas contas bancárias e corretoras para importar seus investimentos automaticamente.
+        <section>
+          <h2 className="text-xl font-semibold text-foreground">Seus bancos em um só lugar</h2>
+          <p className="mt-2 mb-6 text-sm leading-relaxed text-muted-foreground">
+            Conecte bancos e corretoras para importar seus investimentos para a Kadig.
           </p>
-          <Button onClick={handleConnect} disabled={connecting} className="w-full h-12 bg-connect-foreground text-connect hover:bg-connect-foreground/90 font-semibold">
-            {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-            Conectar primeira conta
-          </Button>
+          <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <Link2 className="w-8 h-8 text-primary" aria-hidden="true" />
+              </div>
+            </div>
+            <div className="space-y-5">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-muted/60 flex items-center justify-center">
+                  <Wallet className="w-5 h-5 text-primary" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Tudo na sua carteira</h3>
+                  <p className="text-xs leading-relaxed text-muted-foreground mt-1">Veja seus investimentos conectados junto aos demais ativos.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-muted/60 flex items-center justify-center">
+                  <RefreshCw className="w-5 h-5 text-primary" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Sincronização</h3>
+                  <p className="text-xs leading-relaxed text-muted-foreground mt-1">Atualize os investimentos das instituições conectadas.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-muted/60 flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5 text-primary" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Você no controle</h3>
+                  <p className="text-xs leading-relaxed text-muted-foreground mt-1">Gerencie e remova suas conexões quando quiser.</p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={handleConnect} disabled={connecting} className="w-full h-12 mt-8 rounded-xl font-semibold">
+              {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+              Conectar banco
+            </Button>
+          </div>
         </section>
       )}
 
@@ -511,7 +542,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="bg-card border border-border rounded-lg p-4"
+               className="bg-card border border-border rounded-xl p-4"
             >
               <div className="flex items-center gap-3">
                 {/* Logo - Using BankLogo component for reliable logos */}
@@ -578,8 +609,8 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         </div>
       )}
 
-      <div className="mt-6 flex items-start gap-3 border-t border-border pt-5">
-        <ShieldCheck className="w-5 h-5 shrink-0 text-success" />
+      <div className="mt-5 flex items-start gap-3 px-1 pb-5">
+        <ShieldCheck className="w-4 h-4 shrink-0 text-primary mt-0.5" />
         <p className="text-xs leading-relaxed text-muted-foreground">
           A conexão é realizada com seu consentimento pelo Open Finance. Você pode revogar o acesso a qualquer momento.
         </p>
