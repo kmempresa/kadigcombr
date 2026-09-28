@@ -202,9 +202,11 @@ const Onboarding = () => {
     if (error) { toast.error("Não foi possível criar a meta"); return finish(); }
     const current = s?.result.netWorth || 0;
     const rate = s?.cdi12m || 0;
-    let currentLabel = "Conecte seu patrimônio para calcular";
+    let currentLabel = current > 0 ? "Indisponível no momento" : "Conecte seu patrimônio para calcular";
     let optimized: string | null = null;
-    if (current > 0 && rate > 0) {
+    if (current >= amount) {
+      currentLabel = "Meta já alcançada";
+    } else if (current > 0 && rate > 0) {
       const m = monthsToTarget(current, amount, rate);
       currentLabel = isFinite(m) ? monthLabel(m) : "mais de 100 anos";
       const extra = (s?.result.totalOpportunity || 0) / 12;
