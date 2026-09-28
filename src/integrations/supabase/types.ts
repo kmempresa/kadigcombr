@@ -231,9 +231,12 @@ export type Database = {
       }
       goals: {
         Row: {
+          contribution_day: number | null
           created_at: string
           current_value: number | null
           id: string
+          last_reminder_month: string | null
+          monthly_contribution: number | null
           portfolio_id: string | null
           target_date: string | null
           target_value: number
@@ -242,9 +245,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          contribution_day?: number | null
           created_at?: string
           current_value?: number | null
           id?: string
+          last_reminder_month?: string | null
+          monthly_contribution?: number | null
           portfolio_id?: string | null
           target_date?: string | null
           target_value?: number
@@ -253,9 +259,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          contribution_day?: number | null
           created_at?: string
           current_value?: number | null
           id?: string
+          last_reminder_month?: string | null
+          monthly_contribution?: number | null
           portfolio_id?: string | null
           target_date?: string | null
           target_value?: number
@@ -570,6 +579,48 @@ export type Database = {
           total_gain?: number | null
           total_value?: number | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          active: boolean
+          asset_kind: string
+          created_at: string
+          direction: string
+          id: string
+          label: string
+          last_price: number | null
+          symbol: string
+          target_price: number
+          triggered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          asset_kind?: string
+          created_at?: string
+          direction: string
+          id?: string
+          label: string
+          last_price?: number | null
+          symbol: string
+          target_price: number
+          triggered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          asset_kind?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          label?: string
+          last_price?: number | null
+          symbol?: string
+          target_price?: number
+          triggered_at?: string | null
           user_id?: string
         }
         Relationships: []
