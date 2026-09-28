@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Item { ticker: string; label: string; rate: number; quantity: number; total: number; payment_date: string; upcoming: boolean }
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const COLLAPSED = 3;
 
 export default function DividendsCard({ showValues, refreshKey }: { showValues: boolean; refreshKey?: number }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [tickers, setTickers] = useState(0);
   const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     supabase.functions.invoke("kadig-extras", { body: { action: "dividends" } }).then(({ data, error }) => {
@@ -23,6 +26,8 @@ export default function DividendsCard({ showValues, refreshKey }: { showValues: 
   const received = (items || []).filter((i) => !i.upcoming);
   const upcoming = (items || []).filter((i) => i.upcoming).reverse();
   const total12 = received.reduce((s, i) => s + i.total, 0);
+  const collapsible = upcoming.length > COLLAPSED || received.length > COLLAPSED;
+  const hidden = Math.max(0, upcoming.length - COLLAPSED) + Math.max(0, received.length - COLLAPSED);
 
   return (
     <div className="space-y-3">
@@ -36,12 +41,22 @@ export default function DividendsCard({ showValues, refreshKey }: { showValues: 
             </div>
             {upcoming.length > 0 && <div className="space-y-2 border-t border-border pt-3">
               <p className="text-xs font-medium text-primary">A receber</p>
-              {upcoming.map((i, k) => <Row key={`u${k}`} i={i} v={v} />)}
+              {(expanded ? upcoming : upcoming.slice(0, COLLAPSED)).map((i, k) => <Row key={`u${k}`} i={i} v={v} />)}
             </div>}
             {received.length > 0 ? <div className="space-y-2 border-t border-border pt-3">
               <p className="text-xs font-medium text-muted-foreground">Últimos pagamentos</p>
-              {received.slice(0, 6).map((i, k) => <Row key={`r${k}`} i={i} v={v} />)}
+              {(expanded ? received : received.slice(0, COLLAPSED)).map((i, k) => <Row key={`r${k}`} i={i} v={v} />)}
             </div> : <p className="text-sm text-muted-foreground">Nenhum provento pago nos últimos 12 meses para as ações da carteira.</p>}
+            {collapsible && (
+              <button
+                type="button"
+                onClick={() => setExpanded((e) => !e)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-sm font-medium text-primary transition-colors hover:bg-muted"
+              >
+                {expanded ? "Ver menos" : `Ver mais (${hidden})`}
+                <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
+              </button>
+            )}
             <p className="text-[11px] text-muted-foreground">Calculado com a quantidade atual de cada ação. Dados oficiais da B3.</p>
           </>
         )}
