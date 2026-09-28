@@ -24,7 +24,7 @@ interface PaywallFeature {
 }
 
 interface PremiumPaywallProps {
-  type: "bianca" | "trade" | "mercado";
+  type: "bianca" | "trade" | "mercado" | "intelligence";
   onSubscribe: () => void;
 }
 
@@ -69,6 +69,20 @@ const paywallConfig = {
       { icon: TrendingUp, title: "Maiores Altas/Baixas", description: "Oportunidades" },
       { icon: Globe, title: "Índices Globais", description: "Ibovespa, S&P 500" },
       { icon: LineChart, title: "Gráficos Históricos", description: "Análise técnica" },
+    ] as PaywallFeature[],
+  },
+  intelligence: {
+    icon: Sparkles,
+    title: "Kadig Intelligence",
+    subtitle: "Inteligência do seu Patrimônio",
+    description: "Análise completa e automática dos seus investimentos",
+    accentColor: "from-kadig-blue to-kadig-cyan",
+    glowColor: "shadow-kadig-blue/30",
+    features: [
+      { icon: PieChart, title: "Análise do Patrimônio", description: "Raio-x completo da carteira" },
+      { icon: Target, title: "Oportunidades", description: "Sugestões com dados reais" },
+      { icon: LineChart, title: "Carteira vs CDI", description: "Comparação com o CDI" },
+      { icon: TrendingUp, title: "Autopilot", description: "Suas regras em ação" },
     ] as PaywallFeature[],
   },
 };
@@ -284,6 +298,16 @@ const PremiumPaywall = ({ type, onSubscribe }: PremiumPaywallProps) => {
                 </div>
                 <div>
                   <p className="text-foreground font-semibold text-xs">Mercado</p>
+                </div>
+              </div>
+            )}
+            {type !== "intelligence" && (
+              <div className="flex items-center gap-2 bg-card/50 rounded-lg px-3 py-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-kadig-blue to-kadig-cyan flex items-center justify-center shadow-md">
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-foreground font-semibold text-xs">Intelligence</p>
                 </div>
               </div>
             )}
