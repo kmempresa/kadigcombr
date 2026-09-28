@@ -12,8 +12,8 @@
 - [ ] Integrar central de cibersegurança da Kadig ao KDG com alertas, avisos, suspensão e banimento — Kadig concluído (aviso obrigatório validado); falta aplicar a tela no projeto KDG Control Hub
 - [x] Ativação real da verificação em duas etapas (TOTP) — confirmada funcionando com login real pelo usuário
 - [x] Validar aviso obrigatório de segurança no iPhone — testado com a conta de teste; aparece sobre o app e o botão "Li e entendi" fecha
-- [ ] Alertas de preço (ações B3 e cripto, aviso quando bater)
-- [ ] Carteira comparada ao CDI na Intelligence
-- [ ] Proventos das ações da carteira
-- [ ] Lembrete de aporte mensal nas metas
-- [ ] Sessões e dispositivos em Segurança
+- [x] Alertas de preço (ações B3 e cripto, aviso quando bater)
+- [x] Carteira comparada ao CDI na Intelligence
+- [x] Proventos das ações da carteira
+- [x] Lembrete de aporte mensal nas metas
+- [x] Sessões e dispositivos em Segurança

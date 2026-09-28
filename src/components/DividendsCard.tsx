@@ -53,7 +53,7 @@ export default function DividendsCard({ showValues, refreshKey }: { showValues: 
 function Row({ i, v }: { i: Item; v: (n: number) => string }) {
   return (
     <div className="flex items-center justify-between gap-3 text-sm">
-      <div className="min-w-0"><p className="font-medium text-foreground">{i.ticker} <span className="text-xs font-normal text-muted-foreground">{i.label}</span></p>
+      <div className="min-w-0"><p className="font-medium text-foreground">{i.ticker} <span className="text-xs font-normal text-muted-foreground">{/jcp/i.test(i.label) ? "JCP" : i.label.charAt(0) + i.label.slice(1).toLowerCase()}</span></p>
         <p className="text-xs text-muted-foreground">{new Date(i.payment_date).toLocaleDateString("pt-BR")}</p></div>
       <p className="shrink-0 font-medium text-success">{v(i.total)}</p>
     </div>
