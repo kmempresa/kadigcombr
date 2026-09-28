@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Globe, Trash2, Edit, ChevronDown, Loader2 } from "lucide-react";
+import { X, Plus, Globe, Trash2, Edit, ChevronDown, Loader2, Home, Car, Building2, Gem, Palette, Bitcoin, PiggyBank, Package } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import {
   Drawer,
@@ -43,14 +43,14 @@ const CURRENCIES = [
 ];
 
 const CATEGORIES = [
-  { id: "imoveis", name: "Imóveis", icon: "🏠" },
-  { id: "veiculos", name: "Veículos", icon: "🚗" },
-  { id: "empresas", name: "Empresas/Negócios", icon: "🏢" },
-  { id: "joias", name: "Joias/Metais Preciosos", icon: "💎" },
-  { id: "arte", name: "Arte/Colecionáveis", icon: "🎨" },
-  { id: "cripto", name: "Criptomoedas", icon: "₿" },
-  { id: "poupanca", name: "Poupança/Conta Corrente", icon: "💰" },
-  { id: "outros", name: "Outros", icon: "📦" },
+  { id: "imoveis", name: "Imóveis", icon: Home },
+  { id: "veiculos", name: "Veículos", icon: Car },
+  { id: "empresas", name: "Empresas/Negócios", icon: Building2 },
+  { id: "joias", name: "Joias/Metais Preciosos", icon: Gem },
+  { id: "arte", name: "Arte/Colecionáveis", icon: Palette },
+  { id: "cripto", name: "Criptomoedas", icon: Bitcoin },
+  { id: "poupanca", name: "Poupança/Conta Corrente", icon: PiggyBank },
+  { id: "outros", name: "Outros", icon: Package },
 ];
 
 const GlobalPatrimonioDrawer = ({
@@ -320,7 +320,7 @@ const GlobalPatrimonioDrawer = ({
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-xl">
-                        {category.icon}
+                        <category.icon className="w-5 h-5 text-primary" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-foreground">{asset.name}</h4>
@@ -426,7 +426,7 @@ const GlobalPatrimonioDrawer = ({
                               : "bg-muted text-foreground"
                           }`}
                         >
-                          <span className="text-lg">{cat.icon}</span>
+                          <cat.icon className="w-5 h-5" />
                           <span className="text-[10px] font-medium truncate w-full text-center">
                             {cat.name.split("/")[0]}
                           </span>
