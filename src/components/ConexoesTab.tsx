@@ -17,6 +17,8 @@ import {
   Zap,
   Banknote
 } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePortfolio } from "@/contexts/PortfolioContext";
@@ -414,12 +416,12 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
   const getStatusIcon = (status: string | null) => {
     switch (status) {
       case 'UPDATED':
-        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+        return <CheckCircle className="w-4 h-4 text-success" />;
       case 'UPDATING':
-        return <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />;
+        return <RefreshCw className="w-4 h-4 text-primary animate-spin" />;
       case 'LOGIN_ERROR':
       case 'OUTDATED':
-        return <AlertCircle className="w-4 h-4 text-amber-500" />;
+        return <AlertCircle className="w-4 h-4 text-warning" />;
       default:
         return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
     }
@@ -447,74 +449,32 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
   };
 
   return (
-    <div className={`flex-1 pb-24 ${theme === "light" ? "light-theme" : ""}`}>
-      {/* Header - Kadig Style (same as Dashboard) */}
-      <header className="relative overflow-hidden pt-safe">
-        {/* Background gradient effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        
-        <div className="relative px-4 pb-4 pt-2">
-          <div className="flex items-center justify-between">
-            {/* Left side - Title with icon */}
-            <motion.div 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <div className="relative">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
-                  <Link2 className="w-5 h-5 text-white" />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-background" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Open Finance</span>
-                <span className="font-semibold text-foreground text-base">Conexões</span>
-              </div>
-            </motion.div>
-
-            {/* Right side - Action buttons */}
-            <div className="flex items-center gap-1">
-              {/* Sync All Button */}
-              {connections.length > 0 && (
-                <motion.button 
-                  onClick={() => syncAllConnections()}
-                  disabled={syncing}
-                  whileTap={{ scale: 0.9 }}
-                  className="p-2.5 rounded-xl text-primary hover:bg-primary/10 transition-all"
-                  title="Sincronizar todos os investimentos"
-                >
-                  <Zap className={`w-5 h-5 ${syncing ? 'animate-pulse' : ''}`} />
-                </motion.button>
-              )}
-              <motion.button 
-                onClick={fetchConnections}
-                disabled={loading}
-                whileTap={{ scale: 0.9 }}
-                className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-              >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-              </motion.button>
-              <motion.button 
-                onClick={handleConnect}
-                disabled={connecting}
-                whileTap={{ scale: 0.9 }}
-                whileHover={{ scale: 1.05 }}
-                className="ml-1 w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30"
-              >
-                {connecting ? (
-                  <Loader2 className="w-5 h-5 text-primary-foreground animate-spin" />
-                ) : (
-                  <Plus className="w-5 h-5 text-primary-foreground" />
-                )}
-              </motion.button>
-            </div>
+    <div className={`min-h-full flex-1 bg-background text-foreground pb-24 ${theme === "light" ? "light-theme" : ""}`}>
+      <header className="pt-safe border-b border-border">
+        <div className="px-5 pt-3 pb-5 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-xs font-medium text-primary">Open Finance</span>
+            <h1 className="text-xl font-semibold text-foreground">Conexões</h1>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {connections.length > 0 && (
+              <Button variant="ghost" size="icon" onClick={() => syncAllConnections()} disabled={syncing} aria-label="Sincronizar todos os investimentos" title="Sincronizar todos os investimentos">
+                <Zap className={`w-5 h-5 ${syncing ? 'animate-pulse' : ''}`} />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={fetchConnections} disabled={loading} aria-label="Atualizar conexões" title="Atualizar conexões">
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            {connections.length > 0 && (
+              <Button size="icon" onClick={handleConnect} disabled={connecting} aria-label="Conectar nova conta" title="Conectar nova conta">
+                {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+              </Button>
+            )}
           </div>
         </div>
       </header>
-      
-      <div className="px-4">
+
+      <div className="px-5 pt-6">
 
       {/* Loading */}
       {loading && connections.length === 0 && (
@@ -526,59 +486,34 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Empty State */}
       {!loading && connections.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col items-center justify-center py-12 text-center"
-        >
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Link2 className="w-8 h-8 text-primary" />
+        <section className="overflow-hidden rounded-lg bg-kadig-navy p-6 sm:p-8 text-kadig-white border border-primary/20">
+          <div className="w-12 h-12 rounded-md bg-primary/20 border border-primary/30 flex items-center justify-center mb-6">
+            <Building2 className="w-6 h-6 text-kadig-light" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
-            Nenhuma conexão
-          </h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+          <h2 className="max-w-sm text-2xl font-semibold leading-tight">Conecte seus bancos em um só lugar</h2>
+          <p className="mt-3 mb-7 max-w-sm text-sm leading-relaxed text-kadig-white/80">
             Conecte suas contas bancárias e corretoras para importar seus investimentos automaticamente.
           </p>
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-medium"
-          >
-            {connecting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Plus className="w-5 h-5" />
-            )}
-            Conectar Conta
-          </button>
-        </motion.div>
+          <Button onClick={handleConnect} disabled={connecting} className="w-full h-12 bg-kadig-white text-kadig-navy hover:bg-kadig-white/90 font-semibold">
+            {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+            Conectar primeira conta
+          </Button>
+        </section>
       )}
 
       {/* Connections List */}
       {connections.length > 0 && (
         <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-foreground">Contas conectadas</h2>
           {connections.map((connection, index) => (
             <motion.div
               key={connection.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="relative overflow-hidden bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-4"
+              className="bg-card border border-border rounded-lg p-4"
             >
-              {/* Glow effect */}
-              <div 
-                className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 opacity-30"
-                style={{ 
-                  backgroundColor: connection.connector_primary_color 
-                    ? (connection.connector_primary_color.startsWith('#') 
-                        ? connection.connector_primary_color 
-                        : `#${connection.connector_primary_color}`)
-                    : 'hsl(var(--primary))' 
-                }}
-              />
-              
-              <div className="relative flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 {/* Logo - Using BankLogo component for reliable logos */}
                 <BankLogo
                   connectorName={connection.connector_name}
@@ -607,43 +542,35 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
                 </div>
 
                 {/* Actions - Mobile optimized */}
-                <div className="flex items-center gap-1">
-                  <motion.button
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <Button variant="ghost" size="icon"
                     onClick={() => {
                       setSelectedConnection(connection);
                       setShowImportDrawer(true);
                     }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-9 h-9 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center justify-center"
-                    title="Importar"
+                    className="h-9 w-9 text-primary" title="Importar" aria-label="Importar investimentos"
                   >
                     <Download className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
+                  </Button>
+                  <Button variant="ghost" size="icon"
                     onClick={() => handleSyncConnection(connection)}
                     disabled={syncingItemId === connection.item_id}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-9 h-9 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-colors flex items-center justify-center"
-                    title="Sincronizar"
+                    className="h-9 w-9" title="Sincronizar" aria-label="Sincronizar instituição"
                   >
                     <RefreshCw className={`w-4 h-4 ${syncingItemId === connection.item_id ? 'animate-spin' : ''}`} />
-                  </motion.button>
-                  <motion.button
+                  </Button>
+                  <Button variant="ghost" size="icon"
                     onClick={() => handleViewDetails(connection)}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-9 h-9 rounded-xl bg-muted/50 text-foreground hover:bg-muted transition-colors flex items-center justify-center"
-                    title="Detalhes"
+                    className="h-9 w-9" title="Detalhes" aria-label="Ver detalhes da instituição"
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </motion.button>
-                  <motion.button
+                  </Button>
+                  <Button variant="ghost" size="icon"
                     onClick={() => setDeletingConnectionId(connection.id)}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-9 h-9 rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors flex items-center justify-center"
-                    title="Remover"
+                    className="h-9 w-9 text-destructive hover:text-destructive" title="Remover" aria-label="Remover instituição"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </motion.button>
+                  </Button>
                 </div>
               </div>
             </motion.div>
@@ -651,26 +578,12 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         </div>
       )}
 
-      {/* Info Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-2xl"
-      >
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Link2 className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h4 className="font-semibold text-foreground mb-1">Open Finance</h4>
-            <p className="text-sm text-muted-foreground">
-              Suas conexões são seguras e protegidas pelo Banco Central. 
-              Você pode revogar o acesso a qualquer momento.
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      <div className="mt-6 flex items-start gap-3 border-t border-border pt-5">
+        <ShieldCheck className="w-5 h-5 shrink-0 text-success" />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          A conexão é realizada com seu consentimento pelo Open Finance. Você pode revogar o acesso a qualquer momento.
+        </p>
+      </div>
       </div>
 
       {/* Pluggy Connect Widget */}
@@ -678,6 +591,8 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         <PluggyConnect
           connectToken={connectToken}
           includeSandbox={false}
+          theme={theme}
+          language="pt"
           onSuccess={handleConnectionSuccess}
           onError={(error) => {
             console.error("Pluggy connection error:", error);
@@ -699,7 +614,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
         setShowDetailsDrawer(open);
         if (!open) setSelectedConnection(null);
       }}>
-        <DrawerContent className={`max-h-[90vh] ${theme === "light" ? "light-theme" : ""}`}>
+        <DrawerContent className={`max-h-[90vh] bg-background text-foreground ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
               {selectedConnection && (
@@ -776,7 +691,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingConnectionId} onOpenChange={() => setDeletingConnectionId(null)}>
-        <AlertDialogContent className={theme === "light" ? "light-theme" : ""}>
+        <AlertDialogContent className={`bg-background text-foreground ${theme === "light" ? "light-theme" : ""}`}>
           <AlertDialogHeader>
             <AlertDialogTitle>Remover conexão?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -801,7 +716,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Import to Portfolio Drawer */}
       <Drawer open={showImportDrawer} onOpenChange={setShowImportDrawer}>
-        <DrawerContent className={`max-h-[85vh] ${theme === "light" ? "light-theme" : ""}`}>
+        <DrawerContent className={`max-h-[85vh] bg-background text-foreground ${theme === "light" ? "light-theme" : ""}`}>
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -860,19 +775,19 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button
+              <Button variant="secondary"
                 onClick={() => {
                   setShowImportDrawer(false);
                   setSelectedPortfolioForImport("");
                 }}
-                className="flex-1 py-3 rounded-xl bg-secondary text-foreground font-medium"
+                className="flex-1 h-12"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => selectedConnection && handleImportToPortfolio(selectedConnection)}
                 disabled={!selectedPortfolioForImport || importingConnectionId === selectedConnection?.id}
-                className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 h-12"
               >
                 {importingConnectionId === selectedConnection?.id ? (
                   <>
@@ -885,7 +800,7 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
                     Importar
                   </>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
         </DrawerContent>
