@@ -558,7 +558,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       href={news.news_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-shrink-0 w-64 bg-white rounded-xl overflow-hidden"
+                      className="flex-shrink-0 w-64 bg-card border border-border rounded-xl overflow-hidden"
                     >
                       <div className="h-32 bg-muted">
                         <img 
