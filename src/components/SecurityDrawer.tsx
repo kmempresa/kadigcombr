@@ -66,7 +66,7 @@ const SecurityDrawerComponent = ({ open, onOpenChange }: SecurityDrawerProps) =>
 
   return (
     <Drawer open={open} onOpenChange={(next) => { onOpenChange(next); if (!next) setView("main"); }}>
-      <DrawerContent className={`${theme === "light" ? "light-theme" : ""} h-[96dvh] overflow-hidden bg-background`}>
+      <DrawerContent className={`${theme === "light" ? "light-theme" : ""} h-[96dvh] overflow-hidden bg-background text-foreground`}>
         <header className="shrink-0 border-b border-border px-4 pb-4 safe-area-inset-top">
           <div className="flex items-center gap-3 pt-2">
             <Button variant="ghost" size="icon" className="rounded-full" onClick={back} aria-label="Voltar"><ArrowLeft /></Button>
