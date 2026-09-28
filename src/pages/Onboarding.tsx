@@ -588,7 +588,7 @@ const Onboarding = () => {
               <motion.div key="goalCreated" {...anim} className="pt-2">
                 <Title kicker="Meta criada" title={brl(createdGoal.target)} />
                 <div className="rounded-3xl border border-border/60 bg-card/40 backdrop-blur-xl divide-y divide-border/60">
-                  <div className="flex justify-between p-4 text-sm"><span className="text-muted-foreground">Ritmo atual</span><span className="font-semibold text-foreground">{createdGoal.current}</span></div>
+                  <div className="flex justify-between gap-4 p-4 text-sm"><span className="text-muted-foreground shrink-0">Ritmo atual</span><span className="font-semibold text-foreground text-right">{createdGoal.current}</span></div>
                   {createdGoal.optimized && (
                     <div className="flex justify-between p-4 text-sm"><span className="text-muted-foreground">Com otimizações</span><span className="font-semibold text-kadig-cyan">{createdGoal.optimized}</span></div>
                   )}
