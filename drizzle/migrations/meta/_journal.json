@@ -29,6 +29,13 @@
       "when": 1790268853115,
       "tag": "0003_kadig_security_center",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790617794538,
+      "tag": "0004_harden_security_definer_functions",
+      "breakpoints": true
     }
   ]
 }
