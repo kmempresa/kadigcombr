@@ -422,8 +422,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 onClick={tool.onClick}
                 className={`w-full flex items-center justify-between bg-gradient-to-r ${tool.gradient} rounded-xl px-5 py-4`}
               >
-                <span className="text-foreground font-medium">{tool.label}</span>
-                <ChevronRight className="w-5 h-5 text-foreground" />
+                <span className="text-primary-foreground font-medium">{tool.label}</span>
+                <ChevronRight className="w-5 h-5 text-primary-foreground" />
               </button>
             ))}
           </section>
@@ -525,7 +525,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                     rel="noopener noreferrer"
                     className="block mb-4"
                   >
-                    <div className="relative rounded-2xl overflow-hidden h-64 bg-[#252b3d]">
+                    <div className="relative rounded-2xl overflow-hidden h-64 bg-card">
                       <img 
                         src={getNewsImage(marketNews[0], 0)} 
                         alt="" 
@@ -560,7 +560,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       rel="noopener noreferrer"
                       className="flex-shrink-0 w-64 bg-white rounded-xl overflow-hidden"
                     >
-                      <div className="h-32 bg-gray-200">
+                      <div className="h-32 bg-muted">
                         <img 
                           src={getNewsImage(news, index + 1)} 
                           alt="" 
@@ -569,7 +569,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                         />
                       </div>
                       <div className="p-3">
-                        <h3 className="text-gray-900 font-medium text-sm line-clamp-3 mb-2">
+                        <h3 className="text-foreground font-medium text-sm line-clamp-3 mb-2">
                           {news.title}
                         </h3>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -645,14 +645,14 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 >
                   <div className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 rounded-full bg-gray-500" />
-                      {index < newsPerPage - 1 && <div className="w-0.5 flex-1 bg-gray-600 mt-1" />}
+                      <div className="w-3 h-3 rounded-full bg-muted-foreground" />
+                      {index < newsPerPage - 1 && <div className="w-0.5 flex-1 bg-border mt-1" />}
                     </div>
                     <div className="flex-1 pb-4">
                       <p className="text-muted-foreground text-xs mb-2">
                         {new Date(news.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {new Date(news.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} • {news.source_name}
                       </p>
-                      <div className="w-48 h-32 rounded-lg overflow-hidden mb-2 bg-gray-700">
+                      <div className="w-48 h-32 rounded-lg overflow-hidden mb-2 bg-muted">
                         <img 
                           src={getNewsImage(news, index)} 
                           alt="" 
