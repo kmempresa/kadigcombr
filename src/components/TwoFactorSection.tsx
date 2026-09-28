@@ -24,16 +24,11 @@ export default function TwoFactorSection() {
   const start = async () => {
     setBusy(true); setError("");
     try {
-      const { data: existing, error: listError } = await supabase.auth.mfa.listFactors();
-      if (listError) throw listError;
-      for (const f of existing?.all ?? []) {
-        if (f.status !== "verified") await supabase.auth.mfa.unenroll({ factorId: f.id });
-      }
       const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Kadig" });
       if (enrollError || !data) throw enrollError ?? new Error("Falha ao iniciar");
       setEnrolling({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
     } catch {
-      toast.error("Não foi possível iniciar a verificação em duas etapas.");
+      toast.error("O serviço de verificação em duas etapas está indisponível. Nenhuma proteção foi ativada; tente novamente mais tarde.");
     } finally { setBusy(false); }
   };
 

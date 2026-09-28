@@ -10,3 +10,4 @@
 - [ ] Documentar dependências externas e riscos restantes
 - [x] Padronizar Segurança, Preferências, Suporte e Sobre; corrigir todas as ações da Conta
 - [ ] Integrar central de cibersegurança da Kadig ao KDG com alertas, avisos, suspensão e banimento — Kadig concluído; falta aplicar a tela no projeto KDG Control Hub
+- [ ] Ativação real da verificação em duas etapas — bloqueada pelo serviço de contas do Lovable Cloud (cadastro de autenticador retorna erro mesmo com sessão válida); requer correção da plataforma
