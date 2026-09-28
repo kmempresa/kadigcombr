@@ -22,7 +22,7 @@ export const KadigEmail = ({ preview, title, children, cta, url, note }: {
     <Preview>{preview}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Text style={brand}>KADIG</Text>
+        <Img src={LOGO_URL} alt="Kadig" width="132" style={logo} />
         <Section style={bar} />
         <Heading style={h1}>{title}</Heading>
         {children}
