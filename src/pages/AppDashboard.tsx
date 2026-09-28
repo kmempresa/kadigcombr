@@ -59,6 +59,7 @@ import ProventosDrawer from "@/components/analysis/ProventosDrawer";
 import ProjecaoDrawer from "@/components/analysis/ProjecaoDrawer";
 import SensibilidadeAtivosDrawer from "@/components/analysis/SensibilidadeAtivosDrawer";
 import GoalDrawer from "@/components/GoalDrawer";
+import DividendsCard from "@/components/DividendsCard";
 import { SupportDrawer } from "@/components/SupportDrawer";
 import { SecurityDrawer } from "@/components/SecurityDrawer";
 import GlobalPatrimonioDrawer from "@/components/GlobalPatrimonioDrawer";
@@ -334,6 +335,14 @@ const AppDashboard = () => {
   const handlePriceUpdate = useCallback(() => {
     console.log("[AppDashboard] Prices updated, refreshing data...");
     setRefreshKey(prev => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    const run = () => { if (document.visibilityState === "visible") supabase.functions.invoke("kadig-extras", { body: { action: "check" } }).catch(() => null); };
+    run();
+    const t = window.setInterval(run, 60 * 1000);
+    document.addEventListener("visibilitychange", run);
+    return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", run); };
   }, []);
 
   const { isUpdating: isPricesUpdating, refreshPrices, lastUpdateTime } = useRealTimePrices({
@@ -1217,6 +1226,8 @@ const AppDashboard = () => {
                 </div>
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
+
+              <DividendsCard showValues={showValues} refreshKey={refreshKey} />
 
               {/* Metas da carteira - Always show carousel */}
               <div className="space-y-4">
