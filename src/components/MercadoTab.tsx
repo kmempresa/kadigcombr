@@ -336,30 +336,30 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
   };
 
   const tools = [
-    { label: "Simulador de investimentos", gradient: "from-violet-500 to-purple-600", icon: Calculator, onClick: () => setSimuladorOpen(true) },
-    { label: "Comparador de ativos", gradient: "from-fuchsia-500 to-pink-500", icon: BarChart3, onClick: () => setComparadorOpen(true) },
-    { label: "Carteiras recomendadas", gradient: "from-violet-400 to-purple-500", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
+    { label: "Simulador de investimentos", gradient: "from-primary to-primary", icon: Calculator, onClick: () => setSimuladorOpen(true) },
+    { label: "Comparador de ativos", gradient: "from-primary to-primary", icon: BarChart3, onClick: () => setComparadorOpen(true) },
+    { label: "Carteiras recomendadas", gradient: "from-primary to-primary", icon: Briefcase, onClick: () => setCarteirasOpen(true) },
     { label: "Relatórios e análises", gradient: "from-teal-500 to-cyan-600", icon: FileText, onClick: () => setRelatoriosOpen(true) },
     { label: "Índice Kadig", gradient: "from-cyan-500 to-teal-500", icon: Award, onClick: () => setIndiceKadigOpen(true) },
   ];
 
   return (
-    <div className="flex-1 pb-20 bg-[#1a1f2e] overflow-y-auto">
+    <div className="flex-1 pb-20 bg-background overflow-y-auto">
       {/* Header */}
       <header className="flex items-center justify-between p-4 safe-area-inset-top">
-        <div className="flex items-center gap-2 text-white">
+        <div className="flex items-center gap-2 text-foreground">
           <span className="font-medium">Mercado</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-          <span className="text-gray-400">Home</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <span className="text-muted-foreground">Home</span>
         </div>
         <div className="flex items-center gap-3">
-          <button className="p-2 text-gray-400">
+          <button className="p-2 text-muted-foreground">
             <Sun className="w-5 h-5" />
           </button>
-          <button className="p-2 text-gray-400">
+          <button className="p-2 text-muted-foreground">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button className="p-2 text-gray-400">
+          <button className="p-2 text-muted-foreground">
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
@@ -368,14 +368,14 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
       {loading && maioresAltas.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
-          <p className="text-sm text-gray-400">Carregando dados do mercado...</p>
+          <p className="text-sm text-muted-foreground">Carregando dados do mercado...</p>
         </div>
       ) : (
         <>
           {/* Índices do mercado */}
           <section className="px-4 pb-4">
             {marketError && (
-              <div className="mb-4 rounded-xl border border-gray-700 bg-[#252b3d] p-4 text-sm text-gray-300">
+              <div className="mb-4 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
                 Cotações temporariamente indisponíveis. A Kadig não exibe valores antigos como se fossem atuais.
               </div>
             )}
@@ -383,11 +383,11 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
               {marketIndices.map((index) => (
                 <div 
                   key={index.name}
-                  className="flex-shrink-0 bg-[#252b3d] rounded-xl px-4 py-3 flex items-center gap-3"
+                  className="flex-shrink-0 bg-card rounded-xl px-4 py-3 flex items-center gap-3"
                 >
                   <div>
-                    <p className="text-white text-sm font-medium">{index.name}</p>
-                    <p className="text-gray-400 text-xs">{formatNumber(index.value)}</p>
+                    <p className="text-foreground text-sm font-medium">{index.name}</p>
+                    <p className="text-muted-foreground text-xs">{formatNumber(index.value)}</p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-md font-medium ${
                     index.changePercent >= 0 
@@ -408,9 +408,9 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 placeholder="Buscar ativos, índices, fundos de investime..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12 bg-[#252b3d] border-0 text-white placeholder:text-gray-500 pr-10"
+                className="h-12 bg-card border-0 text-foreground placeholder:text-muted-foreground pr-10"
               />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             </div>
           </section>
 
@@ -422,8 +422,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 onClick={tool.onClick}
                 className={`w-full flex items-center justify-between bg-gradient-to-r ${tool.gradient} rounded-xl px-5 py-4`}
               >
-                <span className="text-white font-medium">{tool.label}</span>
-                <ChevronRight className="w-5 h-5 text-white" />
+                <span className="text-foreground font-medium">{tool.label}</span>
+                <ChevronRight className="w-5 h-5 text-foreground" />
               </button>
             ))}
           </section>
@@ -446,7 +446,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             <section className="px-4 pb-6">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1 h-6 bg-primary rounded-full" />
-                <h2 className="text-lg font-semibold text-white">Melhores ofertas de renda fixa</h2>
+                <h2 className="text-lg font-semibold text-foreground">Melhores ofertas de renda fixa</h2>
               </div>
               <div className="flex gap-2 mb-3 overflow-x-auto pb-1 -mx-4 px-4">
                 {categories.map((cat) => (
@@ -455,8 +455,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                     onClick={() => setOfferFilter(cat)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                       offerFilter === cat
-                        ? "bg-primary text-white"
-                        : "bg-[#252b3d] text-gray-400"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card text-muted-foreground"
                     }`}
                   >
                     {cat}
@@ -467,12 +467,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 {filteredOffers.map((offer) => (
                   <div
                     key={offer.id}
-                    className="bg-[#252b3d] rounded-xl px-4 py-3 flex items-center gap-3"
+                    className="bg-card rounded-xl px-4 py-3 flex items-center gap-3"
                   >
                     <BankLogo connectorName={offer.bank_name} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{offer.bank_name}</p>
-                      <p className="text-gray-400 text-xs truncate">
+                      <p className="text-foreground text-sm font-medium truncate">{offer.bank_name}</p>
+                      <p className="text-muted-foreground text-xs truncate">
                         {offer.product}
                         {offer.term ? ` · ${offer.term}` : ""}
                         {offer.min_investment != null ? ` · mín. ${formatPrice(offer.min_investment)}` : ""}
@@ -485,10 +485,10 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 ))}
               </div>
               {filteredOffers.length === 0 && (
-                <p className="text-gray-500 text-sm py-2">Nenhuma oferta de {offerFilter} no momento.</p>
+                <p className="text-muted-foreground text-sm py-2">Nenhuma oferta de {offerFilter} no momento.</p>
               )}
               {bankOffersUpdatedAt && (
-                <p className="text-gray-500 text-xs mt-2">
+                <p className="text-muted-foreground text-xs mt-2">
                   Taxas divulgadas pelos bancos, atualizadas em {new Date(bankOffersUpdatedAt).toLocaleDateString("pt-BR")}. Confira as condições no site de cada banco antes de investir.
                 </p>
               )}
@@ -500,12 +500,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-primary rounded-full" />
-              <h2 className="text-lg font-semibold text-white">Principais notícias do mercado</h2>
+              <h2 className="text-lg font-semibold text-foreground">Principais notícias do mercado</h2>
             </div>
             
             <button 
               onClick={() => setShowAllNews(!showAllNews)}
-              className="bg-[#252b3d] text-gray-300 text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2"
+              className="bg-card text-muted-foreground text-sm px-4 py-2 rounded-lg mb-4 flex items-center gap-2"
             >
               {showAllNews ? 'VER MENOS' : 'TODAS AS NOTÍCIAS'}
               <ChevronDown className={`w-4 h-4 transition-transform ${showAllNews ? 'rotate-180' : ''}`} />
@@ -572,7 +572,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                         <h3 className="text-gray-900 font-medium text-sm line-clamp-3 mb-2">
                           {news.title}
                         </h3>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{new Date(news.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           <span>•</span>
                           <span>{new Date(news.date).toLocaleDateString('pt-BR')}</span>
@@ -586,8 +586,8 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 </div>
               </>
             ) : (
-              <div className="bg-[#252b3d] rounded-xl p-6 text-center">
-                <p className="text-sm text-gray-400">Nenhuma notícia disponível</p>
+              <div className="bg-card rounded-xl p-6 text-center">
+                <p className="text-sm text-muted-foreground">Nenhuma notícia disponível</p>
               </div>
             )}
           </section>
@@ -596,7 +596,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-primary rounded-full" />
-              <h2 className="text-lg font-semibold text-white">Timeline de notícias</h2>
+              <h2 className="text-lg font-semibold text-foreground">Timeline de notícias</h2>
             </div>
             
             {/* Pagination - only show if we have news */}
@@ -605,7 +605,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 <button 
                   onClick={() => setNewsPage(Math.max(1, newsPage - 1))}
                   disabled={newsPage === 1}
-                  className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
+                  className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-muted-foreground disabled:opacity-50"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -616,7 +616,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                     key={page}
                     onClick={() => setNewsPage(page)}
                     className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-medium ${
-                      newsPage === page ? 'bg-primary text-white' : 'bg-[#252b3d] text-gray-400 hover:bg-[#3a4259]'
+                      newsPage === page ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground hover:bg-muted'
                     }`}
                   >
                     {page}
@@ -626,7 +626,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                 <button 
                   onClick={() => setNewsPage(Math.min(totalNewsPages, newsPage + 1))}
                   disabled={newsPage === totalNewsPages}
-                  className="w-10 h-10 rounded-lg bg-[#252b3d] flex items-center justify-center text-gray-400 disabled:opacity-50"
+                  className="w-10 h-10 rounded-lg bg-card flex items-center justify-center text-muted-foreground disabled:opacity-50"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -649,7 +649,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       {index < newsPerPage - 1 && <div className="w-0.5 flex-1 bg-gray-600 mt-1" />}
                     </div>
                     <div className="flex-1 pb-4">
-                      <p className="text-gray-400 text-xs mb-2">
+                      <p className="text-muted-foreground text-xs mb-2">
                         {new Date(news.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {new Date(news.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })} • {news.source_name}
                       </p>
                       <div className="w-48 h-32 rounded-lg overflow-hidden mb-2 bg-gray-700">
@@ -660,11 +660,11 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                           onError={(e) => { (e.target as HTMLImageElement).src = newsPlaceholders[index % newsPlaceholders.length]; }}
                         />
                       </div>
-                      <h4 className="text-white font-medium text-sm line-clamp-2 mb-1">
+                      <h4 className="text-foreground font-medium text-sm line-clamp-2 mb-1">
                         {news.title}
                       </h4>
                       {news.text && (
-                        <p className="text-gray-400 text-xs line-clamp-2">
+                        <p className="text-muted-foreground text-xs line-clamp-2">
                           {news.text}
                         </p>
                       )}
@@ -679,40 +679,40 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-primary rounded-full" />
-              <h2 className="text-lg font-semibold text-white">Cotações do dia</h2>
+              <h2 className="text-lg font-semibold text-foreground">Cotações do dia</h2>
             </div>
             
             {/* Premium banner */}
-            <div className="bg-[#252b3d] rounded-xl p-4 mb-4 flex items-center gap-3">
+            <div className="bg-card rounded-xl p-4 mb-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
-              <p className="text-gray-300 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Tá de olho nas cotações? <span className="text-primary font-medium">Acompanhe em tempo real.</span>
               </p>
             </div>
 
             {/* IBOV indicator */}
-            <div className="bg-[#252b3d] rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
-              <span className="text-white font-medium">IBOV:</span>
-              <span className="text-gray-300">{formatNumber(marketIndices[0]?.value || 0)}</span>
+            <div className="bg-card rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+              <span className="text-foreground font-medium">IBOV:</span>
+              <span className="text-muted-foreground">{formatNumber(marketIndices[0]?.value || 0)}</span>
               <div className="flex items-center gap-1 text-red-500">
                 <ArrowDown className="w-4 h-4" />
                 <span className="text-sm">{marketIndices[0]?.changePercent.toFixed(2)}%</span>
               </div>
-              <ChevronDown className="w-5 h-5 text-gray-400 ml-auto" />
+              <ChevronDown className="w-5 h-5 text-muted-foreground ml-auto" />
             </div>
 
             {/* Maiores Altas */}
-            <div className="bg-[#252b3d] rounded-2xl p-4 mb-4">
+            <div className="bg-card rounded-2xl p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <ArrowUp className="w-5 h-5 text-emerald-500" />
-                  <h3 className="text-white font-semibold">Maiores Altas</h3>
+                  <h3 className="text-foreground font-semibold">Maiores Altas</h3>
                 </div>
                 <button 
                   onClick={() => setShowAllAltas(!showAllAltas)}
-                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                  className="flex items-center gap-1 bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   {showAllAltas ? 'Ver menos' : 'Ver todos'}
                   <ChevronDown className={`w-4 h-4 transition-transform ${showAllAltas ? 'rotate-180' : ''}`} />
@@ -727,7 +727,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       setSelectedStock(stock);
                       setStockDetailOpen(true);
                     }}
-                    className="flex items-center gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 cursor-pointer hover:bg-muted p-2 -mx-2 rounded-lg transition-colors"
                   >
                     <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden">
                       {stock.logoUrl ? (
@@ -746,15 +746,15 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">{stock.symbol}</p>
-                      <p className="text-xs text-gray-400 truncate">{stock.shortName}</p>
+                      <p className="font-semibold text-foreground">{stock.symbol}</p>
+                      <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">VALOR (R$)</p>
-                      <p className="text-white font-medium">{formatPrice(stock.regularMarketPrice)}</p>
+                      <p className="text-xs text-muted-foreground">VALOR (R$)</p>
+                      <p className="text-foreground font-medium">{formatPrice(stock.regularMarketPrice)}</p>
                     </div>
                     <div className="text-right w-20">
-                      <p className="text-xs text-gray-400">VARIAÇÃO</p>
+                      <p className="text-xs text-muted-foreground">VARIAÇÃO</p>
                       <p className="text-emerald-500 font-medium">
                         {stock.regularMarketChangePercent.toFixed(2)}%
                       </p>
@@ -765,15 +765,15 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             </div>
 
             {/* Maiores Baixas */}
-            <div className="bg-[#252b3d] rounded-2xl p-4">
+            <div className="bg-card rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <ArrowDown className="w-5 h-5 text-red-500" />
-                  <h3 className="text-white font-semibold">Maiores Baixas</h3>
+                  <h3 className="text-foreground font-semibold">Maiores Baixas</h3>
                 </div>
                 <button 
                   onClick={() => setShowAllBaixas(!showAllBaixas)}
-                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                  className="flex items-center gap-1 bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   {showAllBaixas ? 'Ver menos' : 'Ver todos'}
                   <ChevronDown className={`w-4 h-4 transition-transform ${showAllBaixas ? 'rotate-180' : ''}`} />
@@ -788,7 +788,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       setSelectedStock(stock);
                       setStockDetailOpen(true);
                     }}
-                    className="flex items-center gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
+                    className="flex items-center gap-3 cursor-pointer hover:bg-muted p-2 -mx-2 rounded-lg transition-colors"
                   >
                     <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden">
                       {stock.logoUrl ? (
@@ -807,15 +807,15 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">{stock.symbol}</p>
-                      <p className="text-xs text-gray-400 truncate">{stock.shortName}</p>
+                      <p className="font-semibold text-foreground">{stock.symbol}</p>
+                      <p className="text-xs text-muted-foreground truncate">{stock.shortName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">VALOR (R$)</p>
-                      <p className="text-white font-medium">{formatPrice(stock.regularMarketPrice)}</p>
+                      <p className="text-xs text-muted-foreground">VALOR (R$)</p>
+                      <p className="text-foreground font-medium">{formatPrice(stock.regularMarketPrice)}</p>
                     </div>
                     <div className="text-right w-20">
-                      <p className="text-xs text-gray-400">VARIAÇÃO</p>
+                      <p className="text-xs text-muted-foreground">VARIAÇÃO</p>
                       <p className="text-red-500 font-medium">
                         {stock.regularMarketChangePercent.toFixed(2)}%
                       </p>
@@ -830,7 +830,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
           <section className="px-4 pb-6">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-6 bg-primary rounded-full" />
-              <h2 className="text-lg font-semibold text-white">Agenda do mercado</h2>
+              <h2 className="text-lg font-semibold text-foreground">Agenda do mercado</h2>
             </div>
             
             {/* Category Filters */}
@@ -848,7 +848,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                     agendaFilter === filter.key
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-[#252b3d] text-gray-300 hover:bg-[#3a4259]'
+                      : 'bg-card text-muted-foreground hover:bg-muted'
                   }`}
                 >
                   {filter.label}
@@ -857,12 +857,12 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
             </div>
 
             {/* Events Section */}
-            <div className="bg-[#252b3d] rounded-2xl p-4 mb-4">
+            <div className="bg-card rounded-2xl p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-semibold">Próximos Eventos</h3>
+                <h3 className="text-foreground font-semibold">Próximos Eventos</h3>
                 <button 
                   onClick={() => setShowAllAgenda(!showAllAgenda)}
-                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                  className="flex items-center gap-1 bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   {showAllAgenda ? 'Ver menos' : 'Ver todos'}
                   <ChevronDown className={`w-4 h-4 transition-transform ${showAllAgenda ? 'rotate-180' : ''}`} />
@@ -882,7 +882,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                       <div 
                         key={event.id}
                         className={`flex items-start gap-3 p-2 -mx-2 rounded-lg transition-colors ${
-                          event.type === 'earnings' ? 'cursor-pointer hover:bg-[#3a4259]' : ''
+                          event.type === 'earnings' ? 'cursor-pointer hover:bg-muted' : ''
                         }`}
                         onClick={() => {
                           if (event.type === 'earnings' && event.ticker) {
@@ -906,7 +906,7 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                           event.type === 'holiday' ? 'bg-red-500/20 border-2 border-red-500' :
                           'bg-cyan-500/20 border-2 border-cyan-500'
                         }`}>
-                          <span className="text-white font-bold text-lg leading-none">{event.day}</span>
+                          <span className="text-foreground font-bold text-lg leading-none">{event.day}</span>
                           <span className={`text-xs ${
                             event.type === 'copom' ? 'text-emerald-400' :
                             event.type === 'fomc' ? 'text-blue-400' :
@@ -922,39 +922,39 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                             <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${
                               event.importance === 'alta' ? 'bg-red-500/20 text-red-400' :
                               event.importance === 'média' ? 'bg-yellow-500/20 text-yellow-400' :
-                              'bg-gray-500/20 text-gray-400'
+                              'bg-gray-500/20 text-muted-foreground'
                             }`}>
                               {event.importance.toUpperCase()}
                             </span>
                             {event.ticker && (
-                              <span className="bg-purple-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                              <span className="bg-purple-500 text-foreground text-xs px-2 py-0.5 rounded-md font-medium">
                                 {event.ticker}
                               </span>
                             )}
                           </div>
-                          <p className="text-white text-sm font-medium">{event.title}</p>
-                          <p className="text-gray-400 text-xs mt-1">{event.description}</p>
+                          <p className="text-foreground text-sm font-medium">{event.title}</p>
+                          <p className="text-muted-foreground text-xs mt-1">{event.description}</p>
                         </div>
                         {event.type === 'earnings' && (
-                          <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
+                          <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-4" />
                         )}
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm text-center py-4">
+                <p className="text-muted-foreground text-sm text-center py-4">
                   Nenhum evento encontrado
                 </p>
               )}
             </div>
 
             {/* Dividends Section */}
-            <div className="bg-[#252b3d] rounded-2xl p-4">
+            <div className="bg-card rounded-2xl p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-white font-semibold">Dividendos</h3>
+                <h3 className="text-foreground font-semibold">Dividendos</h3>
                 <button 
                   onClick={() => setShowAllDividends(!showAllDividends)}
-                  className="flex items-center gap-1 bg-[#3a4259] text-gray-300 text-sm px-3 py-1.5 rounded-lg hover:bg-[#4a5269] transition-colors"
+                  className="flex items-center gap-1 bg-muted text-muted-foreground text-sm px-3 py-1.5 rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   {showAllDividends ? 'Ver menos' : 'Ver todos'}
                   <ChevronDown className={`w-4 h-4 transition-transform ${showAllDividends ? 'rotate-180' : ''}`} />
@@ -981,30 +981,30 @@ const MercadoTab = ({ showValues }: MercadoTabProps) => {
                         });
                         setStockDetailOpen(true);
                       }}
-                      className="flex items-start gap-3 cursor-pointer hover:bg-[#3a4259] p-2 -mx-2 rounded-lg transition-colors"
+                      className="flex items-start gap-3 cursor-pointer hover:bg-muted p-2 -mx-2 rounded-lg transition-colors"
                     >
                       <div className="w-14 h-14 rounded-full bg-violet-500/20 border-2 border-violet-500 flex flex-col items-center justify-center text-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg leading-none">{dividend.paymentDay}</span>
+                        <span className="text-foreground font-bold text-lg leading-none">{dividend.paymentDay}</span>
                         <span className="text-violet-400 text-xs">{dividend.paymentMonth}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="bg-violet-500 text-white text-xs px-2 py-0.5 rounded-md font-medium">
+                          <span className="bg-violet-500 text-foreground text-xs px-2 py-0.5 rounded-md font-medium">
                             {dividend.ticker}
                           </span>
-                          <span className="text-gray-400 text-xs">DATA-COM:</span>
-                          <span className="text-white text-xs">{dividend.dataCom}</span>
-                          <span className="text-gray-400 text-xs ml-2">VALOR</span>
+                          <span className="text-muted-foreground text-xs">DATA-COM:</span>
+                          <span className="text-foreground text-xs">{dividend.dataCom}</span>
+                          <span className="text-muted-foreground text-xs ml-2">VALOR</span>
                           <span className="text-emerald-400 text-xs font-medium">R$ {dividend.value.toFixed(2)}</span>
                         </div>
-                        <p className="text-gray-400 text-xs truncate">{dividend.companyName}</p>
+                        <p className="text-muted-foreground text-xs truncate">{dividend.companyName}</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-gray-500 flex-shrink-0 mt-4" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-4" />
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm text-center py-4">
+                <p className="text-muted-foreground text-sm text-center py-4">
                   Nenhum dividendo encontrado
                 </p>
               )}

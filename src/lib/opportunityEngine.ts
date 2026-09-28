@@ -191,7 +191,7 @@ export function runEngine(
       id: "concentration",
       severity: "risk",
       category: "Concentração",
-      title: `${topPct.toFixed(0)}% da carteira em um único ativo`,
+      title: `${topPct.toFixed(0)}% dos seus investimentos em um único ativo`,
       detail: `${top.asset_name} representa ${brl(top.current_value)}. Os 3 maiores ativos somam ${top3Pct.toFixed(0)}% do total. Um problema nesse ativo afetaria boa parte do seu patrimônio.`,
       annualImpact: 0,
       action: "Reduzir a posição para até 20–25% e diversificar",
