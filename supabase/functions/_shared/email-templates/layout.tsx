@@ -2,7 +2,7 @@
 import * as React from 'npm:react@18.3.1'
 import { Body, Button, Container, Head, Heading, Html, Img, Preview, Section, Text } from 'npm:@react-email/components@0.0.22'
 
-const LOGO_URL = 'https://appinvestt.lovable.app/email/kadig-logo.png'
+const LOGO_URL = 'https://appinvestt.lovable.app/__l5e/assets-v1/af1c6778-46e4-492e-80f1-455e2c434015/kadig-logo.png'
 
 const main = { backgroundColor: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif' }
 const container = { maxWidth: '480px', margin: '0 auto', padding: '32px 24px' }
