@@ -486,15 +486,15 @@ export default function ConexoesTab({ onImportInvestments, theme = "dark" }: Con
 
       {/* Empty State */}
       {!loading && connections.length === 0 && (
-        <section className="overflow-hidden rounded-lg bg-kadig-navy p-6 sm:p-8 text-kadig-white border border-primary/20">
-          <div className="w-12 h-12 rounded-md bg-primary/20 border border-primary/30 flex items-center justify-center mb-6">
-            <Building2 className="w-6 h-6 text-kadig-light" />
+        <section className="overflow-hidden rounded-lg bg-connect p-6 sm:p-8 text-connect-foreground border border-primary/20">
+          <div className="w-12 h-12 rounded-md bg-connect-foreground/15 border border-connect-foreground/30 flex items-center justify-center mb-6">
+            <Building2 className="w-6 h-6 text-connect-foreground" />
           </div>
           <h2 className="max-w-sm text-2xl font-semibold leading-tight">Conecte seus bancos em um só lugar</h2>
-          <p className="mt-3 mb-7 max-w-sm text-sm leading-relaxed text-kadig-white/80">
+          <p className="mt-3 mb-7 max-w-sm text-sm leading-relaxed text-connect-foreground/80">
             Conecte suas contas bancárias e corretoras para importar seus investimentos automaticamente.
           </p>
-          <Button onClick={handleConnect} disabled={connecting} className="w-full h-12 bg-kadig-white text-kadig-navy hover:bg-kadig-white/90 font-semibold">
+          <Button onClick={handleConnect} disabled={connecting} className="w-full h-12 bg-connect-foreground text-connect hover:bg-connect-foreground/90 font-semibold">
             {connecting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
             Conectar primeira conta
           </Button>
