@@ -257,11 +257,11 @@ function calculateFinancialHealth(profile: any, patrimonio: number, renda: numbe
   if (patrimonio > renda * 12) score += 10;
   if (patrimonio > renda * 24) score += 10;
 
-  let status = "🔴 Crítico";
-  if (score >= 40) status = "🟠 Atenção";
-  if (score >= 60) status = "🟡 Regular";
-  if (score >= 75) status = "🟢 Bom";
-  if (score >= 90) status = "🌟 Excelente";
+  let status = "Crítico";
+  if (score >= 40) status = "Atenção";
+  if (score >= 60) status = "Regular";
+  if (score >= 75) status = "Bom";
+  if (score >= 90) status = "Excelente";
 
   return { score: Math.max(0, Math.min(100, score)), status, issues };
 }
@@ -299,7 +299,7 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
     analysis.push("⚠️ Carteira concentrada em apenas 1 tipo de ativo");
   } else if (types.length >= 3) {
     score += 15;
-    analysis.push("✅ Boa diversificação por tipo de ativo");
+    analysis.push("Boa diversificação por tipo de ativo");
   }
 
   const maxConcentration = Math.max(...Object.values(byType)) / patrimonio * 100;
@@ -318,12 +318,12 @@ function analyzeDiversification(investments: any[], patrimonio: number): { score
 
   const hasRendaFixa = types.some(t => ["renda_fixa", "tesouro", "cdb", "lci", "lca"].includes(t));
   if (!hasRendaFixa) {
-    analysis.push("💡 Considere adicionar renda fixa para estabilidade");
+    analysis.push("Considere adicionar renda fixa para estabilidade");
   }
 
   const hasRendaVariavel = types.some(t => ["acao", "fii", "etf"].includes(t));
   if (!hasRendaVariavel && patrimonio > 10000) {
-    analysis.push("💡 Com reserva formada, considere renda variável para crescimento");
+    analysis.push("Com reserva formada, considere renda variável para crescimento");
   }
 
   return { score: Math.max(0, Math.min(100, score)), analysis };

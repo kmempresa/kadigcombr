@@ -29,7 +29,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/kadig-ai-cha
 const WELCOME_MESSAGE: Message = {
   id: "welcome",
   role: "assistant",
-  content: "Olá! Sou a Bianca, sua consultora financeira pessoal 👋\n\nConheço sua carteira de investimentos e estou aqui para te ajudar com análises personalizadas, recomendações e tirar suas dúvidas.\n\nComo posso ajudar você hoje?",
+  content: "Olá! Sou a Bianca, sua consultora financeira pessoal.\n\nConheço sua carteira de investimentos e estou aqui para te ajudar com análises personalizadas, recomendações e tirar suas dúvidas.\n\nComo posso ajudar você hoje?",
   timestamp: new Date(),
 };
 
@@ -727,7 +727,7 @@ const ConsultorIA = () => {
         
         <p className="text-center text-[11px] text-muted-foreground mt-3">
           {currentConversationId 
-            ? "💾 Conversa salva automaticamente"
+            ? "Conversa salva automaticamente"
             : "Bianca conhece sua carteira e dá recomendações personalizadas"
           }
         </p>
