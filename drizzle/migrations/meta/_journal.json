@@ -50,6 +50,13 @@
       "when": 1790621929043,
       "tag": "0006_kadig_extras_alerts_goal_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791536865326,
+      "tag": "0007_migration",
+      "breakpoints": true
     }
   ]
 }
