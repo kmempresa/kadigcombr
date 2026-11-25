@@ -278,6 +278,43 @@ serve(async (req) => {
           }
         }
 
+        // Fallback real: cotações ao vivo do Yahoo Finance (fonte gratuita, sem chave)
+        if (Object.keys(prices).length === 0) {
+          console.log('BRAPI unavailable, using Yahoo Finance for currencies');
+          const yahooSymbols: { [key: string]: string } = {
+            'DÓLAR AMERICANO (USD)': 'USDBRL=X',
+            'EURO (EUR)': 'EURBRL=X',
+            'LIBRA ESTERLINA (GBP)': 'GBPBRL=X',
+            'IENE JAPONÊS (JPY)': 'JPYBRL=X',
+            'FRANCO SUÍÇO (CHF)': 'CHFBRL=X',
+            'DÓLAR CANADENSE (CAD)': 'CADBRL=X',
+            'DÓLAR AUSTRALIANO (AUD)': 'AUDBRL=X',
+            'PESO ARGENTINO (ARS)': 'ARSBRL=X',
+            'YUAN CHINÊS (CNY)': 'CNYBRL=X',
+            'PESO MEXICANO (MXN)': 'MXNBRL=X',
+          };
+          for (const [name, symbol] of Object.entries(yahooSymbols)) {
+            try {
+              const yRes = await fetch(
+                `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1d`,
+                { headers: { 'User-Agent': 'Mozilla/5.0' } }
+              );
+              const yData = await yRes.json();
+              const meta = yData?.chart?.result?.[0]?.meta;
+              const price = parseFloat(meta?.regularMarketPrice);
+              const prev = parseFloat(meta?.chartPreviousClose);
+              if (price > 0) {
+                prices[name] = {
+                  price,
+                  change24h: prev > 0 ? ((price - prev) / prev) * 100 : 0,
+                };
+              }
+            } catch (_) {
+              // Moeda seguinte: uma falha não derruba as outras.
+            }
+          }
+        }
+
         if (Object.keys(prices).length === 0) {
           return new Response(
             JSON.stringify({ prices: {}, error: 'Currency prices unavailable' }),
